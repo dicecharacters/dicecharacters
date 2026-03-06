@@ -9190,6 +9190,10 @@ function finishCharacter() {
     character.name = document.getElementById('characterNameInput').value;
     localStorage.setItem("characterName", character.name);
 
+    // Bilder im Bogen löschen
+    localStorage.removeItem('portraitImage');
+    localStorage.removeItem('symbolImage');
+
     // Weiterleitung
     window.location.href = "charakterbogen.html";
 }
@@ -10009,4 +10013,5 @@ document.addEventListener('touchend', function(e) {
             triggerSaveAnimation(); // Unser schöner goldener Glow!
         }
     }
+
 });
