@@ -458,6 +458,10 @@ function updateAttributePoints(event) {
     const inputs = Array.from(document.querySelectorAll('.background-attribute-points'));
     const remainingPointsEl = document.getElementById('attributePointsRemaining');
     const changedInput = event.target;
+
+   if (changedInput.value.length > 1 && changedInput.value.startsWith('0')) {
+        changedInput.value = parseInt(changedInput.value, 10);
+    }
     
     let totalPoints = 0;
 
@@ -2543,6 +2547,14 @@ function validateFeatSelection(featSelectElements) {
                 !hasRequiredAttributes; // <-- HIER wird gesperrt
 
             option.disabled = shouldDisable;
+
+	    // Handy Talent Disable Logik
+	    const isSmallScreen = window.innerWidth < 1000; 
+	    if (isSmallScreen && shouldDisable && option.value !== el.value) {
+    		if (!option.text.includes("🔒")) option.text = "🔒 " + option.text;
+	    } else {
+    		option.text = option.text.replace("🔒 ", "");
+            }
         });
     });
 }
@@ -4991,10 +5003,22 @@ function updateSkills() {
     // Speichere die gewählten Skills
     selectedSkills = skillSelects.map(select => select.value).filter(Boolean);
 
+   // Deaktiviere die bereits ausgewählten skills
+    const isSmallScreen = window.innerWidth < 1000; // Jetzt ab Tablet-Größe
+
     // Deaktiviere die bereits ausgewählten skills in den anderen Dropdown-Listen
     skillSelects.forEach(select => {
         Array.from(select.options).forEach(option => {
-            option.disabled = selectedSkills.includes(option.value) && option.value !== "";
+            const shouldBeDisabled = selectedSkills.includes(option.value) && option.value !== "";
+            option.disabled = shouldBeDisabled;
+
+            if (isSmallScreen && option.disabled && option.value !== select.value) {
+                if (!option.text.includes("🔒")) {
+                    option.text = "🔒 " + option.text;
+                }
+            } else {
+                option.text = option.text.replace("🔒 ", "");
+            }
         });
     });
 
@@ -6759,6 +6783,19 @@ function initializeEquipmentStep() {
     
     // 4. Aufbau für weitere Ausrüstung (Bereich 3)
     setupAdditionalEquipmentUI();
+
+    // Im Mobile-Modus Bereich 3 sofort ausklappen
+    if (window.innerWidth <= 600) {
+        const section = document.getElementById('additionalEquipmentSection');
+        const arrow = document.getElementById('toggleArrow');
+        const toggleHeader = document.getElementById('additionalEquipmentToggle');
+        
+        if (section && arrow && toggleHeader) {
+            section.style.display = 'block'; // Sektion zeigen
+            arrow.style.transform = 'rotate(-180deg)'; // Pfeil drehen
+            toggleHeader.classList.add('expanded-border'); // Rahmen anpassen
+        }
+    }
 
     showEquipmentOptionDetails(false);
 }
@@ -9570,6 +9607,8 @@ function goToStep(step) {
 
         document.getElementById("saveClass").style.display = "block";
         speciesImageBox.style.display = "none"; // Bild ausblenden
+
+	checkMobileOnboarding();
   
     } else if (step === 2) { //Background
         languageSwitcher.style.display = "none"; // Sprachumschalter ausblenden
@@ -9602,6 +9641,15 @@ function goToStep(step) {
         languageSwitcher.style.display = "none"; // Sprachumschalter ausblenden
         document.getElementById('saveAttributes').style.display = 'block';
         initializeAttributeSetup();
+
+	if (window.innerWidth <= 600) {
+            const pbRadio = document.getElementById('pointBuy');
+            if (pbRadio) {
+                pbRadio.checked = true;
+                handleMethodChange(); // UI auf Point Buy umstellen
+            }
+            setupMobileAttributeUI(); // Pfeile und Bonus-Blasen vorbereiten
+        }
         updateAttributeBonusesInStep4();
 
     } else if (step === 5) { //Level
@@ -9880,14 +9928,19 @@ function updateDropdownsForLanguage() {
 
 })();
 
+//=======================================================================
+// MOBILE SECTION
+//=======================================================================
 
-//=======================================================================
-// MOBILE SWIPE LOGIK
-//=======================================================================
+// MOBILE - Schritt 1 und Swipe Logik
+
 
 let touchstartX = 0;
 let touchendX = 0;
 let touchstartY = 0;
+
+// Variable für das Onboarding-Status
+let mobileHintSeen = localStorage.getItem('mobileSwipeHintSeen') === 'true';
 
 function handleGesture() {
     const swipeDistance = touchendX - touchstartX;
@@ -9905,6 +9958,7 @@ function handleGesture() {
         handleMobileForward();
     }
 }
+
 
 function handleMobileForward() {
     if (currentStep === 12) {
@@ -9931,6 +9985,30 @@ function handleMobileForward() {
     }
 }
 
+// ONBOARDING LOGIK
+function checkMobileOnboarding() {
+    if (currentStep === 1 && !mobileHintSeen && window.innerWidth <= 600) {
+        const onboarding = document.getElementById('swipeOnboarding');
+        if (onboarding) {
+            // Wir müssen sicherstellen, dass die Texte beim Einblenden 
+            // der aktuellen Sprache entsprechen
+            applyTranslations(translations, currentLang);
+            
+            onboarding.style.display = 'block';
+            
+            const hideHint = () => {
+                onboarding.style.display = 'none';
+                localStorage.setItem('mobileSwipeHintSeen', 'true');
+                mobileHintSeen = true;
+                document.body.removeEventListener('click', hideHint);
+            };
+
+            // Einmaliger Klick irgendwo entfernt die Maske
+            document.body.addEventListener('click', hideHint, { once: true });
+        }
+    }
+}
+
 function triggerSaveAnimation() {
     const content = document.getElementById('mainContent');
     content.classList.remove('save-glow-active');
@@ -9944,40 +10022,71 @@ document.addEventListener('touchstart', e => {
     touchstartY = e.changedTouches[0].screenY;
 });
 
+
+// SWIPE-ERKENNUNG (Unteres Viertel)
 document.addEventListener('touchend', e => {
     touchendX = e.changedTouches[0].screenX;
     const screenHeight = window.innerHeight;
     const screenWidth = window.innerWidth;
-    const edgeThreshold = 50; // 50px vom Rand
+    const edgeThreshold = 50; 
 
-    // SICHERHEITS-CHECK: Nur am Rand ODER im unteren Drittel
-    const isAtEdge = touchstartX < edgeThreshold || touchstartX > (screenWidth - edgeThreshold);
-    const isAtBottom = touchstartY > (screenHeight * 0.66);
+    // Sicherheits-Check: NUR im unteren Viertel (ab 75% der Höhe)
+    // Wir ignorieren den "isAtEdge" Check hier, um nur unten zu swipen
+    const isAtBottomQuarter = touchstartY > (screenHeight * 0.95);
 
-    if (isAtEdge || isAtBottom) {
+    if (isAtBottomQuarter) {
         handleGesture();
     }
 });
 
-// --- MOBILE TOUCH DRAG & DROP FÜR SCHRITT 4 ---
+// MOBILE - Schritt 2: Backgorund Atrribute Inputs
+
+document.addEventListener('focusin', function(e) {
+    // Prüft, ob das angeklickte Element ein Attribut-Feld aus Schritt 2 ist
+    if (e.target.classList.contains('background-attribute-points')) {
+        // Wenn der Wert 0 ist, leeren wir das Feld für die neue Eingabe
+        if (e.target.value === "0") {
+            e.target.value = "";
+        }
+        // Markiert den Text (falls vorhanden), damit er beim Tippen ersetzt wird
+        e.target.select();
+    }
+});
+
+document.addEventListener('focusout', function(e) {
+    if (e.target.classList.contains('background-attribute-points')) {
+        // Falls der Nutzer das Feld leer lässt, springt es sauber auf 0 zurück
+        if (e.target.value === "") {
+            e.target.value = "0";
+        }
+    }
+});
+
+
+// Tablet - Schritt 4: Attribrute Drag & Drop
 
 document.addEventListener('touchstart', function(e) {
     if (e.target.classList.contains('draggable-value')) {
         const touch = e.touches[0];
         e.target.dataset.startX = touch.clientX;
         e.target.dataset.startY = touch.clientY;
+        
+        // Element hervorheben und über alles andere legen
         e.target.style.zIndex = "1000";
         e.target.style.position = "relative";
+        e.target.style.transition = "none"; // Sofortige Reaktion
     }
 }, { passive: false });
 
 document.addEventListener('touchmove', function(e) {
     if (e.target.classList.contains('draggable-value')) {
-        e.preventDefault(); // Verhindert das Scrollen der Seite
+        e.preventDefault(); // Verhindert das Scrollen der Seite während des Draggens
+        
         const touch = e.touches[0];
         const deltaX = touch.clientX - e.target.dataset.startX;
         const deltaY = touch.clientY - e.target.dataset.startY;
         
+        // Bewege das Element mit dem Finger
         e.target.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.1)`;
     }
 }, { passive: false });
@@ -9985,33 +10094,112 @@ document.addEventListener('touchmove', function(e) {
 document.addEventListener('touchend', function(e) {
     if (e.target.classList.contains('draggable-value')) {
         const touch = e.changedTouches[0];
-        e.target.style.zIndex = "";
-        e.target.style.transform = "";
-        e.target.style.position = "";
+        const draggedEl = e.target;
 
-        // Finden, was unter dem Finger liegt
+        // --- DER TRICK: Pointer-Events ausschalten ---
+        draggedEl.style.pointerEvents = 'none'; 
+        
+        // Jetzt "hindurchschauen" auf das Element an der Position
         const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
         
-        // Prüfen, ob wir über einer gültigen Drop-Zone (Attribut-Input) sind
+        // Pointer-Events sofort wieder aktivieren
+        draggedEl.style.pointerEvents = 'auto';
+
+        // Prüfen, ob wir über einer Drop-Zone sind
         const dropZone = targetElement ? targetElement.closest('.attribute-score-input') : null;
 
         if (dropZone) {
-            // Hier nutzen wir deine bestehende Logik! 
-            // Wir simulieren einfach einen Drop-Vorgang
-            const value = e.target.innerText;
-            const attributeName = dropZone.dataset.attribute; // Sicherstellen, dass data-attribute gesetzt ist
+            const value = draggedEl.innerText;
 
-            // RUFE DEINE BESTEHENDE FUNKTION AUF (Anpassen an deinen Funktionsnamen!)
+            // Falls du eine zentrale Drop-Logik hast:
             if (typeof handleDropLogic === "function") {
                 handleDropLogic(value, dropZone); 
             } else {
-                // Falls du keine zentrale Funktion hast, weisen wir den Wert direkt zu:
+                // Manuelle Zuweisung (deine Fallback-Logik)
+                const previousValue = dropZone.value;
                 dropZone.value = value;
-                dropZone.dispatchEvent(new Event('change')); // Triggert die Berechnung
-                e.target.style.display = 'none'; // Versteckt den Wert im Pool
-            }
-            triggerSaveAnimation(); // Unser schöner goldener Glow!
-        }
-    }
+                
+                // Triggere die Berechnung (Update Modifikatoren etc.)
+                dropZone.dispatchEvent(new Event('change')); 
+                dropZone.dispatchEvent(new Event('input')); // Sicherstellen, dass alles reagiert
 
+                // Element aus dem Pool entfernen
+                draggedEl.style.display = 'none';
+
+                // Falls das Feld schon einen Wert hatte, schicke ihn zurück in den Pool
+                if (previousValue && previousValue !== "") {
+                    createDraggableValue(previousValue, 'standardArrayValues');
+                }
+            }
+            triggerSaveAnimation(); // Dein goldener Glow
+        }
+
+        // Styles zurücksetzen
+        draggedEl.style.zIndex = "";
+        draggedEl.style.transform = "";
+        draggedEl.style.position = "";
+        draggedEl.style.transition = "";
+    }
 });
+
+// MOBILE - Schritt 4: Attribrute Pointcost
+
+function setupMobileAttributeUI() {
+    if (window.innerWidth > 600) return;
+
+    attributeList.forEach(attr => {
+        const stringId = attr.translationLabel.replace('Label', '');
+        const scoreInput = document.getElementById(`${stringId}Score`);
+        if (!scoreInput) return;
+        
+        const rowWrapper = scoreInput.closest('.interactive-elements');
+        const scoreContainer = scoreInput.parentNode; 
+
+        scoreInput.readOnly = true;
+
+        let bonusBadge = scoreContainer.querySelector('.mobile-background-bonus');
+        if (!bonusBadge) {
+            bonusBadge = document.createElement('span');
+            bonusBadge.className = 'mobile-background-bonus';
+            scoreContainer.appendChild(bonusBadge);
+        }
+
+        const bonusValue = character.backgroundAttributeBonuses[attr.translationLabel] || 0;
+        if (bonusValue > 0) {
+            // HIER: Das "+" wieder hinzugefügt
+            bonusBadge.innerText = "+" + bonusValue; 
+            bonusBadge.style.display = 'flex';
+        } else {
+            bonusBadge.style.display = 'none';
+        }
+
+        if (!document.getElementById(`stepper-${stringId}`)) {
+            const stepperDiv = document.createElement('div');
+            stepperDiv.id = `stepper-${stringId}`;
+            stepperDiv.className = 'mobile-stepper-ui';
+            stepperDiv.innerHTML = `
+                <button type="button" class="stepper-btn" onclick="adjustValue('${stringId}', 1)">▲</button>
+                <button type="button" class="stepper-btn" onclick="adjustValue('${stringId}', -1)">▼</button>
+            `;
+            rowWrapper.appendChild(stepperDiv);
+        }
+
+        scoreInput.onclick = () => {
+            document.querySelectorAll('.mobile-stepper-ui').forEach(s => s.classList.remove('active-stepper'));
+            document.getElementById(`stepper-${stringId}`).classList.add('active-stepper');
+        };
+    });
+}
+
+// Symmetrische Rechenfunktion
+function adjustValue(stringId, delta) {
+    const input = document.getElementById(`${stringId}Score`);
+    let currentVal = parseInt(input.value) || 8;
+    let newVal = currentVal + delta;
+
+    if (newVal >= 8 && newVal <= 15) {
+        input.value = newVal;
+        updatePointBuy(); // Bestehende D&D-Berechnungsfunktion aufrufen
+        triggerSaveAnimation(); // Dein goldener Glow-Effekt
+    }
+}
