@@ -69,7 +69,7 @@ Object.assign(translations.de, {
     // Maneuver: Namen
     "ambushLabel": "Hinterhalt",
     "baitAndSwitchLabel": "Ködern und Tauschen",
-    "commandersStrikeLabel": "Befehlshaberstoß",
+    "commandersStrikeLabel": "Befehlshaberstoss",
     "commandingPresenceLabel": "Befehlspräsenz",
     "disarmingAttackLabel": "Entwaffnender Angriff",
     "distractingStrikeLabel": "Ablenkender Schlag",
@@ -81,7 +81,7 @@ Object.assign(translations.de, {
     "menacingAttackLabel": "Bedrohlicher Angriff",
     "parryLabel": "Parieren",
     "precisionAttackLabel": "Präzisionsangriff",
-    "pushingAttackLabel": "Stoßangriff",
+    "pushingAttackLabel": "Stossangriff",
     "rallyLabel": "Rallye",
     "riposteLabel": "Riposte",
     "sweepingAttackLabel": "Schwungangriff",

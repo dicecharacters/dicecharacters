@@ -53,6 +53,7 @@ const translations = {
     "saveStory": "speichern & weiter",
     "saveAlignment": "speichern & weiter",
     "saveAppearance": "speichern & weiter",
+    "saveAndContinueLabel": "speichern & weiter",
     "finish": "Abschließen",
     "finishLabel": "Fertig",
     "back": "zurück",
@@ -395,7 +396,7 @@ const translations = {
 
     // Mobile Version
     "confirmFinish": "Möchtest du die Charaktererstellung abschließen und den Bogen erstellen?",
-    "swipeHint": "Wische am unteren Rand zum Navigieren",
+    "swipeHint": "Wische zum Navigieren",
 
     // Charakterbogen
     "playerNameLabel": "Spielername",
@@ -479,6 +480,7 @@ const translations = {
     "saveStory": "save & continue",
     "saveAlignment": "save & continue",
     "saveAppearance": "save & continue",
+    "saveAndContinueLabel": "save & continue",
     "finish": "Finalize",
     "finishLabel": "Finish",
     "back": "back",
@@ -821,7 +823,7 @@ const translations = {
 
     // mobile cersion
     "confirmFinish": "Do you want to complete the character creation and generate the sheet?",
-    "swipeHint": "Swipe at the bottom to navigate",
+    "swipeHint": "Swipe to navigate",
 
     // character sheet
     "playerNameLabel": "Player Name",
@@ -1065,6 +1067,11 @@ function applyTranslations(translations, currentLang) {
 
     // Name & Abschluss
     setTextContent('summaryLabel', elements.summaryLabel);
+
+    // Onboarding Labels übersetzen
+    setTextContent('onboardingBackLabel', elements.back);
+    setTextContent('onboardingSaveLabel', elements.saveAndContinueLabel);
+    setTextContent('onboardingSwipeHint', elements.swipeHint);
 
     // Setze den Text, ohne das Fragezeichen zu überschreiben
 

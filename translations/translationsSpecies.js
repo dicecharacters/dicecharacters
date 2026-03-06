@@ -161,7 +161,7 @@ Object.assign(translations.de, {
         "gnomishCunningLabel": "Gnomische Raffinesse",
         "gnomishLineageLabel": "Gnomischer Herkunftszweig",
         "giantAncestryLabel": "Riesenabstammung",
-        "largeFormLabel": "Große Gestalt",
+        "largeFormLabel": "Grosse Gestalt",
         "powerfulBuildLabel": "Kräftiger Bau",
         "braveLabel": "Mutig",
         "halflingNimblenessLabel": "Halbling-Geschicklichkeit",

@@ -32,7 +32,7 @@ Object.assign(translations.de, {
     "huntersLoreLabel": "Jägerwissen",
     "huntersPreyLabel": "Beute des Jägers",
     "rovingLabel": "Weitwanderer",
-    "exceptionalTrainingLabel": "Außergewöhnliches Training",
+    "exceptionalTrainingLabel": "Aussergewöhnliches Training",
     "beguilingTwistLabel": "Betörende Wendung",
     "ironMindLabel": "Eiserner Geist",
     "defensiveTacticsLabel": "Defensive Taktiken",

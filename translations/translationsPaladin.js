@@ -39,7 +39,7 @@ Object.assign(translations.de, {
     "relentlessAvengerLabel": "Unerbittlicher Rächer",
     "abjureFoesLabel": "Gegner bannen",
     "auraOfCourageLabel": "Aura des Mutes",
-    "radiantStrikesLabel": "Gleißende Schläge",
+    "radiantStrikesLabel": "Gleissende Schläge",
     "restoringTouchLabel": "Wiederherstellende Berührung",
     "smiteOfProtectionLabel": "Schlag des Schutzes",
     "gloriousDefenseLabel": "Ruhmreiche Verteidigung",
