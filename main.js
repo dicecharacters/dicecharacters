@@ -59,6 +59,7 @@ let character = {
 //=======================================================================
 // Interne Globale Variablen
 //=======================================================================
+let currentStep = 1;
 
 let strengthScore = null; // Schritt 4
 let dexterityScore = null; // Schritt 4
@@ -9189,10 +9190,6 @@ function finishCharacter() {
     character.name = document.getElementById('characterNameInput').value;
     localStorage.setItem("characterName", character.name);
 
-    // Bilder im Bogen löschen
-    localStorage.removeItem('portraitImage');
-    localStorage.removeItem('symbolImage');
-
     // Weiterleitung
     window.location.href = "charakterbogen.html";
 }
@@ -9519,6 +9516,8 @@ function goBack() {
 function goToStep(step) {
 
     document.body.className = `active-step-${step}`;
+
+    currentStep = step; // für mobile version
 
     // Sprachumschalter-Element definieren
     const languageSwitcher = document.getElementById("languageSwitcher");
@@ -9876,3 +9875,138 @@ function updateDropdownsForLanguage() {
     document.addEventListener('drop', stopScrolling);
 
 })();
+
+
+//=======================================================================
+// MOBILE SWIPE LOGIK
+//=======================================================================
+
+let touchstartX = 0;
+let touchendX = 0;
+let touchstartY = 0;
+
+function handleGesture() {
+    const swipeDistance = touchendX - touchstartX;
+    const minDistance = 70; // Mindestdistanz für einen Swipe
+
+    // 1. ZURÜCK (Swipe nach rechts)
+    if (swipeDistance > minDistance) {
+        if (currentStep > 1) {
+            triggerSaveAnimation();
+            goToStep(currentStep - 1);
+        }
+    } 
+    // 2. WEITER / SPEICHERN (Swipe nach links)
+    else if (swipeDistance < -minDistance) {
+        handleMobileForward();
+    }
+}
+
+function handleMobileForward() {
+    if (currentStep === 12) {
+        // Wir prüfen, ob die Funktion finishCharacter existiert
+        if (typeof finishCharacter === "function") {
+            const confirmMsg = translations[currentLang].confirmFinish || "Finish character?";
+            
+            if (confirm(confirmMsg)) {
+                triggerSaveAnimation();
+                // Hier rufen wir jetzt DEINE Funktion auf:
+                finishCharacter(); 
+            }
+        } else {
+            console.error("Fehler: Die Funktion 'finishCharacter' wurde in main.js nicht gefunden!");
+        }
+    } else {
+        // Normales Speichern für alle anderen Schritte (1 bis 11)
+        // Wir suchen den Button, der gerade fürs Speichern zuständig ist
+        const saveBtn = document.querySelector('.fixed-button:not(#back):not([style*="display: none"])');
+        if (saveBtn) {
+            triggerSaveAnimation();
+            saveBtn.click(); 
+        }
+    }
+}
+
+function triggerSaveAnimation() {
+    const content = document.getElementById('mainContent');
+    content.classList.remove('save-glow-active');
+    void content.offsetWidth; // Trigger reflow
+    content.classList.add('save-glow-active');
+}
+
+// Event Listener mit Sicherheits-Check
+document.addEventListener('touchstart', e => {
+    touchstartX = e.changedTouches[0].screenX;
+    touchstartY = e.changedTouches[0].screenY;
+});
+
+document.addEventListener('touchend', e => {
+    touchendX = e.changedTouches[0].screenX;
+    const screenHeight = window.innerHeight;
+    const screenWidth = window.innerWidth;
+    const edgeThreshold = 50; // 50px vom Rand
+
+    // SICHERHEITS-CHECK: Nur am Rand ODER im unteren Drittel
+    const isAtEdge = touchstartX < edgeThreshold || touchstartX > (screenWidth - edgeThreshold);
+    const isAtBottom = touchstartY > (screenHeight * 0.66);
+
+    if (isAtEdge || isAtBottom) {
+        handleGesture();
+    }
+});
+
+// --- MOBILE TOUCH DRAG & DROP FÜR SCHRITT 4 ---
+
+document.addEventListener('touchstart', function(e) {
+    if (e.target.classList.contains('draggable-value')) {
+        const touch = e.touches[0];
+        e.target.dataset.startX = touch.clientX;
+        e.target.dataset.startY = touch.clientY;
+        e.target.style.zIndex = "1000";
+        e.target.style.position = "relative";
+    }
+}, { passive: false });
+
+document.addEventListener('touchmove', function(e) {
+    if (e.target.classList.contains('draggable-value')) {
+        e.preventDefault(); // Verhindert das Scrollen der Seite
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - e.target.dataset.startX;
+        const deltaY = touch.clientY - e.target.dataset.startY;
+        
+        e.target.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.1)`;
+    }
+}, { passive: false });
+
+document.addEventListener('touchend', function(e) {
+    if (e.target.classList.contains('draggable-value')) {
+        const touch = e.changedTouches[0];
+        e.target.style.zIndex = "";
+        e.target.style.transform = "";
+        e.target.style.position = "";
+
+        // Finden, was unter dem Finger liegt
+        const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        // Prüfen, ob wir über einer gültigen Drop-Zone (Attribut-Input) sind
+        const dropZone = targetElement ? targetElement.closest('.attribute-score-input') : null;
+
+        if (dropZone) {
+            // Hier nutzen wir deine bestehende Logik! 
+            // Wir simulieren einfach einen Drop-Vorgang
+            const value = e.target.innerText;
+            const attributeName = dropZone.dataset.attribute; // Sicherstellen, dass data-attribute gesetzt ist
+
+            // RUFE DEINE BESTEHENDE FUNKTION AUF (Anpassen an deinen Funktionsnamen!)
+            if (typeof handleDropLogic === "function") {
+                handleDropLogic(value, dropZone); 
+            } else {
+                // Falls du keine zentrale Funktion hast, weisen wir den Wert direkt zu:
+                dropZone.value = value;
+                dropZone.dispatchEvent(new Event('change')); // Triggert die Berechnung
+                e.target.style.display = 'none'; // Versteckt den Wert im Pool
+            }
+            triggerSaveAnimation(); // Unser schöner goldener Glow!
+        }
+    }
+});

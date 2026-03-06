@@ -3030,3 +3030,64 @@ textarea::placeholder,
     overflow: hidden; /* Verhindert Scrollbalken */
     display: block;
 }
+
+/* =======================================================================
+   MOBILE-UPGRADE (< 600px)
+   ======================================================================= */
+@media screen and (max-width: 600px) {
+    /* 1. Sprache & Buttons weg */
+    #languageSwitcher, .fixed-button { 
+        display: none !important; 
+    }
+
+    /* 2. Main Content befreien */
+    #mainContent {
+        width: calc(100% - 60px); /* Platz für schmale StepBar */
+        max-width: 95vw;
+        margin-left: 40px; /* Rückt nach rechts, um Stepbar Platz zu geben */
+        padding: 15px;
+        font-size: 0.95rem;
+    }
+
+    /* 3. StepBar "Geister-Modus" */
+    #stepBar {
+        width: 40px;
+        background-color: rgba(58, 58, 65, 0.3); /* Sehr transparent */
+        border-right: 1px solid rgba(122, 67, 29, 0.4);
+        z-index: 0 !important; /* Hinter dem Content */
+    }
+
+    .stepButton {
+        width: 90%;
+        height: 35px;
+        min-height: 30px;
+        font-size: 0.8em;
+    }
+
+    /* 4. Listen-Layout für Mobile (Spezies, Klassen etc.) */
+    #speciesList, #classList, #backgroundList {
+        grid-template-columns: 1fr; /* Einspaltig auf dem Handy */
+        padding: 0 10px;
+    }
+}
+
+/* --- FEEDBACK: GOLDENER SPEICHER-GLOW --- */
+.save-glow-active {
+    animation: goldFlash 0.6s ease-out;
+}
+
+@keyframes goldFlash {
+    0% { box-shadow: 0 0 0px #d4a017; border-color: #7a431d; }
+    50% { box-shadow: 0 0 25px #fce181; border-color: #fce181; }
+    100% { box-shadow: 0 0 10px rgba(0, 0, 0, 0.7); border-color: #7a431d; }
+}
+
+@media screen and (max-width: 600px) {
+    /* Verhindert das Scrollen der Seite, wenn man ein Attribut anfasst */
+    .draggable-value {
+        touch-action: none; 
+        user-select: none;
+    }
+}
+
+

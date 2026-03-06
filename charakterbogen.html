@@ -5520,6 +5520,32 @@ function setupImageUploads() {
     }
 }
 
+/* --- BILDER-UPLOAD LOGIK (Mit Canvas Auto-Resize) --- */
+
+function setupImageUploads() {
+    const portraitContainer = document.getElementById('portraitContainer');
+    const portraitInput = document.getElementById('portraitInput');
+    
+    const symbolContainer = document.getElementById('communitySymbolBox');
+    const symbolInput = document.getElementById('symbolInput');
+
+    // 1. Klick auf Box öffnet den Dateidialog (nur wenn im Edit-Mode)
+    if (portraitContainer && portraitInput) {
+        portraitContainer.addEventListener('click', () => {
+            if (isEditMode) portraitInput.click();
+        });
+        // 2. Datei ausgewählt -> Verarbeiten
+        portraitInput.addEventListener('change', (e) => processAndSaveImage(e, portraitContainer, 'portraitImage', 800));
+    }
+
+    if (symbolContainer && symbolInput) {
+        symbolContainer.addEventListener('click', () => {
+            if (isEditMode) symbolInput.click();
+        });
+        symbolInput.addEventListener('change', (e) => processAndSaveImage(e, symbolContainer, 'symbolImage', 400));
+    }
+}
+
 // Lädt das Bild, verkleinert es, speichert es und zeigt es an
 function processAndSaveImage(event, container, storageKey, maxSize) {
     const file = event.target.files[0];

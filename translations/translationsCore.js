@@ -393,6 +393,10 @@ const translations = {
     "portraitPlaceholderText": "Portrait",
     "symbolLabelText": "Symbol",
 
+    // Mobile Version
+    "confirmFinish": "Möchtest du die Charaktererstellung abschließen und den Bogen erstellen?",
+    "swipeHint": "Wische am unteren Rand zum Navigieren",
+
     // Charakterbogen
     "playerNameLabel": "Spielername",
     "pageNumerLabel": "Seite",
@@ -814,6 +818,10 @@ const translations = {
     "namePlaceholderText": "Name of your character",
     "portraitPlaceholderText": "Portrait",
     "symbolLabelText": "Symbol",
+
+    // mobile cersion
+    "confirmFinish": "Do you want to complete the character creation and generate the sheet?",
+    "swipeHint": "Swipe at the bottom to navigate",
 
     // character sheet
     "playerNameLabel": "Player Name",
