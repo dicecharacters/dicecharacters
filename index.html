@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">DiceCharacters</title>
+    <meta name="description" id="metaDesc" content="">
+    <link rel="stylesheet" href="css/landing.css">
+</head>
+<body>
+
+    <div id="floatingLang">
+        <button onclick="setLanguage('de')" id="langDe" title="Deutsch"><img src="images/germany.png" alt="DE"></button>
+        <button onclick="setLanguage('en')" id="langEn" title="English"><img src="images/usa.png" alt="EN"></button>
+    </div>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1 id="heroTitle" class="gold-text"></h1>
+            <p id="heroSubtitle" class="motto-text"></p>
+            
+            <div class="universe-group">
+                <label for="universe" id="universeLabel"></label>
+                <select id="universe" class="dropdown-fancy">
+                    <option value="dnd2024" id="dndVersion"></option>
+                </select>
+            </div>
+            
+            <div class="cta-area">
+                <button onclick="window.location.href='charaktererstellung.html'" class="btn-start" id="startAction"></button>
+                <div class="scroll-indicator"><span>&#x25BC;</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="info-section">
+        <div class="info-card">
+            <h2 id="aboutHeader"></h2>
+            <div class="divider"></div>
+            <p id="aboutText1"></p>
+            <p id="aboutText2"></p>
+            <p class="highlight-text" id="aboutFooter"></p>
+        </div>
+    </section>
+
+    <section class="contact-section">
+        <div class="contact-card">
+            <h2 id="contactHeader"></h2>
+            <form action="https://formspree.io/f/marc.riemensperger@gmail.com" method="POST">
+                <div class="input-group">
+                    <label id="contactSubject"></label>
+                    <input type="text" name="subject" id="subjectInput" required>
+                </div>
+                <div class="input-group">
+                    <label id="contactMessage"></label>
+                    <textarea name="message" id="messageInput" required></textarea>
+                </div>
+                <button type="submit" class="btn-send" id="contactSend"></button>
+            </form>
+        </div>
+    </section>
+
+    <script src="translations/translationsCore.js"></script>
+    <script src="translations/translationsIndex.js"></script>
+    <script>
+    let currentLang = 'de';
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        const elements = translations[lang];
+        
+        // Titel und SEO
+        document.title = elements.indexPageTitle;
+        const meta = document.getElementById('metaDesc');
+        if (meta) meta.content = elements.indexMetaDesc;
+
+        // Auswahl für den Charakterersteller speichern
+        localStorage.setItem("currentLanguage", lang);
+
+        Object.keys(elements).forEach(key => {
+            const el = document.getElementById(key);
+            if (el) {
+                if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+                    // Automatischer Placeholder-Check
+                    const placeholderKey = "contactPlaceholder" + key.replace("Input", "").replace("contact", "");
+                    if (elements[placeholderKey]) el.placeholder = elements[placeholderKey];
+                } else {
+                    el.innerHTML = elements[key];
+                }
+            }
+        });
+
+        // Extra Fix für die IDs (Sicherheit geht vor)
+        document.getElementById('subjectInput').placeholder = elements.contactPlaceholderSubject;
+        document.getElementById('messageInput').placeholder = elements.contactPlaceholderMessage;
+
+        // Button-Highlighting
+        document.getElementById('langDe').classList.toggle('active-lang', lang === 'de');
+        document.getElementById('langEn').classList.toggle('active-lang', lang === 'en');
+    }
+
+    // BEIM LADEN: Erst schauen, ob schon was im Speicher ist, sonst 'de'
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedLang = localStorage.getItem("currentLanguage") || 'de';
+        setLanguage(savedLang);
+    });
+    </script>
+</body>
+</html>

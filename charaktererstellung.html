@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">DnD Charakter Erstellen</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="stepBar">
+    <button id="step1Btn" class="stepButton" onclick="goToStep(1)">
+        <span>Schritt 1</span>
+        <small class="step-subtext">
+            <span id="lblStep1"></span><span id="valStep1"></span>
+        </small>
+    </button>
+
+    <button id="step2Btn" class="stepButton" onclick="goToStep(2)" disabled>
+        <span>Schritt 2</span>
+        <small class="step-subtext">
+            <span id="lblStep2"></span><span id="valStep2"></span>
+        </small>
+    </button>
+
+    <button id="step3Btn" class="stepButton" onclick="goToStep(3)" disabled>
+        <span>Schritt 3</span>
+        <small class="step-subtext">
+            <span id="lblStep3"></span><span id="valStep3"></span>
+        </small>
+    </button>
+
+    <button id="step4Btn" class="stepButton" onclick="goToStep(4)" disabled>
+        <span>Schritt 4</span>
+        <small class="step-subtext">
+            <span id="lblStep4"></span><span id="valStep4"></span>
+        </small>
+    </button>
+
+    <button id="step5Btn" class="stepButton" onclick="goToStep(5)" disabled>
+        <span>Schritt 5</span>
+        <small class="step-subtext">
+            <span id="lblStep5"></span><span id="valStep5"></span>
+        </small>
+    </button>
+
+    <button id="step6Btn" class="stepButton" onclick="goToStep(6)" disabled>
+        <span>Schritt 6</span>
+        <small class="step-subtext">
+            <span id="lblStep6"></span><span id="valStep6"></span>
+        </small>
+    </button>
+
+    <button id="step7Btn" class="stepButton" onclick="goToStep(7)" disabled>
+        <span>Schritt 7</span>
+        <small class="step-subtext">
+            <span id="lblStep7"></span><span id="valStep7"></span>
+        </small>
+    </button>
+
+    <button id="step8Btn" class="stepButton" onclick="goToStep(8)" disabled>
+        <span>Schritt 8</span>
+        <small class="step-subtext">
+            <span id="lblStep8"></span><span id="valStep8"></span>
+        </small>
+    </button>
+
+    <button id="step9Btn" class="stepButton" onclick="goToStep(9)" disabled>
+        <span>Schritt 9</span>
+        <small class="step-subtext">
+            <span id="lblStep9"></span><span id="valStep9"></span>
+        </small>
+    </button>
+
+    <button id="step10Btn" class="stepButton" onclick="goToStep(10)" disabled>
+        <span>Schritt 10</span>
+        <small class="step-subtext">
+            <span id="lblStep10"></span><span id="valStep10"></span>
+        </small>
+    </button>
+
+    <button id="step11Btn" class="stepButton" onclick="goToStep(11)" disabled>
+        <span>Schritt 11</span>
+        <small class="step-subtext">
+            <span id="lblStep11"></span><span id="valStep11"></span>
+        </small>
+    </button>
+
+    <button id="step12Btn" class="stepButton" onclick="goToStep(12)" disabled>
+        <span>Schritt 12</span>
+        <small class="step-subtext">
+            <span id="lblStep12"></span><span id="valStep12"></span>
+        </small>
+    </button>
+</div>
+
+    <!-- Sprachumschalter -->
+<div id="languageSwitcher" style="display: none;">
+    <button onclick="setLanguage('de')"><img src="images/germany.png" alt="Deutsch" width="30" height="20"></button>
+    <button onclick="setLanguage('en')"><img src="images/usa.png" alt="Englisch" width="30" height="20"></button>
+</div>
+
+    <div id="mainContent">
+        <!-- Schritt 1: Klassenwahl -->
+        <div id="step1" class="step">
+            <h2 id="step1Title">Schritt 1: Klasse wählen</h2>
+            <p id="step1Description">Wähle eine Klasse für deinen Charakter.</p>
+            <ul id="classList">
+                <li>
+                    <input type="radio" id="barbarian" name="class" value="Barbarian" onclick="selectClass('barbarian')">
+                    <label for="barbarian" id="barbarianLabel"><strong>Barbarian</strong></label>
+                </li>
+                <li>
+                    <input type="radio" id="bard" name="class" value="Bard" onclick="selectClass('bard')">
+                    <label for="bard" id="bardLabel"><strong>Bard</strong></label>
+                </li>
+                <li>
+                    <input type="radio" id="cleric" name="class" value="Cleric" onclick="selectClass('cleric')">
+                    <label for="cleric" id="clericLabel"><strong>Cleric</strong></label>
+                </li>
+                <li>
+                    <input type="radio" id="druid" name="class" value="Druid" onclick="selectClass('druid')">
+                    <label for="druid" id="druidLabel"><strong>Druid</strong></label>
+                </li>
+                <li>
+                    <input type="radio" id="fighter" name="class" value="Fighter" onclick="selectClass('fighter')">
+                    <label for="fighter" id="fighterLabel"><strong>Fighter</strong></label>
+                </li>
+                <li>
+                    <input type="radio" id="monk" name="class" value="Monk" onclick="selectClass('monk')">
+                    <label for="monk" id="monkLabel"><strong>Monk</strong></label>
+                </li>
+                <li>
+                    <input type="radio" id="paladin" name="class" value="Paladin" onclick="selectClass('paladin')">
+                    <label for="paladin" id="paladinLabel"><strong>Paladin</strong></label>
+                </li>
+                <li>
+                    <input type="radio" id="ranger" name="class" value="Ranger" onclick="selectClass('ranger')">
+                    <label for="ranger" id="rangerLabel"><strong>Ranger</strong></label>
+                </li>
+                <li>
+                    <input type="radio" id="rogue" name="class" value="Rogue" onclick="selectClass('rogue')">
+                    <label for="rogue" id="rogueLabel"><strong>Rogue</strong></label>
+                </li>
+                <li>
+                    <input type="radio" id="sorcerer" name="class" value="Sorcerer" onclick="selectClass('sorcerer')">
+                    <label for="sorcerer" id="sorcererLabel"><strong>Sorcerer</strong></label>
+                </li>
+                <li>
+                    <input type="radio" id="warlock" name="class" value="Warlock" onclick="selectClass('warlock')">
+                    <label for="warlock" id="warlockLabel"><strong>Warlock</strong></label>
+                </li>
+                <li>
+                    <input type="radio" id="wizard" name="class" value="Wizard" onclick="selectClass('wizard')">
+                    <label for="wizard" id="wizardLabel"><strong>Wizard</strong></label>
+                </li>
+            </ul>
+            <!-- Container für die Klassenbeschreibung -->
+            <div id="classTextContainer" style="display: none;">
+                <div id="barbarianText" class="classText"></div>
+                <div id="bardText" class="classText"></div>
+                <div id="clericText" class="classText"></div>
+                <div id="druidText" class="classText"></div>
+                <div id="fighterText" class="classText"></div>
+                <div id="monkText" class="classText"></div>
+                <div id="paladinText" class="classText"></div>
+                <div id="rangerText" class="classText"></div>
+                <div id="rogueText" class="classText"></div>
+                <div id="sorcererText" class="classText"></div>
+                <div id="warlockText" class="classText"></div>
+                <div id="wizardText" class="classText"></div>
+            </div>
+
+	    <!-- Container für das Klassensymbol -->
+            <div id="classSymbolContainer" style="display: none;">
+                <img id="classSymbolImage" src="" alt="Symbol der gewählten Klasse" onclick="toggleClassDetails()">
+            </div>
+
+            <!-- Text zwischen Symbol und Details -->
+            <p id="toggleText" style="text-align: center; margin-bottom: 0; display: none;">Drücke das Symbol für</p>
+
+            <!-- Container für die Klassen-Details -->
+            <h3 id="classDetailsHeader" style="text-align: center; margin-top: 0;">Klassendetails</h3>
+            <div id="classDetailsContainer" class="info-container" style="display: none;">
+                <div id="classDetailsContent"></div>
+            </div>
+
+            <!-- Container für die Klassenbilder -->
+            <div id="classImageContainer">
+                <img id="classImage" src="" alt="Bild der gewählten Klasse" style="display: none;">
+            </div>
+        </div>
+
+        <!-- Schritt 2: Hintergrund wählen -->
+        <div id="step2" class="step" style="display: none;">
+            <h2 id="step2Title">Schritt 2: Hintergrund wählen</h2>
+            <p id="step2Description">Wähle den Hintergrund deines Charakters.</p>
+
+            <ul id="backgroundList">
+    <li><input type="radio" id="acolyte" name="background" value="Acolyte" onclick="showBackgroundText('acolyte'); updateBackgroundDetails('acolyte')"><label for="acolyte" id="acolyteLabel">Akolyth</label></li>
+    <li><input type="radio" id="artisan" name="background" value="Artisan" onclick="showBackgroundText('artisan'); updateBackgroundDetails('artisan')"><label for="artisan" id="artisanLabel">Handwerker</label></li>
+    <li><input type="radio" id="charlatan" name="background" value="Charlatan" onclick="showBackgroundText('charlatan'); updateBackgroundDetails('charlatan')"><label for="charlatan" id="charlatanLabel">Scharlatan</label></li>
+    <li><input type="radio" id="criminal" name="background" value="Criminal" onclick="showBackgroundText('criminal'); updateBackgroundDetails('criminal')"><label for="criminal" id="criminalLabel">Verbrecher</label></li>
+    <li><input type="radio" id="entertainer" name="background" value="Entertainer" onclick="showBackgroundText('entertainer'); updateBackgroundDetails('entertainer')"><label for="entertainer" id="entertainerLabel">Unterhalter</label></li>
+    <li><input type="radio" id="farmer" name="background" value="Farmer" onclick="showBackgroundText('farmer'); updateBackgroundDetails('farmer')"><label for="farmer" id="farmerLabel">Bauer</label></li>
+    <li><input type="radio" id="guard" name="background" value="Guard" onclick="showBackgroundText('guard'); updateBackgroundDetails('guard')"><label for="guard" id="guardLabel">Wächter</label></li>
+    <li><input type="radio" id="guide" name="background" value="Guide" onclick="showBackgroundText('guide'); updateBackgroundDetails('guide')"><label for="guide" id="guideLabel">Führer</label></li>
+    <li><input type="radio" id="hermit" name="background" value="Hermit" onclick="showBackgroundText('hermit'); updateBackgroundDetails('hermit')"><label for="hermit" id="hermitLabel">Eremit</label></li>
+    <li><input type="radio" id="merchant" name="background" value="Merchant" onclick="showBackgroundText('merchant'); updateBackgroundDetails('merchant')"><label for="merchant" id="merchantLabel">Händler</label></li>
+    <li><input type="radio" id="noble" name="background" value="Noble" onclick="showBackgroundText('noble'); updateBackgroundDetails('noble')"><label for="noble" id="nobleLabel">Adliger</label></li>
+    <li><input type="radio" id="sage" name="background" value="Sage" onclick="showBackgroundText('sage'); updateBackgroundDetails('sage')"><label for="sage" id="sageLabel">Gelehrter</label></li>
+    <li><input type="radio" id="sailor" name="background" value="Sailor" onclick="showBackgroundText('sailor'); updateBackgroundDetails('sailor')"><label for="sailor" id="sailorLabel">Seemann</label></li>
+    <li><input type="radio" id="scribe" name="background" value="Scribe" onclick="showBackgroundText('scribe'); updateBackgroundDetails('scribe')"><label for="scribe" id="scribeLabel">Schreiber</label></li>
+    <li><input type="radio" id="soldier" name="background" value="Soldier" onclick="showBackgroundText('soldier'); updateBackgroundDetails('soldier')"><label for="soldier" id="soldierLabel">Soldat</label></li>
+    <li><input type="radio" id="wayfarer" name="background" value="Wayfarer" onclick="showBackgroundText('wayfarer'); updateBackgroundDetails('wayfarer')"><label for="wayfarer" id="wayfarerLabel">Wanderer</label></li>
+            </ul>
+
+            <!-- Container für die Hintergrundbeschreibung -->
+            <div id="backgroundTextContainer" style="display: none;">
+                <div id="acolyteText" class="backgroundText"></div>
+                <div id="artisanText" class="backgroundText"></div>
+                <div id="charlatanText" class="backgroundText"></div>
+                <div id="criminalText" class="backgroundText"></div>
+                <div id="entertainerText" class="backgroundText"></div>
+                <div id="farmerText" class="backgroundText"></div>
+                <div id="guardText" class="backgroundText"></div>
+                <div id="guideText" class="backgroundText"></div>
+                <div id="hermitText" class="backgroundText"></div>
+                <div id="merchantText" class="backgroundText"></div>
+                <div id="nobleText" class="backgroundText"></div>
+                <div id="sageText" class="backgroundText"></div>
+                <div id="sailorText" class="backgroundText"></div>
+                <div id="scribeText" class="backgroundText"></div>
+                <div id="soldierText" class="backgroundText"></div>
+                <div id="wayfarerText" class="backgroundText"></div>
+            </div>
+
+            <!-- Container für die Hintergrunddetails -->
+            <h3 id="backgroundDetailsHeader" style="text-align: center; margin-top: 40px;">Hintergrunddetails</h3>
+            <div id="backgroundDetailsContainer" class="info-container" style="display: none;">
+                <div id="backgroundDetailsContent"></div>
+            </div>
+
+        </div>
+
+<!-- Schritt 3: Volk wählen -->
+<div id="step3" class="step" style="display: none;">
+    <h2 id="step3Title">Schritt 3: Volk wählen</h2>
+    <p id="step3Description">Wähle dein Volk:</p>
+
+            <ul id="speciesList">
+                <li><input type="radio" id="aasimar" name="species" value="Aasimar" onclick="showSpeciesDLabel('aasimar')"><label for="aasimar" id="aasimarLabel">Aasimar</label></li>
+                <li><input type="radio" id="dragonborn" name="species" value="Dragonborn" onclick="showSpeciesDLabel('dragonborn')"><label for="dragonborn" id="dragonbornLabel">Drachengeboren</label></li>
+                <li><input type="radio" id="dwarf" name="species" value="Dwarf" onclick="showSpeciesDLabel('dwarf')"><label for="dwarf" id="dwarfLabel">Zwerg</label></li>
+                <li><input type="radio" id="elf" name="species" value="Elf" onclick="showSpeciesDLabel('elf')"><label for="elf" id="elfLabel">Elf</label></li>
+                <li><input type="radio" id="gnome" name="species" value="Gnome" onclick="showSpeciesDLabel('gnome')"><label for="gnome" id="gnomeLabel">Gnom</label></li>
+                <li><input type="radio" id="goliath" name="species" value="Goliath" onclick="showSpeciesDLabel('goliath')"><label for="goliath" id="goliathLabel">Goliath</label></li>
+                <li><input type="radio" id="halfling" name="species" value="Halfling" onclick="showSpeciesDLabel('halfling')"><label for="halfling" id="halflingLabel">Halbling</label></li>
+                <li><input type="radio" id="human" name="species" value="Human" onclick="showSpeciesDLabel('human')"><label for="human" id="humanLabel">Mensch</label></li>
+                <li><input type="radio" id="orc" name="species" value="Orc" onclick="showSpeciesDLabel('orc')"><label for="orc" id="orcLabel">Ork</label></li>
+                <li><input type="radio" id="tiefling" name="species" value="Tiefling" onclick="showSpeciesDLabel('tiefling')"><label for="tiefling" id="tieflingLabel">Tiefling</label></li>
+            </ul>
+
+            <!-- Container für die Völkerbeschrereibung -->
+            <div id="speciesTextContainer" style="display: none;">
+                <div id="aasimarD" class="speciesDLabel"></div>
+                <div id="dragonbornD" class="speciesDLabel"></div>
+                <div id="dwarfD" class="speciesDLabel"></div>
+                <div id="elfD" class="speciesDLabel"></div>
+                <div id="gnomeD" class="speciesDLabel"></div>
+                <div id="goliathD" class="speciesDLabel"></div>
+                <div id="halflingD" class="speciesDLabel"></div>
+                <div id="humanD" class="speciesDLabel"></div>
+                <div id="orcD" class="speciesDLabel"></div>
+                <div id="tieflingD" class="speciesDLabel"></div>
+            </div>
+
+        <h3 id="speciesTraitsLabel">Volksmerkmale <span class="info-icon" onclick="toggleInfoBox('infoBoxStep3')">?</span></h3>
+        <div id="speciesTraitsContainer" class="info-container" style="display: none;">
+        <div id="speciesTraitsContent"></div>
+
+    <!-- Dropdown für Skillful -->
+    <label id="skillfulLabel" style="display: none;">Skillful: Wähle eine Fertigkeit:</label>
+    <select id="skillfulDropdown" style="display: none;">
+        <option value="">Bitte wählen</option>
+        <!-- Dynamische Optionen für Skills werden hier eingefügt -->
+    </select>
+
+    <!-- Dropdown für Versatile -->
+    <label id="versatileLabel" style="display: none;">Versatile: Wähle ein Origin Feat:</label>
+    <select id="versatileDropdown" style="display: none;">
+        <option value="">Bitte wählen</option>
+        <!-- Dynamische Optionen für Origin Feats werden hier eingefügt -->
+    </select>
+    </div>
+
+    <!-- Species Image Box -->
+    <div id="speciesImageBox" class="species-image" style="display: none;"></div>
+    <div id="lineageImageBox" class="lineage-image" style="display: none;"></div>
+
+    <!-- Lineage Details Box -->
+    <div id="lineageDetailBox" class="lineage-details" style="display: none;"></div>
+</div>
+
+<!-- Schritt 4: Attribute setzen -->
+<div id="step4" class="step" style="display: none;">
+            <h2 id="step4Title">Schritt 4: Attribute setzen</h2>
+            <p id="step4Description">Verteile die Attributwerte für deinen Charakter.</p>
+
+            <h3 id="distributionMethodsLabel">Verteilungsmethode</h3>
+            <div id="attributeMethodSelection">
+                <input type="radio" id="standardArray" name="attributeMethod" value="standard" checked>
+                <label for="standardArray" id="standardArrayLabel">Standard Array</label>
+                <input type="radio" id="randomGeneration" name="attributeMethod" value="random">
+                <label for="randomGeneration" id="randomGenerationLabel">Zufällig</label>
+                <input type="radio" id="pointBuy" name="attributeMethod" value="pointbuy">
+                <label for="pointBuy" id="pointCostLabel">Point Buy</label>
+            </div>
+
+            <div id="valuePoolContainer">
+                <div id="standardArrayValues" class="value-pool">
+                    </div>
+                <div id="randomlyGeneratedValues" class="value-pool" style="display: none;">
+                    <button id="rollAttributesBtn"></button>
+                    </div>
+		<div id="pointBuyTracker" style="display: none;">
+    			<span id="remainingPointsTextLabel"></span>: <span id="pointsRemaining">27</span>
+                </div>
+            </div>
+            
+            <div id="attributeScoresContainer">
+                </div>
+</div>
+
+<!-- Schritt 5: Stufe wählen -->
+<div id="step5" class="step" style="display: none;">
+    <h2 id="step5Title">Schritt 5: Stufe wählen</h2>
+    <p id="step5Description">Wähle eine Stufe (1-20):</p>
+    <label for="level" id="levelLabel">Stufe:</label>
+    <input type="number" id="level" name="level" min="1" max="20" oninput="updateLevelInfo()">
+    
+    <!-- Dynamische Anzeige der Levelinfo -->
+    <h3 id="classFeaturesTitle">Klassenmerkmale <span class="info-icon" onclick="toggleInfoBox('infoBoxStep5')">?</span></h3>
+    <div id="levelInfoContainer" class="info-container"></div>
+</div>
+
+<!-- Schritt 6: Forme deine Klasse -->
+<div id="step6" class="step" style="display: none;">
+    <h2 id="step6Title">Schritt 6: Forme deine Klasse</h2>
+    <p id="step6Description">Forme deine Klasse nach deinen Vorstellungen.</p>
+    
+<!-- Teil 1: Auswahl der Fähigkeiten (Level 1) -->
+<div id="skillSection" class="class-section" style="display: none;">
+    <h3 id="skillProfTitle">Gemeisterte Fertigkeiten</h3>
+    <label id="chooseSkillLabelA">Wähle eine Fertigkeit (Stufe 1):</label>
+    <select id="skill1" name="skill1" onchange="updateSkills()" class="dropdown">
+        <!-- Optionen werden dynamisch basierend auf der gewählten Klasse hinzugefügt -->
+    </select>
+
+    <label id="chooseSkillLabelB">Wähle eine Fertigkeit (Stufe 1):</label>
+    <select id="skill2" name="skill2" onchange="updateSkills()" class="dropdown">
+        <!-- Optionen werden dynamisch basierend auf der gewählten Klasse hinzugefügt -->
+    </select>
+</div>
+
+    <!-- Teil 1b: Dynamischer Teil für spezifische Klassenkriterien (Level 1) -->
+    <div id="dynamicClassSection1" class="class-section" style="display: none;">
+        <!-- Dynamischer Inhalt wird hier eingefügt -->
+    </div>
+
+    <div id="dynamicClassSection2" class="class-section" style="display: none;">
+        <!-- Dynamischer Inhalt wird hier eingefügt -->
+    </div>
+
+    <div id="dynamicClassSection3" class="class-section" style="display: none;">
+        <!-- Dynamischer Inhalt wird hier eingefügt -->
+    </div>
+
+    <div id="dynamicClassSection4" class="class-section" style="display: none;">
+        <!-- Dynamischer Inhalt wird hier eingefügt -->
+    </div>
+
+           <!-- Teil 2: Auswahl der "Subclass" (Level 3) -->
+            <div id="subclassSection" class="class-section" style="display: none;">
+                <h3 id="subclassTitle">Unterklasse</h3>
+                <div id="subclassOptions">
+                    <!-- Radio-Buttons für Subclasses werden dynamisch basierend auf der gewählten Klasse hinzugefügt -->
+                </div>
+                
+                <!-- Dynamische Inhalte für Subklassen -->
+                <div id="dynamicSubclassContent" class="class-section" style="display: none;">
+                    <!-- Dynamischer Inhalt für Subklassen wird hier eingefügt -->
+                </div>
+            </div>
+
+    <!-- Subclass Details Box -->
+    <div id="subclassDetailBox" class="subclass-details" style="display: none;"></div>
+    <div id="subclassImageContainer" class="subclass-image-vertical" style="display: none;"></div>
+            <!-- Die Subklassendetails werden hier dynamisch eingefügt -->
+
+    <!-- Teil 3: Ability Score Improvement or Feat -->
+    <div id="abilityImprovementSection" class="class-section" style="display: none; position: relative;">
+        <h3 id="improvTitle">Verbesserungen und Talente</h3>
+        <span id="toggle-feat-info" class="info-icon" 
+              style="position: absolute; top: 8px; right: 12px; cursor: pointer; font-size: 1.17em;" 
+              onclick="toggleInfoBox('feat-info-box-container')">?</span>
+              
+        <div id="abilityImprovementOptionsContainer">
+            </div>
+    </div>
+
+    <div id="feat-info-box-container" class="spell-info-box-container" style="display: none;">
+        <div id="feat-info-box-header" class="spell-info-box-header">
+            <span>Talent Details</span>
+            <span id="close-feat-info" class="close-btn">&times;</span>
+        </div>
+        <div id="feat-info-box-content" class="spell-info-box-content">
+        </div>
+    </div>
+</div>
+
+<!-- Schritt 7: Zauber wählen -->
+    <div id="step7" class="step" style="display: none;">
+        <h2 id="step7Title">Schritt 7: Zauber wählen</h2>
+
+    <div class="step-description-container" id="step7DescContainer">
+         Wähle die Zauber für deinen Charakter: <span id="toggle-spell-info" class="info-icon" onclick="toggleInfoBox('spell-info-box-container')">?</span>
+    </div>
+
+<div id="spell-info-box-container" style="display: none;">
+    <div id="spell-info-box-header" class="spell-info-box-header">
+        <span>Zauber Details</span>
+        <span id="close-spell-info" class="close-btn">&times;</span>
+    </div>
+    <div id="spell-info-box-content" class="spell-info-box-content">
+    </div>
+</div>
+
+        <div id="spellList">
+            <!-- Die Zauber werden hier dynamisch eingefügt -->
+        </div>
+    </div>
+
+<div id="step8" class="step" style="display: none;">
+    <h2 id="step8Title">Schritt 8: Ausrüstung wählen</h2>
+    <p id="step8Description">Wähle dein Equipment.</p>
+
+    <div id="equipmentOptionsSection" class="equipment-section">
+        <table id="equipmentOptionsTable" class="equipment-table">
+            <thead>
+                <tr id="equipmentHeaderRow">
+                    </tr>
+            </thead>
+            <tbody>
+                <tr id="classEquipmentRow">
+                    <td id="classEquipmentLabel"></td>
+                </tr>
+                <tr id="backgroundEquipmentRow">
+                    <td id="backgroundEquipmentLabel"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="equipmentOptionsInfoBox" class="info-box" style="display: none;">
+        <span class="close-icon" onclick="toggleInfoBox('equipmentOptionsInfoBox')">&times;</span>
+        <h3 id="equipmentDetailsTitle">Option Details</h3>
+        <div id="equipmentDetailsContent"></div>
+    </div>
+
+    <div id="purseSection" class="equipment-section">
+        <div class="purse-header">
+            <h3 id="purseLabel">Geldbörse:</h3>
+            <button id="resetPurseBtn" type="button" onclick="resetPurseValues()">
+    		<img src="images/reset.png" alt="Reset" class="reset-icon">
+            </button>
+        </div>
+        <div id="purseInputs">
+            </div>
+    </div>
+
+    <div id="additionalEquipmentToggle" class="equipment-section toggle-header">
+        <h3 id="additionalEquipmentTitle" onclick="toggleAdditionalEquipment()">
+            Weitere Ausrüstung wählen <span id="toggleArrow">&#x25BC;</span>
+        </h3>
+    </div>
+    
+    <div id="additionalEquipmentSection" class="equipment-section no-border" style="display: none;">
+        
+        <div id="itemSelectionContainer">
+            </div>
+
+        <hr>
+
+        <div id="equipmentTablesContainer">
+            </div>
+    </div>
+</div>
+
+<!-- Schritt 9: Charaktergeschichte -->
+<div id="step9" class="step" style="display: none;">
+<h2 id="step9Title">Erzähle deine Geschichte</h2>
+    <p id="step9Description">Beschreibe die Herkunft und Erlebnisse deines Charakters.</p>
+
+    <div class="class-section story-wrapper">
+        <textarea id="storyInput" class="story-inner-textarea"></textarea>
+    </div>
+    
+    <div class="char-counter story-counter-position">
+        <span id="storyCounter">0</span> / <span id="storyMax"></span>
+    </div>
+
+    <div class="class-section">
+        <h3 id="languagesLabel">Sprachen</h3>
+        <div class="story-flex-container">
+	  <label>
+    		<span id="storyLang1Label">Sprache (Festgelegt)</span>:
+	  </label>
+		<select id="langCommon" class="dropdown" disabled></select>
+
+	  <label>
+    		<span id="chooseLanguageLabel2">Wähle eine Sprache</span>:
+	  </label>
+		<select id="langSelect2" class="dropdown"></select>
+
+	  <label>
+    		<span id="chooseLanguageLabel3">Wähle eine Sprache</span>:
+	  </label>
+		<select id="langSelect3" class="dropdown"></select>
+        </div>
+    </div>
+
+    <div class="class-section">
+        <h3 id="faithLabel">Glaube</h3>
+        <div class="radio-group-centered">
+            <div class="radio-item">
+                <input type="radio" id="faithModeSelection" name="faithType" value="selection" checked onclick="updateFaithUI()">
+                <label for="faithModeSelection" id="selectionLabel">Auswahl</label>
+            </div>
+            <div class="radio-item">
+                <input type="radio" id="faithModeFree" name="faithType" value="freeText" onclick="updateFaithUI()">
+                <label for="faithModeFree" id="freeTextLabel">Freitext</label>
+            </div>
+        </div>
+
+        <div id="faithSelectionWrapper">
+            <div class="setting-selection">
+                <div class="radio-item">
+                    <input type="radio" id="realmFR" name="activeRealm" value="forgottenRealmsLabel" checked onchange="refreshPantheonOptions()">
+                    <label for="realmFR" id="forgottenRealmsLabel">Vergessene Reiche:</label>
+                </div>
+            </div>
+            
+	  <label for="pantheonSelect">
+    		<span id="choosePantheonLabel">Wähle ein Pantheon</span>:
+	  </label>
+		<select id="pantheonSelect" class="dropdown" onchange="refreshDeityOptions()"></select>
+
+	  <label for="deitySelect">
+    		<span id="chooseDeityLabel">Wähle eine Gottheit</span>:
+	  </label>
+		<select id="deitySelect" class="dropdown" onchange="displayDeityDetails()"></select>
+
+	  <div id="deityDetailBox" class="info-sub-box" style="display: none;">
+    	    <div class="deity-grid">
+        	<span class="deity-label"><strong id="alignmentLabel"></strong>:</span>
+        	<span id="valDeityAlignment" class="deity-value"></span>
+        
+        	<span class="deity-label"><strong id="symbolLabel"></strong>:</span>
+        	<span id="valDeitySymbol" class="deity-value"></span>
+    	    </div>
+	  </div>
+        </div>
+
+        <div id="faithFreeWrapper" style="display: none;">
+		<label for="deityFreeName">
+       		 <span id="nameOfDeityLabel">Name deiner Gottheit</span>:
+   		</label>
+            <input type="text" id="deityFreeName" class="dropdown text-left-input full-width-input">
+            <div class="char-counter">
+                <span id="deityFreeCounter">0</span> / <span id="deityFreeMax"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="class-section">
+        <h3 id="communityTitleLabel">Gemeinschaft</h3>
+        <div class="community-input-group">
+		<label for="communityNameInput">
+        		<span id="nameOfCommunityLabel">Name der Gemeinschaft, welcher du angehörst</span>:
+    		</label>
+            <input type="text" id="communityNameInput" class="dropdown text-left-input full-width-input">
+            <div class="char-counter small-spacing">
+                <span id="commNameCounter">0</span> / <span id="commNameMax"></span>
+            </div>
+        </div>
+
+        <label for="communityDescInput" id="communityDescLabel">Beschreibung:</label>
+        <textarea id="communityDescInput" class="dropdown community-textarea"></textarea>
+        <div class="char-counter">
+            <span id="commDescCounter">0</span> / <span id="commDescMax"></span>
+        </div>
+    </div>
+</div>
+
+<!-- Schritt 10: Persönlichkeit & Gesinnung -->
+<div id="step10" class="step" style="display: none;">
+<h2 id="step10Title">Schritt 10: Gesinnung gewichten</h2>
+    <p id="step10Description">"Bestimme die Persönlichkeit und Gesinnung deines Charakters.</p>
+
+<div class="equipment-section personality-wrapper">
+        <div id="personalityEditor" class="story-inner-textarea" contenteditable="true"></div>
+        
+        <div class="char-counter personality-counter-layout">
+            <span id="personalityCharCount">0</span> / <span id="personalityCharMax">800</span>
+        </div>
+
+        <hr class="personality-divider">
+
+        <div class="trait-table-controls">
+            <button id="resetTraitsButton" type="button" onclick="restoreTraitTable()">
+                <img src="images/reset.png" alt="Reset" class="reset-icon" draggable="false">
+            </button>
+        </div>
+        <div id="traitPoolGrid" class="trait-grid">
+            </div>
+    </div>
+
+    <h3 id="alignmentSelectionLabel">Gesinnung</h3>
+    <div id="alignmentCircleMatrix" class="alignment-matrix">
+        </div>
+
+</div>
+
+<!-- Schritt 11: Aussehen -->
+<div id="step11" class="step" style="display: none;">
+<h2 id="step11Title">Schritt 11: Aussehen beschreiben</h2>
+    <p id="step11Description">"Bestimme die Persönlichkeit und Gesinnung deines Charakters.</p>
+
+    <div class="class-section">
+        <h3 id="physicalCharacteristicsLabel"></h3>
+        <div class="appearance-grid">
+            
+            <div class="appearance-row">
+                <span class="appearance-label" id="speciesLabel"></span>
+                <span class="appearance-value" id="valAppSpecies">-</span>
+            </div>
+
+            <div class="appearance-row">
+                <span class="appearance-label" id="lineageLabel"></span>
+                <span class="appearance-value" id="valAppLineage">-</span>
+            </div>
+
+            <div class="appearance-row">
+                <span class="appearance-label" id="ancestryLabel"></span>
+                <span class="appearance-value" id="valAppAncestry">-</span>
+            </div>
+
+            <div class="appearance-row">
+                <span class="appearance-label" id="genderLabel"></span>
+                <select id="selectGender" class=".dropdown"></select>
+            </div>
+
+<div class="appearance-row">
+    <span class="appearance-label">
+        <span id="ageLabel"></span>
+        <small id="ageOrientationInfo" class="orientation-text"></small>
+    </span>
+    
+    <input type="text" id="inputAge" class="app-small-input" maxlength="15"> <span id="yearsLabel" class="unit-text"></span>
+</div>
+
+            <div class="appearance-row">
+                <span class="appearance-label" id="eyeColorLabel"></span>
+                <input type="text" id="inputEyeColor" class="app-small-input" maxlength="15">
+            </div>
+
+            <div class="appearance-row">
+                <span class="appearance-label" id="hairColorLabel"></span>
+                <input type="text" id="inputHairColor" class="app-small-input" maxlength="15">
+            </div>
+
+            <div class="appearance-row">
+                <span class="appearance-label" id="skinToneLabel"></span>
+                <input type="text" id="inputSkinTone" class="app-small-input" maxlength="15">
+            </div>
+
+            <div class="appearance-row">
+                <span class="appearance-label">
+                    <span id="sizeLabel"></span>
+                    <small id="sizeOrientationRange" class="orientation-text"></small>
+                </span>
+                <div class="input-with-unit">
+                    <input type="text" id="inputSize" class="app-small-input size-input-width" maxlength="15">
+                    <span id="unitIndicator" class="unit-text"></span>
+                </div>
+            </div>
+
+            <div class="appearance-row">
+                <span class="appearance-label" id="sizeCategoryLabel"></span>
+                <span class="appearance-value" id="valSizeCategory">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="class-section story-wrapper">
+        <textarea id="appearanceInput" class="story-inner-textarea"></textarea>
+    </div>
+    
+    <div class="char-counter story-counter-position">
+        <span id="appearanceCounter">0</span> / <span id="appearanceMax"></span>
+    </div>
+
+</div>
+
+<!-- Schritt 12: Name & Abschluss -->
+<div id="step12" class="step" style="display: none;">
+   <h2 id="step12Title">Schritt 12: Namensgebung</h2>
+   <p id="step12Description">Überprüfe deine Auswahl gebe deinem Charakter einen Namen.</p>
+
+   <div class="class-section story-wrapper" style="padding: 0;">
+    <textarea id="characterNameInput" class="name-inner-textarea" 
+              spellcheck="false" 
+              autocomplete="off" 
+              autocorrect="off"
+              oninput="character.name = this.value"></textarea>
+    </div>
+
+    <div class="class-section">
+        <h3 id="summaryLabel"></h3>
+        <div id="summaryGrid" class="appearance-grid">
+            </div>
+    </div>
+
+</div>
+
+
+<div id="infoBackdrop" class="info-backdrop" onclick="closeInfoBox()"></div>
+
+    <div id="infoBoxStep3" class="info-box" style="display: none;">
+        <span class="close-icon" onclick="closeInfoBox()">&times;</span>
+        <h3 id="infoBoxTraitTitle"></h3>
+        <div id="infoBoxContentStep3"></div>
+    </div>
+
+    <div id="infoBoxStep5" class="info-box" style="display: none;">
+        <span class="close-icon" onclick="closeInfoBox()">&times;</span>
+        <h3 id="infoBoxTraitTitle2"></h3>
+        <div id="infoBoxContentStep5"></div>
+    </div>
+
+
+<div id="liveAttributesContainer" style="display: none;">
+    </div>
+
+    </div>
+
+    <!-- Fixierte Buttons -->
+<button id="saveClass" class="fixed-button" type="button" onclick="saveClass()">
+    <img src="images/continue.png" alt="Weiter" class="nav-icon">
+</button>
+<button id="saveBackground" class="fixed-button" type="button" onclick="saveBackground()">
+    <img src="images/continue.png" alt="Weiter" class="nav-icon">
+</button>
+<button id="saveSpecies" class="fixed-button" type="button" onclick="saveSpecies()">
+    <img src="images/continue.png" alt="Weiter" class="nav-icon">
+</button>
+<button id="saveAttributes" class="fixed-button" type="button" onclick="saveAttributes()">
+    <img src="images/continue.png" alt="Weiter" class="nav-icon">
+</button>
+<button id="saveLevel" class="fixed-button" type="button" onclick="saveLevel()">
+    <img src="images/continue.png" alt="Weiter" class="nav-icon">
+</button>
+<button id="saveClassForm" class="fixed-button" type="button" onclick="saveClassForm()">
+    <img src="images/continue.png" alt="Weiter" class="nav-icon">
+</button>
+<button id="saveSpells" class="fixed-button" type="button" onclick="saveSpells()">
+    <img src="images/continue.png" alt="Weiter" class="nav-icon">
+</button>
+<button id="saveEquipment" class="fixed-button" type="button" onclick="saveEquipment()">
+    <img src="images/continue.png" alt="Weiter" class="nav-icon">
+</button>
+<button id="saveStory" class="fixed-button" type="button" onclick="saveStory()">
+    <img src="images/continue.png" alt="Weiter" class="nav-icon">
+</button>
+<button id="saveAlignment" class="fixed-button" type="button" onclick="saveAlignment()">
+    <img src="images/continue.png" alt="Weiter" class="nav-icon">
+</button>
+<button id="saveAppearance" class="fixed-button" type="button" onclick="saveAppearance()">
+    <img src="images/continue.png" alt="Weiter" class="nav-icon">
+</button>
+<button id="finish" class="fixed-button" type="button" onclick="finishCharacter()">
+    <img src="images/finish.png" alt="Abschließen" class="nav-icon">
+</button>
+<button id="back" class="fixed-button" type="button" onclick="goBack()">
+    <img src="images/back.png" alt="Zurück" class="nav-icon">
+</button>
+
+    <!-- Externe Skripte laden -->
+    <script src="data/speciesData.js"></script>
+    <script src="data/barbarianClassData.js"></script>
+    <script src="data/bardClassData.js"></script>
+    <script src="data/clericClassData.js"></script>
+    <script src="data/druidClassData.js"></script>
+    <script src="data/fighterClassData.js"></script>
+    <script src="data/monkClassData.js"></script>
+    <script src="data/paladinClassData.js"></script>
+    <script src="data/rangerClassData.js"></script>
+    <script src="data/rogueClassData.js"></script>
+    <script src="data/sorcererClassData.js"></script>
+    <script src="data/warlockClassData.js"></script>
+    <script src="data/wizardClassData.js"></script>
+    <script src="data/weaponAndArmorData.js"></script>
+    <script src="data/toolsData.js"></script>
+    <script src="data/featData.js"></script>
+    <script src="data/gearData.js"></script>
+    <script src="data/coreData.js"></script>
+    <script src="data/backgroundData.js"></script>
+    <script src="data/spellData.js"></script>
+    <script src="data/religionData.js"></script>
+    <script src="main.js"></script>
+
+    <script src="translations/translationsCore.js"></script>
+
+    <script src="translations/translationsBarbarian.js"></script>
+    <script src="translations/translationsBard.js"></script>
+    <script src="translations/translationsCleric.js"></script>
+    <script src="translations/translationsDruid.js"></script>
+    <script src="translations/translationsFighter.js"></script>
+    <script src="translations/translationsMonk.js"></script>
+    <script src="translations/translationsPaladin.js"></script>
+    <script src="translations/translationsRanger.js"></script>
+    <script src="translations/translationsRogue.js"></script>
+    <script src="translations/translationsSorcerer.js"></script>
+    <script src="translations/translationsWarlock.js"></script>
+    <script src="translations/translationsWizard.js"></script>
+
+    <script src="translations/translationsSpecies.js"></script>
+    <script src="translations/translationsBackgrounds.js"></script>
+    <script src="translations/translationsFeats.js"></script>
+    <script src="translations/translationsWeaponAndArmor.js"></script>
+    <script src="translations/translationsToolsAndItems.js"></script>
+    <script src="translations/translationsSpells.js"></script>
+    <script src="translations/translationsSpellDesciptions.js"></script>
+    <script src="translations/translationsReligion.js"></script>
+
+    <script>
+
+    let currentLang = 'de';
+
+    /**
+     * Setzt die Sprache und aktualisiert die UI.
+     * @param {string} lang - 'de' oder 'en'
+     * @param {boolean} isInitial - Wenn true, wird kein confirm() gezeigt und kein Reset durchgeführt.
+     */
+    function setLanguage(lang, isInitial = false) {
+        // Falls die Sprache schon aktiv ist (und es nicht der erste Start ist), nichts tun
+        if (currentLang === lang && !isInitial) {
+            return; 
+        }
+
+        // NUR fragen und zurücksetzen, wenn es KEIN automatischer Start-Vorgang ist
+        if (!isInitial) {
+            const confirmed = confirm("If you change the language, all previous inputs will be reset. Would you like to continue?");
+            if (!confirmed) {
+                return; 
+            }
+            // Eingaben zurücksetzen (nur bei manuellem Wechsel)
+            resetCharacter();
+        }
+
+        // Sprache setzen und im Speicher für die Landing Page aktuell halten
+        currentLang = lang;
+        localStorage.setItem("currentLanguage", lang);
+        console.log("Sprache eingestellt auf:", lang);
+
+        // Texte der gesamten Webseite aktualisieren
+        applyTranslations(translations, currentLang);
+
+        // Dropdowns und dynamische Inhalte aktualisieren
+        updateDropdownsForLanguage();
+
+        // --- DEINE BESTEHENDE LOGIK (UNVERÄNDERT) ---
+        // Infos auf erster Seite schließen und Inhalt leeren
+        const classDetailsContainer = document.getElementById("classDetailsContainer");
+        if (classDetailsContainer) classDetailsContainer.style.display = "none";
+
+        const classTextContainer = document.getElementById("classTextContainer");
+        if (classTextContainer) classTextContainer.style.display = "none";
+
+        if (typeof classImageContainer !== 'undefined') classImageContainer.style.display = "none";
+        if (typeof classSymbolContainer !== 'undefined') classSymbolContainer.style.display = "none";
+        if (typeof toggleText !== 'undefined') toggleText.style.display = "none";
+
+        const backgroundDetailsContainer = document.getElementById("backgroundDetailsContainer");
+        if (backgroundDetailsContainer) backgroundDetailsContainer.style.display = "none";
+
+        const backgroundTextContainer = document.getElementById("backgroundTextContainer");
+        if (backgroundTextContainer) backgroundTextContainer.style.display = "none";
+
+        const textContainer = document.getElementById("speciesTextContainer");
+        if (textContainer) textContainer.style.display = "none"; 
+
+        const traitsContainer = document.getElementById("speciesTraitsContainer");
+        if (traitsContainer) traitsContainer.style.display = "none"; 
+
+        const traitsContent = document.getElementById("speciesTraitsContent");
+        if (traitsContent) traitsContent.innerHTML = ""; 
+
+        const speciesImageBox = document.getElementById("speciesImageBox");
+        if (speciesImageBox) speciesImageBox.style.display = "none"; 
+
+        if (typeof liveAttributesContainer !== 'undefined') liveAttributesContainer.style.display = "none";
+        if (typeof lineageDetailBox !== 'undefined') lineageDetailBox.style.display = "none";
+    }
+
+    // DER NEUE INITIAL-LOAD
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Schauen, ob von der Landing Page (index.html) eine Sprache gespeichert wurde
+        const savedLang = localStorage.getItem("currentLanguage") || 'de'; 
+        
+        // 2. setLanguage als "initial" aufrufen (isInitial = true)
+        // Dadurch überspringen wir das Confirm-Fenster beim ersten Laden
+        setLanguage(savedLang, true); 
+        
+        // 3. Schritt 1 anzeigen
+        goToStep(1); 
+    });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,3032 @@
+/* Hintergrund und Grundlayout */
+body {
+    background-color: #1b1b1f; /* Setzt die Hintergrundfarbe der Seite */
+    color: #e8d8b5; /* Setzt die Textfarbe */
+    font-family: 'Garamond', serif; /* Setzt die Schriftart */
+    margin: 0; /* Entfernt den Standardseitenrand */
+    padding: 0; /* Entfernt die Standardseitenabstände */
+    display: flex; /* Nutzt flexbox für das Layout */
+    flex-direction: row; /* Richtet die Flexbox-Elemente horizontal aus */
+    min-height: 100vh; /* Setzt die minimale Höhe auf die gesamte Fensterhöhe */
+    justify-content: flex-start; /* Richtet die Flexbox-Elemente am Anfang aus */
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Legt es hinter allen Inhalt */
+
+    /* Standardwerte für unsere CSS-Variablen */
+    background-image: var(--page-background-image, none);
+    opacity: var(--page-background-opacity, 1);
+
+    /* Wichtige Stile für das Bild, wie vorher */
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    
+    /* Sanfter Übergang für den Fade-Effekt */
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Sprachumschalter */
+#languageSwitcher {
+    position: fixed; /* Fixiert den Sprachumschalter auf der Seite */
+    top: 20px; /* Positioniert ihn 20px vom oberen Bildschirmrand */
+    right: 2%; /* Positioniert ihn 16.5% vom linken Bildschirmrand */
+    z-index: 1000; /* Setzt die Stapelreihenfolge über andere Elemente */
+    display: flex; /* Nutzt flexbox für die Anordnung */
+    align-items: center; /* Zentriert die Elemente vertikal */
+}
+
+#languageSwitcher button {
+    background: none; /* Entfernt den Standard-Hintergrund des Buttons */
+    border: none; /* Entfernt die Standardrahmen des Buttons */
+    cursor: pointer; /* Ändert den Mauszeiger zu einem Zeiger bei Hover */
+    padding: 0; /* Entfernt die Standardabstände des Buttons */
+    margin-right: 10px; /* Fügt einen rechten Abstand zwischen Buttons hinzu */
+}
+
+#languageSwitcher img {
+    border-radius: 50%; /* Macht die Bilder rund */
+    width: 24px; /* Setzt die Breite der Bilder */
+    height: 24px; /* Setzt die Höhe der Bilder */
+    border: 2px solid #7a431d; /* Fügt einen kupferfarbenen Rahmen hinzu */
+}
+
+/* Container für den Hauptinhalt und Fortschritt */
+#container {
+    display: flex; /* Nutzt flexbox für den Hauptinhalt */
+    justify-content: center; /* Zentriert den Inhalt horizontal */
+    align-items: flex-start; /* Richtet den Inhalt oben aus */
+    width: 100%; /* Setzt die Breite des Containers */
+    padding-top: 20px; /* Fügt einen oberen Abstand hinzu */
+    box-sizing: border-box; /* Inklusive Padding und Border in der Breite */
+}
+
+/* =======================================================================
+   STEPBAR - BASIS (Desktop > 1440px)
+   ======================================================================= */
+
+/* Navigation auf der linken Seite mit Kupferrahmen */
+#stepBar {
+    width: 180px; /* Etwas breiter für die Labels */
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    background-color: rgba(58, 58, 65, 0.8); 
+    padding: 20px 0; 
+    border-right: 2px solid #7a431d; 
+    height: 100vh; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.7);
+    z-index: 1 !important;
+    counter-reset: stepCounter;
+    transition: all 0.3s ease;
+}
+
+/* Buttons für die Navigation */
+.stepButton {
+    position: relative;
+    background-color: #8b5e34;
+    color: #e8d8b5;
+    font-weight: normal; 
+    border: none;
+    width: 100%; 
+    padding: 10px 5px; 
+    min-height: 60px; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 6px 0;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%);
+    counter-increment: stepCounter;
+}
+
+/* Hover- und Aktiv-Zustände beibehalten */
+.stepButton:hover {
+    background-color: #a36a42;
+}
+
+.stepButton:disabled {
+    background-color: #4a4a4f;
+    cursor: not-allowed;
+}
+
+.stepButton.active {
+    background-color: #a36a42;
+}
+
+/* Hover- und Aktiv-Zustände beibehalten */
+.stepButton:hover { background-color: #a36a42; }
+.stepButton:disabled { background-color: #4a4a4f; cursor: not-allowed; }
+.stepButton.active { background-color: #a36a42; }
+
+/* 3. Der Subtext Bereich (Die Auswahl) */
+.step-subtext {
+    color: #e8d8b5; 
+    font-size: 0.9em; 
+    font-weight: bold; 
+    margin-top: 2px;
+}
+
+/* =======================================================================
+   STEPBAR - BREAKPOINTS
+   ======================================================================= */
+
+/* STUFE 2: Standard Laptop / Kleiner Desktop (Breite < 1440px ODER Höhe < 850px) */
+@media screen and (max-width: 1440px), screen and (max-height: 850px) {
+    #stepBar {
+        width: 140px; /* Leicht angepasst für das Muster */
+        display: grid;
+        grid-template-columns: repeat(2, 60px); 
+        /* Die Gaps kontrollieren den Abstand zwischen den Fliesen */
+        column-gap: 0px; 
+        row-gap: 15px; 
+        justify-content: center;
+        align-content: center;
+        padding: 0;
+    }
+
+    .stepButton {
+        width: 60px;
+        height: 60px;
+        min-height: 60px;
+        margin: 0;
+        /* Perfekte Raute */
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); 
+    }
+
+    /* Das "Fliesen-Muster": Jede zweite Fliese wird versetzt, 
+       um exakt in die Lücke der anderen Spalte zu greifen */
+    .stepButton:nth-child(even) {
+        /* Versatz = Hälfte der Höhe + Hälfte der Lücke (60/2 + 10/2) */
+        transform: translateY(35px); 
+    }
+
+    /* Korrektur für die letzte Fliese, damit sie nicht unten abgeschnitten wird */
+    #stepBar {
+        padding-bottom: 40px;
+    }
+
+    /* Nur Nummern zeigen */
+    .stepButton > span, .step-subtext { display: none; }
+    .stepButton::after {
+        content: counter(stepCounter);
+        font-size: 1.5em; 
+        font-weight: bold;
+        color: #e8d8b5;
+        display: block;
+    }
+}
+
+/* STUFE 3: Tablet / Schmale Fenster (< 1000px) */
+@media screen and (max-width: 1000px) {
+    #stepBar {
+        width: 65px; 
+        display: flex;
+        flex-direction: column;
+        grid-template-columns: none;
+        padding: 0px 0;
+        gap: 0px
+    }
+    .stepButton {
+        width: 100%;
+        height: 60px;
+        margin: 2px 0;
+        transform: none !important; /* Versatz aufheben */
+    }
+}
+
+
+/* =======================================================================
+   MAIN CONTENT (FIXIERT)
+   ======================================================================= */
+
+#mainContent {
+    width: 500px; 
+    max-width: 500px; 
+    padding: 20px;
+    background-color: rgba(58, 58, 65, 0.8);
+    color: #e8d8b5;
+    /* Deine handgemachten Rahmen */
+    border-left: 2px solid #7a431d;
+    border-right: 2px solid #7a431d;
+    border-bottom: 2px solid #7a431d; 
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.7);
+    text-align: center;
+    margin: 0 auto; /* Zentriert das Feld im freien Bereich */
+    overflow: hidden; 
+    position: relative;
+    z-index: 5;
+}
+
+/* Inhaltsschritte */
+.step {
+    width: 100%; /* Setzt die Breite der Schritte */
+    margin-bottom: 20px; /* Fügt unteren Abstand hinzu */
+}
+
+.step h2 {
+    margin-bottom: 10vh; /* Fügt unteren Abstand zur Überschrift hinzu */
+}
+
+/* Container für spezifische Texte */
+#classTextContainer {
+    margin-bottom: 3%; /* Fügt unteren Abstand hinzu */
+}
+
+#backgroundTextContainer {
+    margin-bottom: 3%; /* Fügt unteren Abstand hinzu */
+}
+
+#backgroundDetailsContainer input[type="number"].background-attribute-points {
+    width: 40px;
+    height: 35px;
+    font-size: 16px;
+    padding: 5px;
+    margin: 0;
+
+    /* Die folgenden Stile bleiben für das Aussehen erhalten */
+    border-radius: 5px;
+    border: 1px solid #8b5e34;
+    background-color: #2e2e33;
+    color: #e8d8b5;
+    font-family: 'Garamond', serif;
+    text-align: center;
+    /* Die Zeile "-moz-appearance: textfield;" wurde hier entfernt */
+}
+
+.attribute-point-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    /* Ersetzt den alten Margin für einen zuverlässigeren Abstand */
+    padding-bottom: 5px;  /* Schafft einen klaren Innenabstand nach unten */
+    margin-bottom: 5px;   /* Sorgt für zusätzlichen Platz zur ersten Attribut-Zeile */
+}
+
+.attribute-point-row {
+    display: flex;
+    justify-content: space-between; /* Hält das Label links und den Input rechts */
+    align-items: center;
+    margin-bottom: 8px; /* Etwas mehr Abstand zwischen den Attribut-Zeilen */
+}
+
+.attribute-point-row label {
+    flex-grow: 1;           /* Das Label wächst und füllt den verfügbaren Platz */
+    text-align: left;       /* Stellt sicher, dass der Text des Labels linksbündig ist */
+    /* Die alte "flex-basis"-Regel wurde entfernt */
+}
+
+
+/* =======================================================================
+   SCHRITT 3: SPEZIES
+   ======================================================================= */
+
+#speciesTextContainer {
+    margin-bottom: 3%; /* Fügt unteren Abstand hinzu */
+}
+
+/* Zusätzlicher Abstand für Volksmerkmale */
+#speciesTraitsLabel {
+    margin-top: 40px; /* Fügt oberen Abstand zum Label hinzu */
+    margin-bottom: 20px; /* Fügt unteren Abstand zum Label hinzu */
+}
+
+#speciesTraitsContainer {
+    margin-top: 5px; /* Fügt oberen Abstand zum Container hinzu */
+    margin-bottom: 3%; /* Fügt unteren Abstand zum Container hinzu */
+    padding: 5px 15px 0px 40px; /* Fügt Innenabstand hinzu, um den Rahmen zu vergrößern */
+    background-color: rgba(58, 58, 65, 0.6);
+}
+
+#speciesTraitsContainer .radio-container {
+    display: flex; /* Nutzt flexbox für die Anordnung der Radioinputs */
+    flex-direction: row; /* Richtet die Radioinputs horizontal aus */
+    align-items: center; /* Zentriert die Radioinputs vertikal */
+    gap: 10px; /* Fügt Abstand zwischen den Radioinputs hinzu */
+    margin-left: -50px; /* Entfernt den zusätzlichen linken Abstand der Radioinputs */
+}
+
+#skill59, #skill60, #versatileDropdown {
+    width: 220px;
+}
+
+/* =======================================================================
+   SCHRITT 3: SPEZIES-BILD STYLING (Hintergrund-Illustration)
+   ======================================================================= */
+
+.species-image {
+    position: fixed;
+    /* Fest in der unteren rechten Ecke verankert */
+    bottom: 0;
+    right: 0;
+    
+    /* Proportionale Größe basierend auf der Breite */
+    width: 40vw;
+    max-width: 700px;
+    
+    /* Z-Index Logik: 
+       Hinter MainContent (5) und StepBar (10), 
+       aber vor dem eigentlichen Background-Bild */
+     opacity: 0.7;
+     z-index: -1 !important; 
+    
+    /* Verhindert, dass das Bild Klicks abfängt (wichtig, da es groß ist) */
+    pointer-events: none; 
+    text-align: right;
+    transition: opacity 0.3s ease, width 0.3s ease;
+}
+
+.species-image img {
+    /* Wir nutzen 100% des Containers für volle Kontrolle */
+    width: 100%; 
+    height: auto;
+    display: block;
+    
+    /* Optional: Ein leichter Fade-Effekt nach links/oben, 
+       damit es weich in den Hintergrund übergeht */
+    mask-image: linear-gradient(to left, white 70%, transparent 100%),
+                linear-gradient(to top, white 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to left, white 70%, transparent 100%),
+                        linear-gradient(to top, white 70%, transparent 100%);
+}
+
+/* =======================================================================
+   SPEZIES-BILD - BREAKPOINTS
+   ======================================================================= */
+
+/* STUFE 2: Laptop / Kleiner Desktop */
+@media screen and (max-width: 1440px), screen and (max-height: 850px) {
+    .species-image {
+        width: 33vw; /* Etwas kleiner auf Laptops */
+        opacity: 0.6; /* Leicht transparenter, damit es weniger ablenkt */
+        z-index: -1 !important; 
+    }
+}
+
+/* STUFE 3: Sehr schmale Fenster / Tablet (Unter 1000px Breite) */
+@media screen and (max-width: 1000px) {
+    /* Ausblenden, bevor es den MainContent (500px) berührt */
+    .species-image {
+        display: none !important;
+    }
+}
+
+/* =======================================================================
+   LINEAGE DETAILS BOX
+   ======================================================================= */
+.lineage-details {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    left: calc(50% + 320px);
+    width: 350px;
+    background-color: rgba(58, 58, 65, 0.9);
+    color: #e8d8b5;
+    border: 2px solid #d4a017;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+    z-index: 5;
+    text-align: center;
+    display: none;
+    transition: all 0.3s ease;
+
+    /* NEU: Scrollbalken entfernen, Box passt sich dem Inhalt an */
+    max-height: none !important; 
+    overflow: visible !important; 
+}
+
+/* =======================================================================
+   LINEAGE-BILD (Analog zu species-image)
+   ======================================================================= */
+.lineage-image {
+    position: fixed;
+    bottom: 0;
+    right: -100px;
+    width: 40vw;
+    max-width: 470px;
+    opacity: 0.7;
+    z-index: -1 !important; /* Hinter dem Content */
+    pointer-events: none;
+    transition: opacity 0.3s ease, width 0.3s ease;
+}
+
+.lineage-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+    /* Dein bewährter Mask-Effekt */
+    mask-image: linear-gradient(to left, white 70%, transparent 100%),
+                linear-gradient(to top, white 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to left, white 70%, transparent 100%),
+                        linear-gradient(to top, white 70%, transparent 100%);
+}
+
+/* --- BREAKPOINTS --- */
+
+/* STUFE 2: Laptop / Kleiner Desktop (< 1440px ODER < 850px Höhe) */
+@media screen and (max-width: 1440px), screen and (max-height: 850px) {
+    .lineage-details {
+        left: calc(50% + 290px);
+        width: 260px;
+    }
+
+    /* 1. Bild komplett ausblenden (wie gewünscht) */
+    .lineage-image { 
+        display: none !important; 
+    }
+
+    /* 2. Nur die gewünschten Elemente behalten: */
+    /* Wir blenden die Haupt-Beschreibung und das Traits-Label aus */
+    .lineage-desc, 
+    .lineage-traits-header { 
+        display: none !important; 
+    }
+
+    /* Wir stellen sicher, dass Title, Sub-Beschreibung, Tabelle und Dropdown sichtbar sind */
+    .lineage-details h3,
+    .lineage-sub-desc,
+    .lineage-table-container,
+    .lineage-dropdown-container {
+        display: block;
+    }
+}
+
+@media screen and (max-width: 1000px) {
+    .lineage-details {
+        position: relative;
+        top: 0; left: 81px; transform: none;
+        width: 291px;
+        margin: 20px 0;
+        background: rgba(45, 45, 50, 0.6);
+        box-shadow: none;
+    }
+    /* Bild und Details ausblenden */
+    .lineage-image, .lineage-desc, .lineage-sub-desc, .lineage-table-container { 
+        display: none !important; 
+    }
+}
+
+/* Zentrierte Listen für Völker, Klassen, und Hintergründe */
+#speciesList, #classList, #backgroundList {
+    list-style-type: none; /* Beibehalten */
+    padding: 0 30px; /* Erhöht, um die Liste in der 500px Box mittig zu "drücken" */
+    text-align: center; /* Beibehalten */
+    display: grid; /* Beibehalten */
+    grid-template-columns: repeat(2, 1fr); /* Geändert von 3 auf 2 für 500px Breite */
+    gap: 15px; /* Leicht erhöht für bessere Lesbarkeit */
+    justify-content: center; /* Beibehalten */
+    justify-items: center; /* NEU: Zentriert die Li-Elemente innerhalb der Grid-Zellen */
+    max-width: 500px; /* Geändert auf die neue MainContent Breite */
+    margin: 0 auto; /* Beibehalten */
+    margin-top: 5%; /* Beibehalten */
+    margin-bottom: 10%; /* Beibehalten */
+}
+
+/* Die einzelnen Listeneinträge */
+#speciesList li, #classList li, #backgroundList li {
+    text-align: left; /* Beibehalten */
+    width: 100%; /* NEU: Nutzt den Platz der Grid-Zelle */
+    max-width: 160px; /* Beibehalten/Leicht erhöht */
+    display: flex; /* Beibehalten */
+    align-items: center; /* Beibehalten */
+}
+
+#speciesList input[type="radio"] + label, #classList input[type="radio"] + label, #backgroundList input[type="radio"] + label {
+    cursor: pointer; /* Ändert den Mauszeiger zu einem Zeiger bei Hover */
+    font-weight: bold; /* Macht den Text fett */
+}
+
+/* =======================================================================
+   RADIO-INPUTS Ausrichtung (Spezifisch)
+   ======================================================================= */
+
+#blacklabel, #bluelabel, #brasslabel, #bronzelabel, #copperlabel, #goldlabel, #greenlabel, #redlabel, #silverlabel, #whitelabel {
+margin-bottom: 6px;
+}
+
+#cloudsjauntlabel, #firesburnlabel, #frostschilllabel, #hillstumblelabel, #stonesendurancelabel, #stormsthunderlabel {
+margin-bottom: 6px;
+}
+
+#drowlabel, #highelflabel, #woodelflabel {
+margin-bottom: 6px;
+}
+
+#forestgnomelabel, #rockgnomelabel {
+margin-bottom: 6px;
+}
+
+#abyssallabel, #chthoniclabel, #infernallabel {
+margin-bottom: 6px;
+}
+
+#standardArrayLabel, #randomGenerationLabel, #pointCostLabel {
+    display: inline-flex;
+    align-items: center; /* Zentriert den Text innerhalb des Labels vertikal */
+    align-self: center;  /* Zentriert das gesamte Label innerhalb der Flex-Box */
+    margin-bottom: 0;    /* Entfernt eventuelle Standard-Abstände, die die Mitte verschieben */
+}
+
+/* =======================================================================
+   RADIO-INPUTS (Global)
+   ======================================================================= */
+
+/* Globales Design für alle Radio-Inputs */
+input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none; /* Für Safari/Chrome */
+    width: 20px; /* Feste Größe */
+    height: 20px;
+    border: 1px solid #7a431d; /* Kupferfarbener Rahmen */
+    border-radius: 50%; /* Kreisförmig */
+    background-color: #2e2e33; /* Dunkler Kern passend zum Feld */
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    transition: all 0.3s ease;
+    margin-right: 10px; /* Abstand zum Label */
+    flex-shrink: 0; /* Verhindert Verformung in Flexboxen */
+    outline: none;
+    margin-bottom: 3px;
+}
+
+/* Hover-Effekt: Der Kupferrahmen wird etwas heller */
+input[type="radio"]:hover {
+    border-color: #d4a017; /* Gold bei Hover */
+    box-shadow: 0 0 8px rgba(212, 160, 23, 0.4);
+}
+
+/* Der Zustand wenn ausgewählt (Checked) */
+input[type="radio"]:checked {
+    border-color: #d4a017; /* Goldener Rahmen */
+    background-color: #3e3e45; /* Leicht hellerer Kern */
+    box-shadow: 0 0 12px rgba(212, 160, 23, 0.6);
+}
+
+/* Die goldene Kugel (Punkt) im Inneren des ausgewählten Buttons */
+input[type="radio"]:checked::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #d4a017; /* Goldene Kugel */
+    box-shadow: 0 0 10px #fce181; /* Glühender Effekt */
+}
+
+/* Anpassung der Labels, die direkt nach dem Radio-Button kommen */
+input[type="radio"] + label {
+    cursor: pointer;
+    font-weight: bold; /* Übernommen aus deinem li-Stil */
+    color: #e8d8b5;
+    transition: color 0.3s ease;
+}
+
+/* Das Label leuchtet ebenfalls leicht auf, wenn ausgewählt */
+input[type="radio"]:checked + label {
+    color: #fce181; 
+    text-shadow: 0 0 5px rgba(212, 160, 23, 0.3);
+}
+
+
+/* =======================================================================
+   CUSTOM SCROLLBAR (Global)
+   ======================================================================= */
+
+/* Für Chrome, Safari und Edge */
+::-webkit-scrollbar {
+    width: 10px;    /* Breite des vertikalen Balkens */
+    height: 10px;   /* Höhe des horizontalen Balkens */
+}
+
+/* Der Hintergrund des Scrollbalkens (Track) */
+::-webkit-scrollbar-track {
+    background: rgba(30, 30, 35, 0.5); /* Dunkel und dezent */
+    border-radius: 5px;
+}
+
+/* Der bewegliche Teil (Thumb) - Hier nutzen wir dein Braun/Gold */
+::-webkit-scrollbar-thumb {
+    background: #8b5e34; /* Dein "Holz"-Braun */
+    border: 2px solid #3a3a41; /* Kleiner Kontrastrand */
+    border-radius: 5px;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+/* Wenn man mit der Maus darüber fährt (Hover) */
+::-webkit-scrollbar-thumb:hover {
+    background: #d4a017; /* Wechselt zu Gold bei Interaktion */
+}
+
+/* Speziell für Firefox (etwas eingeschränkter in den Optionen) */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #8b5e34 rgba(30, 30, 35, 0.5);
+}
+
+
+
+/* =======================================================================
+   SCHRITT 1: KLASSEN-SYMBOL (Zentriert im MainContent)
+   ======================================================================= */
+
+#classSymbolContainer {
+    position: relative;
+    /* margin: oben/unten (6% wie gehabt) und 'auto' für perfekte horizontale Zentrierung */
+    margin: 6% auto 3% auto; 
+    
+    /* Wir nutzen eine feste Breite statt vw, damit das Symbol im 500px-Fenster stabil bleibt */
+    width: 120px; 
+    height: auto;
+    z-index: 1;
+    
+    /* Entfernt das riskante 'left', da 'margin: auto' die Zentrierung übernimmt */
+    left: 0; 
+    text-align: center;
+    
+    /* Flexbox sorgt dafür, dass das Bild im Container wirklich mittig sitzt */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#classSymbolImage {
+    /* Das Bild nutzt nun 80% des 120px-Containers -> ca. 96px groß und stabil */
+    width: 80%; 
+    height: auto;
+    transition: transform 0.2s ease;
+}
+
+/* Kleiner Bonus: Ein dezenter Hover-Effekt, da man das Symbol ja klicken kann */
+#classSymbolImage:hover {
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+/* =======================================================================
+   SCHRITT 1: KLASSEN-DETAILS-CONTAINER
+   ======================================================================= */
+
+#classDetailsContainer {
+    padding: 20px;
+    background-color: rgba(58, 58, 65, 0.6);
+    border: 2px solid #d4a017;
+    border-radius: 10px;
+    color: #e8d8b5;
+    text-align: left;
+    overflow: auto;
+    max-width: 60%;
+    margin: 0 auto;
+}
+
+/* =======================================================================
+   SCHRITT 1: KLASSEN-BILD BASIS (> 1440px)
+   ======================================================================= */
+
+#classImageContainer {
+    position: fixed; /* Fixiert, damit es beim Scrollen des Main-Inhalts stehen bleibt */
+    top: 50%;        /* Vertikale Mitte */
+    transform: translateY(-50%); /* Zentriert das Bild exakt auf der Y-Achse */
+    left: calc(50% + 320px);    /* Anker rechts neben dem MainContent (250px + 70px Puffer) */
+    width: 35vw;     /* Proportionale Breite: 20% der Bildschirmbreite */
+    max-width: 500px; /* Begrenzung nach oben, damit es auf Riesen-Monitoren nicht zu groß wird */
+    z-index: 1;      /* Hinter den Dropdowns, aber vor dem Hintergrund */
+    pointer-events: none; /* Man kann durch das Bild hindurchklicken */
+    transition: all 0.3s ease;
+}
+
+#classImage {
+    width: 100%;     /* Nutzt die volle Breite des Containers */
+    height: auto;    /* Seitenverhältnis bleibt erhalten */
+
+    /* DEINE ORIGINAL-MASKE (UNVERÄNDERT ÜBERNOMMEN) */
+    --fade-border-thickness: 12%;
+    -webkit-mask-composite: intersect;
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent 0%, white var(--fade-border-thickness)),
+      linear-gradient(to top,    transparent 0%, white var(--fade-border-thickness)),
+      linear-gradient(to right,  transparent 0%, white var(--fade-border-thickness)),
+      linear-gradient(to left,   transparent 0%, white var(--fade-border-thickness));
+    mask-composite: intersect;
+    mask-image:
+      linear-gradient(to bottom, transparent 0%, white var(--fade-border-thickness)),
+      linear-gradient(to top,    transparent 0%, white var(--fade-border-thickness)),
+      linear-gradient(to right,  transparent 0%, white var(--fade-border-thickness)),
+      linear-gradient(to left,   transparent 0%, white var(--fade-border-thickness));
+}
+
+/* =======================================================================
+   BREAKPOINTS - KLASSEN-BILD
+   ======================================================================= */
+
+/* STUFE 2: Laptop / Kleiner Desktop */
+@media screen and (max-width: 1440px), screen and (max-height: 850px) {
+    /* Die StepBar-Änderungen von vorhin bleiben hier aktiv */
+    
+    #classImageContainer {
+        width: 25vw; /* Bild wird auf Laptops etwas kleiner */
+        left: calc(50% + 300px); /* Rückt etwas näher an den Content */
+    }
+}
+
+/* STUFE 3: Sehr schmale Fenster / Tablet (Unter 1000px Breite) */
+@media screen and (max-width: 1000px) {
+    /* Bild ausblenden, wenn kein Platz mehr zwischen MainContent und rechtem Rand ist */
+    #classImageContainer {
+        display: none !important;
+    }
+}
+
+
+/* =======================================================================
+--- Stile für Schritt 4: Attribut-Verteilung ---
+======================================================================= */
+
+#attributeMethodSelection {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+#attributeMethodSelection label {
+    cursor: pointer;
+    margin-right: 5%;
+}
+
+#valuePoolContainer {
+    min-height: 60px;
+    margin: 20px auto;
+    padding: 10px;
+    border: 2px dashed #8b5e34;
+    border-radius: 10px;
+    width: 90%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.value-pool {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.draggable-value {
+    padding: 10px 15px;
+    background-color: #8b5e34;
+    color: #e8d8b5;
+    border-radius: 5px;
+    cursor: grab;
+    font-weight: bold;
+    font-size: 18px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    user-select: none; /* Verhindert Textauswahl beim Ziehen */
+}
+
+.draggable-value:active {
+    cursor: grabbing;
+    transform: scale(1.1);
+    box-shadow: 0 0 15px #d4a017;
+}
+
+#pointBuyTracker {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+#rollAttributesBtn {
+    background: linear-gradient(145deg, #a36a42, #8b5e34); /* Kupfer-Farbverlauf */
+    color: #e8d8b5;
+    font-weight: bold;
+    font-family: 'Garamond', serif;
+    font-size: 16px;
+    border: 1px solid #d4a017; /* Goldener Rahmen */
+    border-radius: 8px;
+    padding: 12px 20px; /* Etwas größer für mehr Präsenz */
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 220, 150, 0.2); /* 3D-Schatten */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Leichter Textschatten für Lesbarkeit */
+    transition: all 0.2s ease-in-out; /* Weiche Übergänge für alle Effekte */
+}
+
+/*
+  Leucht-Effekt, wenn man mit der Maus darüberfährt
+*/
+#rollAttributesBtn:hover {
+    background: linear-gradient(145deg, #b97a51, #9c6f3c); /* Hellerer Farbverlauf */
+    border-color: #fce181; /* Hellerer, leuchtender Rahmen */
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 220, 150, 0.3); /* Stärkerer Schatten */
+    transform: translateY(-2px); /* Hebt den Button leicht an */
+}
+
+/*
+  Feedback beim Klicken
+*/
+#rollAttributesBtn:active {
+    transform: translateY(1px); /* Drückt den Button nach unten */
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+}
+
+#attributeScoresContainer {
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Etwas weniger Abstand zwischen den Reihen */
+}
+
+.attribute-row {
+    display: flex;
+    flex-direction: column; /* Label und interactive-elements untereinander */
+    align-items: center;    /* Alles schön mittig */
+    padding-top: 10px;    /* Abstand über dem Label ("Stärke") */
+    padding-bottom: 10px; /* Abstand unter den Inputs/Kreis */
+    border-top: 1px solid #4a4a4f;
+}
+
+.attribute-label {
+    margin-bottom: 8px;
+    font-size: 1.0em;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #e8d8b5;
+    text-align: center;
+}
+
+.interactive-elements {
+    display: flex;
+    align-items: baseline;     /* Löst Problem 1: Perfekte vertikale Ausrichtung */
+    justify-content: center; /* Zentriert die Elemente innerhalb des Wrappers */
+    gap: 15px;               /* Einheitlicher Abstand zwischen den Elementen */
+    width: 320px;            /* Löst Problem 2 & 3: Feste, konsistente Breite für alle Reihen */
+}
+
+.modifier-container, .score-container {
+    display: contents;
+}
+
+.modifier-circle {
+    width: 50px;
+    height: 50px;
+    border: 3px solid #d4a017;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #e8d8b5;
+    background-color: #2e2e33;
+    flex-shrink: 0; /* Verhindert, dass der Kreis gestaucht wird */
+}
+
+.attribute-score-input, .attribute-bonus-input, .attribute-score-total-input {
+    width: 60px;
+    height: 50px; /* Gleiche Höhe wie der Kreis für perfekte Ausrichtung */
+    padding: 8px;
+    font-size: 20px;
+    border-radius: 5px;
+    border: 1px solid #8b5e34;
+    background-color: #2e2e33;
+    color: #e8d8b5;
+    font-family: 'Garamond', serif;
+    text-align: center;
+    box-sizing: border-box; /* Wichtig, damit padding die Höhe nicht beeinflusst */
+}
+
+.attribute-row .attribute-score-input,
+.attribute-row .attribute-bonus-input,
+.attribute-row .attribute-score-total-input {
+    margin: 3px;
+}
+
+/* Der Wrapper für den Bonus-Input */
+.attribute-bonus-input-wrapper {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+/* Styling für das Plus-Zeichen */
+.attribute-bonus-input-wrapper span {
+    font-size: 1.2em;
+    color: #e8d8b5;
+}
+
+.attribute-component {
+    display: flex;
+    flex-direction: column; /* Stellt das Element (z.B. Kreis) über sein Label */
+    align-items: center;   /* Zentriert Element und Label horizontal */
+    gap: 8px;              /* Steuert den Abstand zwischen Element und seinem Label */
+    width: 90px;           /* Gibt jedem Block eine feste Breite für ein sauberes Raster */
+    text-align: center;
+}
+
+/* Optional: Styling für die kleinen Labels unter den Elementen */
+.attribute-component label {
+    font-size: 0.8em;
+    color: #e8d8b5; /* Etwas dezentere Farbe */
+}
+
+/* Visuelles Feedback für Drop-Zonen */
+.drop-target-hover {
+    background-color: #4a4a4f !important;
+    transform: scale(1.05);
+}
+
+/* Definiert die Animation für das Pulsieren des Schattens */
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 5px rgba(212, 160, 23, 0.6);
+        border-color: #d4a017;
+    }
+    50% {
+        box-shadow: 0 0 14px rgba(212, 160, 23, 0.9);
+        border-color: #fce181;
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(212, 160, 23, 0.6);
+        border-color: #d4a017;
+    }
+}
+
+/* Die Klasse, die wir einem Element geben, um den Effekt zu aktivieren */
+.highlight-target {
+    /* Wir heben den Rahmen etwas stärker hervor */
+    border: 2px solid #d4a017;
+    
+    /* Wir wenden die unendlich laufende Animation an */
+    animation: pulse-glow 2.5s infinite ease-in-out;
+}
+
+/* =======================================================================
+   ATTRIBUTE-LIVE-CONTAINER
+   ======================================================================= */
+
+#liveAttributesContainer {
+    position: fixed;
+    top: 20px; /* Hochgerückt an die Stelle der alten Progress-Box */
+    right: 20px;
+    width: 260px; 
+    padding: 15px;
+    background-color: rgba(58, 58, 65, 0.8);
+    border: 2px solid #7a431d;
+    border-radius: 10px;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.8);
+    z-index: 9;
+    transition: width 0.4s ease-in-out;
+}
+
+#liveAttributesContainer.expanded {
+    width: 600px; 
+}
+
+/* Hauptüberschrift */
+.live-attributes-main-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e8d8b5; 
+}
+.live-attributes-main-header h3 {
+    margin: 0;
+    font-size: 24px;
+    color: #e8d8b5;
+}
+
+/* Der Aufklapp-Pfeil */
+#toggleLiveAttributes {
+    position: absolute;
+    left: 0;
+    cursor: pointer;
+    font-size: 24px;
+    color: #d4a017;
+    transition: transform 0.4s ease-in-out;
+    user-select: none;
+}
+#liveAttributesContainer.expanded #toggleLiveAttributes {
+    transform: rotate(180deg);
+}
+
+/* JEDE ZEILE (Kopfzeile und Datenzeilen) ist eine Flexbox */
+.live-attr-header-row,
+.live-attr-data-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px; 
+    margin-bottom: 8px;
+}
+
+/* Neuer Divider zwischen Kopfzeile und Daten */
+.live-attr-header-row {
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e8d8b5;
+}
+
+/* Spaltenbreiten für die KOPFZEILE */
+.live-attr-header-row span {
+    font-weight: bold;
+    font-size: 0.9em;
+    color: #d4a017;
+    text-align: center;
+    flex-shrink: 0; /* KORREKTUR: Verhindert Schrumpfen */
+}
+.live-attr-header-row .col-attr { flex-basis: 125px; text-align: left; }
+.live-attr-header-row .col-mod   { flex-basis: 30px; }
+.live-attr-header-row .col-total { flex-basis: 45px; }
+.live-attr-header-row .col-base  { flex-basis: 45px; }
+.live-attr-header-row .col-feat  { flex-basis: 45px; }
+.live-attr-header-row .col-bg    { flex-basis: 80px; }
+.live-attr-header-row .col-class { flex-basis: 45px; }
+.live-attr-header-row .col-symbol{ flex-basis: 20px; }
+
+
+/* Spaltenbreiten für die DATENZEILEN */
+.live-attr-data-row > * {
+    text-align: center;
+    flex-shrink: 0; /* KORREKTUR: Verhindert Schrumpfen */
+}
+.live-attr-data-row .col-attr { flex-basis: 125px; text-align: left; font-weight: bold; }
+.live-attr-data-row .col-mod   { flex-basis: 30px; }
+.live-attr-data-row .col-total { flex-basis: 45px; }
+.live-attr-data-row .col-base  { flex-basis: 45px; }
+.live-attr-data-row .col-feat  { flex-basis: 45px; }
+.live-attr-data-row .col-bg    { flex-basis: 45px; }
+.live-attr-data-row .col-class { flex-basis: 45px; }
+.live-attr-data-row .col-symbol{ flex-basis: 20px; color: #d4a017; font-weight: bold; }
+
+/* Styling der einzelnen Elemente */
+#liveAttributesContainer input {
+    width: 45px;
+    height: 30px;
+    box-sizing: border-box;
+    font-size: 14px;
+    border: 1px solid #8b5e34;
+    background-color: #2e2e33;
+    color: #e8d8b5;
+    border-radius: 4px;
+    margin: 0;
+    text-align: center;
+}
+#liveAttributesContainer .modifier-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #d4a017;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+/* Die Logik zum Ein- und Ausklappen der Berechnungs-Teile */
+.col-calc-part {
+    flex-basis: 0;
+    flex-grow: 0;
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.4s ease-in-out;
+}
+#liveAttributesContainer.expanded .col-calc-part {
+    opacity: 1;
+}
+#liveAttributesContainer.expanded .col-base  { flex-basis: 45px; }
+#liveAttributesContainer.expanded .col-feat  { flex-basis: 45px; }
+#liveAttributesContainer.expanded .col-bg    { flex-basis: 80px; }
+#liveAttributesContainer.expanded .col-class { flex-basis: 45px; }
+#liveAttributesContainer.expanded .col-symbol{ flex-basis: 20px; }
+
+/* =======================================================================
+   VISIBILITY LOGIC: ATTRIBUTE-LIVE-CONTAINER
+   ======================================================================= */
+
+/* REGEL 1: Auf dem Desktop (> 1440px) in Schritt 1 immer ausblenden */
+@media screen and (min-width: 1441px) {
+    body.active-step-1 #liveAttributesContainer {
+        display: none !important;
+    }
+}
+
+/* REGEL 2: Stufe 2 - Laptop (Breite < 1440px ODER Höhe < 850px) */
+@media screen and (max-width: 1440px), screen and (max-height: 850px) {
+    /* Grundsätzlich verstecken... */
+    #liveAttributesContainer {
+        display: none !important;
+    }
+
+    /* ...außer in Schritt 12 (Zusammenfassung) */
+    body.active-step-12 #liveAttributesContainer {
+        display: block !important;
+        /* Optional: Hier kannst du die Position für Laptops anpassen, 
+           da dort das Spezies-Bild ja weg ist */
+        right: 20px; 
+    }
+}
+
+/* REGEL 3: Stufe 3 - Tablet / Schmal (< 1000px) */
+@media screen and (max-width: 1000px) {
+    /* Hier gibt es keine Ausnahme: Container IMMER weg */
+    #liveAttributesContainer {
+        display: none !important;
+    }
+    body.active-step-12 #liveAttributesContainer {
+        display: none !important;
+        /* Optional: Hier kannst du die Position für Laptops anpassen, 
+           da dort das Spezies-Bild ja weg ist */; 
+    }
+}
+
+/* =======================================================================
+   EINGABEFELDER (GLOBAL)
+   ======================================================================= */
+
+input[type="text"], input[type="number"] {
+    width: 60px; /* Setzt die Breite der Eingabefelder */
+    padding: 8px; /* Fügt Innenabstände hinzu */
+    font-size: 20px; /* Setzt die Schriftgröße des Eingabefeldes */
+    margin-top: 5px; /* Fügt oberen Abstand hinzu */
+    border-radius: 5px; /* Macht die Ecken der Eingabefelder abgerundet */
+    border: 1px solid #8b5e34; /* Fügt einen kupferfarbenen Rahmen hinzu */
+    background-color: #2e2e33; /* Setzt die Hintergrundfarbe der Eingabefelder */
+    color: #e8d8b5; /* Setzt die Textfarbe der Eingabefelder */
+    font-family: 'Garamond', serif; /* Setzt die Schriftart der Eingabefelder */
+    text-align: center; /* Zentriert den Text innerhalb der Eingabefelder */
+    box-sizing: border-box; /* Inklusive Padding und Border in der Breite */
+    margin-bottom: 5vh; /* Fügt unteren Abstand hinzu */
+}
+
+/* =======================================================================
+   Buttons
+   ======================================================================= */
+
+button[type="button"] {
+    background-color: #8b5e34; /* Setzt die Hintergrundfarbe des Buttons */
+    color: #e8d8b5; /* Setzt die Textfarbe des Buttons */
+    border: none; /* Entfernt den Standardrahmen des Buttons */
+    border-radius: 8px; /* Macht die Ecken des Buttons abgerundet */
+    padding: 10px 15px; /* Fügt Innenabstände hinzu */
+    font-weight: bold; /* Macht den Text fett */
+    cursor: pointer; /* Ändert den Mauszeiger zu einem Zeiger bei Hover */
+    transition: background 0.3s; /* Fügt eine Übergangsanimation hinzu */
+}
+
+button[type="button"]:hover {
+    background-color: #a36a42; /* Ändert die Hintergrundfarbe bei Hover */
+}
+
+/* Fixierte Buttons */
+.fixed-button {
+    position: fixed;
+    background-color: #8b5e34;
+    color: #e8d8b5;
+    border: none;
+    border-radius: 8px;
+    
+    /* WICHTIG: Padding muss auf 0, damit Flexbox den Platz zum Zentrieren hat */
+    padding: 0 !important; 
+    
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    
+    /* Deine Maße */
+    height: 42px;
+    width: 42px;
+
+    /* Perfekte Zentrierung */
+    display: flex;
+    align-items: center;    /* Vertikal */
+    justify-content: center; /* Horizontal */
+    
+    z-index: 20 !important;
+
+    top: 30px; 
+    bottom: auto !important;
+}
+
+/* Spezifische Größe für die Icons in den Buttons */
+.nav-icon {
+    width: 32px;  /* Ideale Größe für Icons */
+    height: 32px;
+    object-fit: contain; /* Verhindert Verzerrung */
+    pointer-events: none; /* Klicks gehen durch auf den Button */
+}
+
+/* Optional: Ein leichter Leuchteffekt bei Hover */
+.fixed-button:hover .nav-icon {
+    filter: drop-shadow(0 0 5px #fce181);
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
+
+/* BASIS: Desktop (> 1440px) */
+/* Wir platzieren die Buttons 320px von der Mitte entfernt (250px Content + 70px Puffer) */
+
+/* Linker Button (Back) */
+#back {
+    /* 50% (Mitte) - 250px (halber Content) + 15px (Einzug nach innen) */
+    left: calc(50% - 235px);
+    right: auto;
+}
+
+/* Rechte Buttons (Save / Continue / Finish) */
+#saveClass, #saveBackground, #saveSpecies, #saveAttributes, #saveLevel, 
+#saveClassForm, #saveSpells, #saveEquipment, #saveStory, #saveAlignment, 
+#saveAppearance, #finish {
+    /* 50% (Mitte) + 250px (halber Content) - 15px (Einzug nach innen) - 45px (Buttonbreite) */
+    left: auto;
+    right: calc(50% - 235px);
+}
+
+/* -----------------------------------------------------------------------
+   BREAKPOINT STUFE 3: Tablet / Schmale Fenster (< 1000px)
+   ----------------------------------------------------------------------- */
+@media screen and (max-width: 1000px) {
+    /* Wenn die stepBar schmal wird, rücken wir die Buttons 
+       vielleicht etwas weiter nach außen oder behalten die Logik bei. 
+       Da der Content bei dir aber bei 500px bleibt, funktioniert 
+       die calc(50%) Logik hier weiterhin hervorragend! */
+    
+    .fixed-button {
+        top: 30px; /* Eventuell etwas höher auf kleinen Schirmen */
+    }
+}
+
+/* =======================================================================
+   DROPDOWNS (Global)
+   ======================================================================= */
+
+/* Stil für Dropdowns und Radio-Inputs */
+.dropdown {
+    width: 100%; /* Setzt die Breite der Dropdowns */
+    max-width: 300px; /* Begrenzung der maximalen Breite der Dropdowns */
+    padding: 5px; /* Fügt Innenabstände hinzu */
+    font-size: 16px; /* Setzt die Schriftgröße der Dropdowns */
+    border-radius: 5px; /* Macht die Ecken der Dropdowns abgerundet */
+    border: 1px solid #8b5e34; /* Fügt einen kupferfarbenen Rahmen hinzu */
+    background-color: #2e2e33; /* Setzt die Hintergrundfarbe der Dropdowns */
+    color: #e8d8b5; /* Setzt die Textfarbe der Dropdowns */
+    box-sizing: border-box; /* Inklusive Padding und Border in der Breite */
+    margin-bottom: 10px; /* Fügt unteren Abstand hinzu */
+}
+
+.dropdownLabel {
+    font-weight: bold;
+    margin-right: 0.25em;
+}
+
+.radio-container {
+    display: flex; /* Nutzt flexbox für die Anordnung der Radio-Inputs */
+    flex-direction: row; /* Richtet die Radio-Inputs horizontal aus */
+    align-items: center; /* Zentriert die Radio-Inputs vertikal */
+    gap: 10px; /* Fügt Abstand zwischen den Radio-Inputs hinzu */
+}
+
+.radio-container label {
+    margin-right: 10px; /* Fügt rechten Abstand zu den Labels hinzu */
+}
+
+/* Zusätzlicher Stil für die Info-Container */
+.info-container {
+    margin-top: 20px; /* Fügt oberen Abstand zum Container hinzu */
+    padding: 15px; /* Fügt Innenabstände hinzu */
+    background-color: rgba(58, 58, 65, 0.6); /* Setzt die Hintergrundfarbe */
+    border: 2px solid #d4a017; /* Fügt einen goldfarbenen Rahmen hinzu */
+    border-radius: 10px; /* Macht die Ecken abgerundet */
+    color: #e8d8b5; /* Setzt die Textfarbe */
+    text-align: left; /* Richtet den Text links aus */
+    overflow: auto; /* Ermöglicht Scrollen bei langem Text */
+    max-width: 300px; /* Begrenzung der maximalen Breite */
+    margin: 0 auto; /* Zentriert den Container innerhalb des Elternblocks */
+}
+
+/* =======================================================================
+   INFOBOX STYLING (Schritt 3 & 5)
+   ======================================================================= */
+
+/* Stil für das Fragezeichen-Symbol */
+.info-icon {
+    cursor: pointer; /* Ändert den Mauszeiger zu einem Zeiger bei Hover */
+    color: #d4a017; /* Setzt die Farbe des Icons */
+    margin-left: 5px; /* Fügt linken Abstand zum Icon hinzu */
+    font-weight: bold; /* Macht den Text fett */
+}
+
+/* Stil für die Infobox */
+.info-box {
+    display: none; /* Wird via JS eingeblendet */
+    position: fixed; /* Befreit die Box aus dem MainContent-Container */
+    
+    /* Positionierung links neben dem MainContent */
+    /* Rechnung: Mitte (50%) - halber Content (250px) - Puffer/Breite der Box */
+    top: 50%;
+    left: calc(50% - 300px); 
+    transform: translate(-100%, -50%); /* Schiebt die Box komplett links vom Ankerpunkt */
+    
+    background-color: rgba(58, 58, 65, 0.9); /* Setzt die Hintergrundfarbe */
+    color: #e8d8b5;
+    padding: 25px;
+    border: 2px solid #d4a017;
+    border-radius: 10px;
+    width: 350px; /* Feste Breite für Stabilität */
+    max-width: 90vw;
+    max-height: 80vh; /* Verhindert, dass die Box oben/unten rausragt */
+    overflow-y: auto; /* Scrollbar innerhalb der Box, falls Text zu lang */
+    
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.8);
+    z-index: 100; /* Weit über dem MainContent (5) und dem Spezies-Bild */
+    text-align: left;
+}
+
+/* =======================================================================
+   BREAKPOINTS FÜR DIE INFOBOX
+   ======================================================================= */
+
+/* STUFE 2: Laptop / Kleiner Monitor 
+   (Breite < 1440px ODER Höhe < 850px) 
+   Hier rückt die Box näher an den Content, bleibt aber noch links. */
+@media screen and (max-width: 1440px), screen and (max-height: 850px) {
+    .info-box {
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 350px;
+        max-width: 85vw;
+        background-color: rgba(58, 58, 65, 0.95);
+        box-shadow: 0px 0px 50px rgba(0, 0, 0, 1);
+    }
+}
+
+/* STUFE 3: Zentrales Overlay 
+   (Unter 1000px Breite - Tablet/Mobil) 
+   Hier springt die Box in die Mitte. */
+@media screen and (max-width: 1000px) {
+    .info-box {
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 300px;
+        max-width: 85vw;
+        background-color: rgba(58, 58, 65, 0.95);
+        box-shadow: 0px 0px 50px rgba(0, 0, 0, 1);
+    }
+}
+
+/* =======================================================================
+   INFO-BACKDROP (Dunkelschleier)
+   ======================================================================= */
+.info-backdrop {
+    display: none; /* Standardmäßig aus, aber JS darf es einschalten */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.8); /* Kräftiges Dunkel für Mobile */
+    z-index: 90 !important; 
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+/* DER RIEGEL: Blockiert den Schleier exakt für Breakpoint 1 (Großer Monitor) */
+@media screen and (min-width: 1441px) and (min-height: 851px) {
+    .info-backdrop {
+        display: none !important; 
+    }
+}
+
+/* Die Buttons verschwinden NUR, wenn der Body diese Klasse hat */
+body.modal-open .fixed-button {
+    display: none !important;
+}
+
+.info-box h3 {
+    text-align: center; /* Zentriert die Überschrift */
+    margin-bottom: 30px; /* Fügt unteren Abstand zur Überschrift hinzu */
+    margin-top: 0px;
+}
+
+.info-box p {
+    margin: 0 0 12px 0;
+    display: grid;
+    /* Spalten für Label und Wert innerhalb der Box */
+    grid-template-columns: 120px auto; 
+    gap: 15px;
+    align-items: baseline;
+    font-size: 0.95em;
+}
+
+.info-box p:last-child {
+    margin-bottom: 0; /* Entfernt den unteren Abstand beim letzten Paragraphen */
+}
+
+.info-box strong {
+    display: block; /* Macht das starke Element als Blockelement */
+}
+
+.info-box span {
+    display: block; /* Macht das span Element als Blockelement */
+    margin-left: 30px; /* Fügt linken Abstand zum span hinzu */
+}
+
+.close-icon {
+    position: absolute; /* Positioniert das Schließen-Symbol absolut */
+    top: 10px; /* Positioniert es 10px vom oberen Bildschirmrand */
+    right: 10px; /* Positioniert es 10px vom rechten Bildschirmrand */
+    cursor: pointer; /* Ändert den Mauszeiger zu einem Zeiger bei Hover */
+    color: #d4a017; /* Setzt die Farbe des Symbols */
+    font-size: 20px; /* Setzt die Schriftgröße des Symbols */
+    font-weight: bold; /* Macht den Text fett */
+}
+
+/* =======================================================================
+   CLASS-SECTION
+   ======================================================================= */
+
+/* Stil für die einzelnen Abschnitte innerhalb von Schritt 5 & 8 */
+.class-section {
+    margin-bottom: 3%; /* Fügt unteren Abstand hinzu */
+    padding: 15px; /* Fügt Innenabstände hinzu */
+    background-color: rgba(58, 58, 65, 0.85); /* Setzt die Hintergrundfarbe */
+    border: 2px solid #d4a017; /* Fügt einen goldfarbenen Rahmen hinzu */
+    border-radius: 10px; /* Macht die Ecken abgerundet */
+    color: #e8d8b5; /* Setzt die Textfarbe */
+    text-align: left; /* Richtet den Text links aus */
+    overflow: auto; /* Ermöglicht Scrollen bei langem Text */
+    max-width: 80%; /* Begrenzung der maximalen Breite */
+    margin: 0 auto 3%; /* Zentriert den Container innerhalb des Elternblocks und fügt unteren Abstand hinzu */
+}
+
+.class-section h3 {
+    text-align: center; /* Zentriert die Überschrift */
+}
+
+/* Stil für die Dropdown-Listen und Labels in Schritt 5 */
+.class-section label {
+    display: block; /* Macht das Label als Blockelement */
+    text-align: left; /* Richtet den Text links aus */
+    margin-bottom: 5px; /* Fügt unteren Abstand hinzu */
+}
+
+/* Spezielle Korrektur für Labels direkt neben Radio-Buttons in der class-section */
+.class-section input[type="radio"] + label {
+    display: inline-flex;
+    align-items: center;    /* Zentriert Text vertikal zum Radio-Kreis */
+    align-self: center;     /* Sorgt für Ausrichtung in Flex-Containern */
+    margin-bottom: 0;       /* Entfernt den Abstand, der das Label nach oben drückt */
+    cursor: pointer;
+}
+
+.class-section select {
+    width: 100%; /* Setzt die Breite der Dropdown-Listen */
+    margin-bottom: 10px; /* Fügt unteren Abstand hinzu */
+    padding: 5px; /* Fügt Innenabstände hinzu */
+    font-size: 16px; /* Setzt die Schriftgröße der Dropdown-Listen */
+    border-radius: 5px; /* Macht die Ecken der Dropdown-Listen abgerundet */
+    border: 1px solid #8b5e34; /* Fügt einen kupferfarbenen Rahmen hinzu */
+    background-color: #2e2e33; /* Setzt die Hintergrundfarbe der Dropdown-Listen */
+    color: #e8d8b5; /* Setzt die Textfarbe der Dropdown-Listen */
+}
+
+/* Stil für die Subclass-Optionen */
+#subclassOptions {
+    text-align: left; /* Richtet den Text links aus */
+}
+
+#subclassOptions label {
+    display: block; /* Macht das Label als Blockelement */
+    margin-bottom: 5px; /* Fügt unteren Abstand hinzu */
+}
+
+.improvement-option label {
+    display: block; /* Macht das Label als Blockelement */
+    margin-bottom: 5px; /* Fügt unteren Abstand hinzu */
+    cursor: pointer; /* Ändert den Mauszeiger zu einem Zeiger bei Hover */
+}
+
+.improvement-option input[type="radio"] {
+    margin-right: 5px; /* Fügt rechten Abstand zu den Radio-Inputs hinzu */
+}
+
+.improvement-option h4 {
+    margin-top: 20px; /* Fügt oberen Abstand hinzu */
+    margin-bottom: 15px; /* Fügt unteren Abstand hinzu */
+    font-size: 16px; /* Setzt die Schriftgröße der Überschrift */
+    color: #e8d8b5; /* Setzt die Textfarbe der Überschrift */
+    font-weight: bold; /* Macht den Text fett */
+}
+
+/* =======================================================================
+   DYNAMIC RIGHT COLUMN (Subclass & Attributes)
+   ======================================================================= */
+
+.subclass-details {
+    border: 2px solid #d4a017;
+    padding: 15px;
+    background-color: rgba(58, 58, 65, 0.9);
+    color: #e8d8b5;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 295px;
+    box-sizing: border-box;
+    z-index: 8;
+    text-align: left;
+    display: none;
+}
+
+.subclass-image-vertical {
+    position: fixed;
+    top: 50%;
+    right: 340px; /* 20px Rand + 300px Box + 20px Puffer */
+    transform: translateY(-50%);
+    height: 90vh;
+    width: auto;
+    pointer-events: none;
+    z-index: -1; /* Vor dem Hintergrund, hinter den Boxen */
+}
+
+.subclass-image-vertical img {
+    height: 100%; /* Behält die volle Höhe des Containers (90vh) */
+    width: auto;
+    object-fit: contain;
+    display: block;
+    opacity: 0.7; /* Beibehaltung der Transparenz */
+
+    /* DEIN FADE-EFFEKT (Maskierung an allen 4 Seiten) */
+    --fade-border-thickness: 12%; 
+
+    /* Webkit-Präfix für ältere Browser */
+    -webkit-mask-composite: intersect;
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent 0%, white var(--fade-border-thickness)),
+      linear-gradient(to top,    transparent 0%, white var(--fade-border-thickness)),
+      linear-gradient(to right,  transparent 0%, white var(--fade-border-thickness)),
+      linear-gradient(to left,   transparent 0%, white var(--fade-border-thickness))
+    ;
+
+    /* Standard-Syntax */
+    mask-composite: intersect;
+    mask-image:
+      linear-gradient(to bottom, transparent 0%, white var(--fade-border-thickness)),
+      linear-gradient(to top,    transparent 0%, white var(--fade-border-thickness)),
+      linear-gradient(to right,  transparent 0%, white var(--fade-border-thickness)),
+      linear-gradient(to left,   transparent 0%, white var(--fade-border-thickness))
+    ;
+}
+
+/* --- FIX: In Schritt 6 bleiben die Attribute IMMER unten (Desktop) --- */
+@media screen and (min-width: 1441px) and (min-height: 851px) {
+    body.active-step-6 #liveAttributesContainer {
+        top: auto !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        position: fixed !important;
+        display: block !important;
+    }
+}
+
+/* =======================================================================
+   BREAKPOINTS
+   ======================================================================= */
+
+/* STUFE 2: Nur das Bild anzeigen (Boxen & Attribute weg) */
+@media screen and (max-width: 1440px), screen and (max-height: 850px) {
+    #subclassDetailBox, #liveAttributesContainer {
+        display: none !important;
+    }
+    /* Das Bild zentriert sich im rechten Bereich */
+    .subclass-image-vertical {
+        right: 50px;
+        height: 90vh;
+    }
+}
+
+/* STUFE 3: Alles weg */
+@media screen and (max-width: 1000px) {
+    #subclassDetailBox, .subclass-image-vertical, #liveAttributesContainer {
+        display: none !important;
+    }
+}
+
+.subclass-details p {
+    margin-bottom: 20px; /* Fügt unteren Abstand hinzu */
+}
+
+.subclass-details h4 {
+    margin-top: 30px; /* Fügt oberen Abstand hinzu */
+    font-size: 16px; /* Setzt die Schriftgröße der Überschrift */
+    color: #e8d8b5; /* Setzt die Textfarbe der Überschrift */
+    text-align: left; /* Richtet die Überschrift links aus */
+}
+
+.subclass-details ul {
+    text-align: left; /* Richtet die Liste links aus */
+    margin: 10px 0; /* Fügt vertikale Abstände hinzu */
+    padding-left: 20px; /* Fügt linken Innenabstand hinzu */
+}
+
+/* Zusätzliche Stile für mehr Abstand */
+#dynamicSubclassContent {
+    border: none; /* Entfernt den Rahmen */
+    padding: 0; /* Entfernt das Padding */
+    background-color: transparent; /* Setzt den Hintergrund transparent */
+    margin-top: 20px; /* Fügt oberen Abstand hinzu */
+}
+
+#subclassOptions {
+    text-align: left; /* Richtet den Text links aus */
+    margin-bottom: 20px; /* Fügt unteren Abstand hinzu */
+}
+
+.feat-content p{
+    margin-block-start: 0px;
+    margin-block-end: 10px;
+}
+
+.feature-description {
+    margin: 0;
+    margin-bottom: 15px; /* Fügt unteren Abstand hinzu */
+}
+
+
+.feat-content {
+    margin-left: 35px; /* Fügt linken Abstand hinzu */
+}
+
+.feat-content label {
+    display: block; /* Macht das Label als Blockelement */
+    margin-bottom: 5px; /* Fügt unteren Abstand hinzu */
+}
+
+.feat-content .dropdown {
+    width: 100%; /* Setzt die Breite der Dropdowns */
+    max-width: 300px; /* Begrenzung der maximalen Breite der Dropdowns */
+    box-sizing: border-box; /* Inklusive Padding und Border in der Breite */
+}
+
+.dropdown-container {
+    margin-top: 10px; /* Fügt oberen Abstand hinzu */
+    width: 100%; /* Setzt die Breite des Containers */
+}
+
+.radio-containerMonk {
+    display: flex; /* Nutzt flexbox für die Anordnung der Radio-Inputs */
+    justify-content: center; /* Zentriert die Radio-Inputs horizontal */
+    gap: 30px; /* Fügt Abstand zwischen den Radio-Inputs hinzu */
+}
+
+.radio-item {
+    display: flex; /* Nutzt flexbox für die Anordnung der Radio-Items */
+    gap: 5px; /* Fügt Abstand zwischen dem Radio-Button und dem Label hinzu */
+}
+
+/* Der Haupt-Wrapper für die ASI-Auswahl */
+.asi-container {
+    padding-top: 0px;
+    margin-top: 0px;
+}
+
+/* Die Kopfzeile mit "Punkte verteilen" und der Punkte-Anzeige */
+.asi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+}
+
+/* Jede einzelne Attribut-Zeile */
+.asi-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 0 20px; /* Etwas seitlicher Einzug für die Optik */
+}
+
+.asi-row label {
+    text-align: left;
+    font-weight: normal;
+}
+
+/* Das Input-Feld für die Punkte */
+input.asi-point-input {
+    width: 45px;
+    height: 30px;
+    font-size: 14px;
+    margin: 0; /* WICHTIG: Überschreibt den generischen 5vh-Abstand */
+}
+
+.feat-content .granted-proficiency-header {
+    font-weight: bold;
+    margin-top: 0px;
+    margin-bottom: 2px;
+}
+
+.feat-content .granted-proficiency-list {
+    list-style-type: none;
+    padding-left: 10px;
+    margin: 0px;
+    margin-bottom: 10px;
+}
+
+/* --- STILE FÜR SCHRITT 7 --- */
+
+#step7DescContainer {
+    margin: 1em 0;
+}
+
+#spellList {
+    text-align: left;
+}
+
+.spell-section-container {
+    border: 2px solid #d4a017; /* Goldener Rahmen */
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: rgba(58, 58, 65, 0.6);
+}
+
+.spell-section-container h3,
+#master-spell-list h4,
+.spell-sub-header h4 {
+    color: #e8d8b5; /* Helle Überschriften-Farbe */
+}
+
+.section-header-with-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-header-with-icon h3,
+.spell-section-container > h3 {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.section-header-icon {
+    width: 28px;
+    height: 28px;
+}
+
+.spell-feature-item {
+    margin-bottom: 10px;
+}
+
+.spell-feature-item label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.spell-choice-details {
+    padding-left: 25px;
+    font-style: italic;
+    color: #bdae93;
+}
+
+.spell-counter {
+    margin: 5px 0;
+    font-weight: bold;
+}
+
+#master-spell-list {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: none; /* Kupferner Divider entfernt */
+}
+
+#master-spell-list h4 {
+    border-bottom: 2px solid #e8d8b5; /* Dickerer, heller Divider */
+    padding-bottom: 5px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+ul.master-spell-ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px 15px;
+}
+
+ul.master-spell-ul li {
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+ul.master-spell-ul li.clickable {
+    cursor: pointer;
+    background-color: rgba(139, 94, 52, 0.2);
+}
+
+ul.master-spell-ul li.clickable:hover {
+    background-color: rgba(139, 94, 52, 0.4);
+}
+
+ul.master-spell-ul li.selected-choice {
+    background-color: rgba(212, 160, 23, 0.3);
+}
+
+.spell-marker-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: 70px;
+    margin-right: 8px;
+}
+
+.spell-marker {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+}
+
+.spell-marker img {
+    width: 100%;
+    height: 100%;
+    vertical-align: middle;
+}
+
+.spell-name {
+    flex-grow: 1;
+}
+
+.spell-sub-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+.sub-header-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.section-divider {
+    border: none;
+    border-top: 1px dashed #e8d8b5; /* Heller, gestrichelter Divider */
+    margin: 20px 10%;
+}
+
+/* --- Stile für Spell Info Box --- */
+/* =======================================================================
+   SPEZIAL-INFOBOXEN: ZAUBER & TALENTE
+   ======================================================================= */
+
+#feat-info-box-container,
+#spell-info-box-container {
+    position: fixed !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important; /* Nur vertikale Zentrierung auf Desktop */
+    display: none; /* Steuerung via JS (flex) */
+    flex-direction: column;
+    background-color: rgba(58, 58, 65, 0.98); /* Etwas deckender für bessere Lesbarkeit */
+    border: 2px solid #d4a017;
+    border-radius: 10px;
+    box-shadow: 0px 0px 25px rgba(0, 0, 0, 0.9);
+    z-index: 100;
+    overflow: hidden; /* Verhindert, dass Grid-Inhalt runden Rahmen überlagert */
+    transition: width 0.3s ease, left 0.3s ease;
+}
+
+/* --- HEADER DER BOX --- */
+#spell-info-box-header, 
+#feat-info-box-header{
+    padding: 10px 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #e8d8b5;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* --- INHALTSBEREICH MIT SPALTEN-LOGIK --- */
+.spell-info-box-content {
+    padding: 15px;
+    display: grid;
+    /* Nutzt die von JS berechnete Anzahl an Spalten */
+    grid-template-columns: repeat(var(--info-cols, 1), 1fr);
+    /* Sorgt dafür, dass Elemente gleichmäßig verteilt werden (Row-First) */
+    grid-auto-flow: row; 
+    gap: 8px;
+    overflow-y: auto;
+    /* Die Box wächst bis max 80% der Höhe, danach erscheint der Scrollbalken */
+    max-height: 75vh;
+}
+
+/* --- FOKUS-MODUS: Wenn ein Element aufgeklappt wird --- */
+.spell-info-box-content.focused-mode {
+    display: block !important; /* Grid aufheben, damit Beschreibung volle Breite nutzt */
+}
+
+/* Verstecke alle Items, die NICHT aktiv sind, wenn der Fokus-Modus an ist */
+.spell-info-box-content.focused-mode .info-spell-item:not(.has-active-child) {
+    display: none !important;
+}
+
+/* Styling der einzelnen Label-Elemente */
+.info-spell-item {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.info-spell-name {
+    background-color: rgba(139, 94, 52, 0.25);
+    padding: 8px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.9em;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    white-space: nowrap; /* Verhindert Zeilenumbruch im Label bei Spalten */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Schneidet zu langen Text mit ... ab */
+}
+
+.info-spell-name:hover {
+    background-color: rgba(212, 160, 23, 0.3);
+    border-color: #d4a017;
+}
+
+.info-spell-name.active {
+    background-color: #d4a017;
+    color: #000;
+    font-weight: bold;
+    white-space: normal; /* Erlaubt Umbruch wenn aufgeklappt */
+}
+
+/* Beschreibungstext */
+.info-spell-description {
+    display: none;
+    padding: 15px 5px;
+    color: #e8d8b5;
+    line-height: 1.5;
+    font-size: 0.95em;
+}
+
+.info-spell-description.active {
+    display: block; /* Erscheint nur wenn aktiv */
+}
+
+/* =======================================================================
+   RESPONSIVE POSITIONIERUNG & BREITEN
+   ======================================================================= */
+
+/* --- DESKTOP (> 1440px) --- */
+@media screen and (min-width: 1441px) {
+    #feat-info-box-container,
+    #spell-info-box-container {
+        width: 400px;
+        /* Position Links: Mitte - 260px (Content) - 320px (Box) - 70px (Puffer) */
+        left: calc(50% - 690px) !important;
+    }
+}
+
+/* --- STUFE 1: LAPTOP (< 1440px ODER < 850px Höhe) --- */
+@media screen and (max-width: 1440px), screen and (max-height: 850px) {
+    #feat-info-box-container,
+    #spell-info-box-container {
+        width: 600px;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important; /* Mittig positioniert */
+    }
+    
+    .info-spell-name {
+        font-size: 0.85em; /* Etwas kleiner, da bis zu 3 Spalten */
+    }
+}
+
+/* --- STUFE 2: TABLET / MOBIL (< 1000px) --- */
+@media screen and (max-width: 1000px) {
+    #feat-info-box-container,
+    #spell-info-box-container {
+        width: 350px;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
+    
+    .info-spell-name {
+        white-space: normal; /* Wieder normaler Umbruch bei nur einer Spalte */
+    }
+}
+
+
+#close-spell-info,
+#close-feat-info {
+    position: absolute; /* Positioniert das Schließen-Symbol absolut */
+    top: 5px; /* Positioniert es 10px vom oberen Bildschirmrand */
+    right: 10px; /* Positioniert es 10px vom rechten Bildschirmrand */
+    cursor: pointer; /* Ändert den Mauszeiger zu einem Zeiger bei Hover */
+    color: #d4a017; /* Setzt die Farbe des Symbols */
+    font-size: 20px; /* Setzt die Schriftgröße des Symbols */
+    font-weight: bold; /* Macht den Text fett */
+}
+
+/* Stile für Tabellen in Zauberbeschreibungen (Version 3) */
+.spell-table {
+  width: 90%;
+  border: 1px solid black; /* GEÄNDERT: Rahmenfarbe Schwarz */
+  border-collapse: collapse; 
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Stil für die Tabellenüberschrift */
+.spell-table caption {
+  caption-side: top;
+  text-align: center;
+  font-weight: bold;
+  text-decoration: underline;
+  margin-bottom: 5px;
+  font-size: 1.1em;
+}
+
+/* Stile für Kopfzellen (th) und Datenzellen (td) */
+.spell-table th,
+.spell-table td {
+  border: 1px solid black; /* GEÄNDERT: Rahmenfarbe Schwarz */
+  padding: 8px;
+  text-align: left;
+}
+
+/* Hintergrundfarbe für die Kopfzeile */
+.spell-table th {
+  background-color: #e8d8b5; /* BEIBEHALTEN: Hintergrund (Helle Farbe) */
+  color: #000000; /* BEIBEHALTEN: Schriftfarbe (Schwarz) */
+}
+
+/* Stil für beschwörbare Kreaturen (Button-Links) */
+.spell-summon-link {
+  display: inline-block; /* Wichtig, damit padding funktioniert */
+  background-color: #e8d8b5; /* Passt zur Tabellenüberschrift */
+  color: #000000; /* Schwarzer Text */
+  padding: 5px 10px; /* Etwas kleiner, da es im Textfluss ist */
+  border: 1px solid #000; /* Schwarzer Rahmen */
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer; /* Zeigt an, dass es anklickbar ist */
+  margin-left: 5px; /* Kleiner Abstand zum Text davor */
+  transition: background-color 0.2s, color 0.2s;
+  user-select: none; /* Verhindert Textmarkierung beim Klicken */
+}
+
+/* Hover-Effekt */
+.spell-summon-link:hover {
+  background-color: #d4a017; /* Deine goldene Hover-Farbe */
+  color: #000;
+}
+
+/* --- STILE FÜR SCHRITT 8: EQUIPMENT--- */
+
+.equipment-section {
+    padding: 15px; /* Fügt Innenabstände hinzu */
+    background-color: rgba(58, 58, 65, 0.85); /* Setzt die Hintergrundfarbe */
+    border: 2px solid #d4a017; /* Fügt einen goldfarbenen Rahmen hinzu */
+    border-radius: 10px; /* Macht die Ecken abgerundet */
+    color: #e8d8b5; /* Setzt die Textfarbe */
+    text-align: left; /* Richtet den Text links aus */
+    overflow: auto; /* Ermöglicht Scrollen bei langem Text */
+    max-width: 95%; /* Begrenzung der maximalen Breite */
+    margin: 0 auto 5%; /* Zentriert den Container innerhalb des Elternblocks und fügt unteren Abstand hinzu */
+}
+
+/* Zusätzliche Klasse für Bereiche ohne goldenen Rahmen (z.b, Schritt 8) */
+.no-border {
+    border: none; /* Entfernt den goldenen Rahmen */
+    background-color: transparent; /* Hintergrundfarbe transparent */
+    max-width: 100%; /* Macht den Bereich breiter */
+    width: 95%; /* Optional: Setze eine feste Breite von 95% */
+    margin: 0 auto 5%; /* Zentriert den Bereich */
+    text-align: center; /* Richtet den Text in der Mitte aus */
+}
+
+/* Equipment-Tabelle (Bereich 1) */
+.equipment-table {
+    width: 100%; /* Die Tabelle nimmt die gesamte Breite des Containers ein */
+    max-width: 100%; /* Die Tabelle überschreitet niemals die Breite des Containers */
+    border-collapse: separate; /* Ermöglicht das Setzen von äußeren Rändern */
+    background-color: transparent; /* Hintergrund bleibt transparent */
+    margin: 0 auto; /* Tabelle zentrieren */
+    box-sizing: border-box; /* Bezieht Padding und Rahmen in die Breite mit ein */
+}
+
+/* Kopfzeile der Tabelle */
+.equipment-table thead th {
+    text-align: center;
+    vertical-align: middle;
+    font-size: 1.2em;
+    font-weight: bold;
+    padding: 20px;
+    background-color: rgba(58, 58, 65, 0.85); /* Dunkler Hintergrund */
+    color: #e8d8b5; /* Helle Schriftfarbe */
+    border-bottom: 2px solid #d4a017; /* Goldener Unterstrich */
+}
+
+/* Stil für die inneren Zell-Linien */
+.equipment-table th, .equipment-table td {
+    border: 1px solid transparent; /* Innere Linien transparent */
+    padding: 8px; /* Etwas Abstand innerhalb der Zellen */
+    font-size: 0.9em; /* Schriftgröße */
+}
+
+/* Buchstaben A, B, C, Keine größer machen */
+.equipment-table td.clickable-option label {
+    display: inline-block; /* Blockelement für Zentrierung */
+    width: 50px; /* Breitere Labels */
+    height: 50px; /* Höhere Labels */
+    line-height: 50px; /* Vertikale Zentrierung */
+    text-align: center; /* Horizontale Zentrierung */
+    border-radius: 50%; /* Runde Form für Kreis */
+    position: relative; /* Ermöglicht die Platzierung des gestrichelten Kreises */
+    transition: all 0.3s ease; /* Sanfter Übergang */
+    cursor: pointer; /* Zeigt an, dass das Label klickbar ist */
+    background-color: transparent; /* Standardmäßig kein Hintergrund */
+    border: 2px dashed #7a431d; /* Kupferfarbener gestrichelter Kreis */
+}
+
+/* Hover-Effekt auf das Label (Kupferfarben) */
+.equipment-table td.clickable-option label:hover {
+    background-color: rgba(122, 67, 29, 0.3); /* Kupferfarbener Hintergrund bei Hover */
+    border: 2px solid #d4a017; /* Durchgezogener goldener Rand bei Hover */
+    box-shadow: 0 0 10px rgba(212, 160, 23, 0.8); /* Goldener Schimmer */
+}
+
+/* Highlighting bei Auswahl: Goldener Kreis um den Buchstaben */
+.equipment-table td.clickable-option input[type="radio"]:checked + label {
+    background-color: rgba(212, 160, 23, 0.3); /* Goldener Hintergrund */
+    border: 2px solid #d4a017; /* Goldener Rand */
+    color: #e8d8b5; /* Helle Schriftfarbe */
+    font-weight: bold; /* Fettschrift */
+}
+
+/* Stil für Radio-Buttons innerhalb der Tabelle: unsichtbar machen */
+.equipment-table input[type="radio"] {
+    display: none;
+}
+
+/* =======================================================================
+   SPEZIAL-INFOBOX: EQUIPMENT OPTIONS (Links vom Content)
+   ======================================================================= */
+
+#equipmentOptionsInfoBox {
+    /* Grund-Reset: Wir erzwingen die Position links, egal was .info-box sagt */
+    position: fixed !important;
+    top: 50% !important;
+    /* Nur vertikal zentrieren, NICHT horizontal (überschreibt Modal-Logik) */
+    transform: translateY(-50%) !important;
+    
+    /* Dynamik: Keine Scrollbalken */
+    max-height: none !important;
+    overflow: visible !important;
+    
+    background-color: rgba(58, 58, 65, 0.9);
+    color: #e8d8b5;
+    padding: 20px;
+    border: 2px solid #d4a017;
+    border-radius: 10px;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.8);
+    z-index: 5;
+    text-align: left;
+    transition: width 0.3s ease, left 0.3s ease;
+}
+
+/* --- ZUSTAND: GROSSER MONITOR (> 1440px) --- */
+@media screen and (min-width: 1441px) {
+    #equipmentOptionsInfoBox {
+        width: 320px;
+        left: calc(50% - 665px) !important; /* 250px Content + 350px Box + 70px Puffer */
+    }
+}
+
+/* --- STUFE 1: LAPTOP / KLEINER MONITOR (< 1440px ODER < 850px Höhe) --- */
+@media screen and (max-width: 1440px) {
+    #equipmentOptionsInfoBox {
+        /* WICHTIG: Wir bleiben LINKS. Kein Sprung in die Mitte! */
+        width: 200px; /* Etwas schmaler für Laptops */
+        left: calc(50% + 295px) !important; /* 250px Content + 280px Box + 30px Puffer */
+        
+        /* Sicherstellen, dass transform nicht durch .info-box auf (-50%, -50%) gesetzt wird */
+        transform: translateY(-50%) !important; 
+    }
+}
+
+/* --- STUFE 2: TABLET / SCHMAL (< 1000px) --- */
+@media screen and (max-width: 1000px) {
+    #equipmentOptionsInfoBox {
+        display: block !important; /* Sichtbar machen, aber... */
+        position: relative !important; /* ...in den normalen Textfluss bringen */
+        left: 25px !important;
+        transform: none !important;
+        width: 25% !important;
+        max-width: 100% !important;
+        
+        /* Alles Box-Styling entfernen */
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 10px 0 20px 0 !important;
+        z-index: 5 !important;
+        overflow: visible !important;
+        max-height: none !important;
+    }
+
+    /* Alle dekorativen oder informativen Elemente verstecken */
+    #equipmentOptionsInfoBox h3,
+    #equipmentOptionsInfoBox .close-icon,
+    #equipmentOptionsInfoBox hr,
+    #equipmentOptionsInfoBox h4 {
+        display: none !important;
+    }
+
+    /* Liste bereinigen */
+    #equipmentOptionsInfoBox ul {
+        padding: 0 !important;
+        margin: 0 !important;
+        list-style: none !important;
+    }
+
+    /* Nur die Listenelemente zeigen, die ein Dropdown enthalten */
+    /* Statische Items (nur Text) werden hier ausgeblendet */
+    #equipmentOptionsInfoBox ul li {
+        margin-bottom: 10px;
+    }
+
+    #equipmentOptionsInfoBox ul li:not(:has(select)) {
+        display: none !important;
+    }
+
+    /* Dropdowns für Mobile optimieren */
+    #equipmentOptionsInfoBox .varies-dropdown {
+        width: 100% !important;
+        max-width: 100% !important;
+        background-color: #2e2e33;
+        border: 1px solid #d4a017; /* Goldener Rand zur besseren Sichtbarkeit */
+    }
+}
+
+/* Das "X" (Schließen-Icon) nur in dieser Box ausblenden */
+#equipmentOptionsInfoBox .close-icon {
+    display: none !important;
+}
+
+#equipmentOptionsInfoBox h3 {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+#equipmentOptionsInfoBox ul {
+    list-style-type: none;
+    padding-left: 10px;
+}
+
+/* Purse Section (Bereich 2) */
+.purse-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e8d8b5; /* Devider in heller Farbe */
+    padding-bottom: 5px;
+}
+
+#purseInputs {
+    display: grid;
+    grid-template-columns: repeat(5, 0.1fr);
+    gap: 8px;
+    justify-content: center; /* Zentriert die gesamte Eingabegruppe horizontal */
+    align-items: center; /* Zentriert die Inputs vertikal */
+    margin-top: 10px;
+}
+
+#purseInputs .coin-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#purseInputs .coin-column label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+#purseInputs input[type="number"] {
+    width: 60px;
+    padding: 5px;
+    text-align: center;
+    margin: 0; /* Überschreibt main.js Standard-Margin-Bottom */
+    font-size: 16px;
+    height: 30px;
+}
+
+/* Styling für den Reset-Button (identisch zu anderen Buttons) */
+#resetPurseBtn {
+    background-color: #8b5e34; /* Kupferfarbener Hintergrund */
+    color: #e8d8b5; /* Textfarbe (falls benötigt, hier irrelevant) */
+    border-radius: 8px; /* Abgerundete Ecken */
+    padding: 8px; /* Innenabstand */
+    cursor: pointer; /* Zeiger bei Hover */
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Sanfte Übergänge */
+    display: flex; /* Flexbox für zentriertes Icon */
+    align-items: center; /* Zentriert das Icon vertikal */
+    justify-content: center; /* Zentriert das Icon horizontal */
+    width: auto; /* Automatische Breite */
+    min-width: 40px; /* Mindestbreite festlegen */
+    height: 40px; /* Einheitliche Höhe */
+}
+
+/* Hover-Effekt für den Reset-Button */
+#resetPurseBtn:hover {
+    background-color: #a36a42; /* Hellere Kupferfarbe bei Hover */
+}
+
+/* Styling für das Icon im Reset-Button */
+#resetPurseBtn .reset-icon {
+    width: 24px; /* Breite des Icons */
+    height: 24px; /* Höhe des Icons */
+    pointer-events: none; /* Verhindert, dass das Icon den Button-Click blockiert */
+}
+
+/* Toggle Header (Bereich 3) */
+.toggle-header h3 {
+    text-align: left;
+    cursor: pointer;
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toggle-header #toggleArrow {
+    transition: transform 0.3s ease-in-out;
+}
+
+.toggle-header.expanded-border {
+    border-bottom: none !important; /* Entfernt die untere Linie des Headers */
+    border-bottom-left-radius: 0 !important; /* Entfernt die untere linke Rundung */
+    border-bottom-right-radius: 0 !important; /* Entfernt die untere rechte Rundung */
+    background-color: transparent !important; /* Macht den Header-Hintergrund transparent, um mit dem Inhalt zu verschmelzen */
+    box-shadow: none !important; /* Entfernt jeglichen Schatten, der die Nahtstelle stören könnte */
+}
+
+/* Rotation des Pfeils, wenn der Bereich aufgeklappt ist */
+#additionalEquipmentToggle:not([style*="display: none"]) h3[onclick*="true"] #toggleArrow {
+    transform: rotate(-180deg);
+}
+
+#itemSelectionContainer {
+    text-align: left;
+}
+
+#additionalEquipmentSection hr {
+    border: none;
+    border-top: 2px solid #d4a017; /* Goldener Divider */
+    margin: 30px 0; /* Abstand oben/unten */
+}
+
+/* Container für jedes Eingabefeld und den Button in Schritt 8 */
+.equipment-form-group {
+    display: flex;
+    flex-direction: column; /* Elemente innerhalb des Containers untereinander anordnen */
+    margin-bottom: 15px; /* Abstand zwischen den Gruppen */
+    align-items: flex-start; /* Elemente linksbündig ausrichten */
+}
+
+/* Styling für Labels in Schritt 8 */
+.equipment-label {
+    font-size: 1em; /* Schriftgröße */
+    margin-bottom: 5px; /* Abstand zwischen Label und Input */
+    color: #e8d8b5; /* Textfarbe */
+}
+
+/* Styling für Buttons in Schritt 8 */
+.equipment-button {
+    width: auto; /* Automatische Breite (an Text angepasst) */
+    padding: 10px 20px; /* Innenabstand (oben/unten, links/rechts) */
+    color: #e8d8b5; /* Textfarbe */
+    background-color: #8b5e34; /* Kupferfarbener Hintergrund */
+    border: 1px solid #d4a017; /* Goldfarbener Rahmen */
+    border-radius: 5px; /* Abgerundete Ecken */
+    cursor: pointer; /* Zeiger bei Hover */
+    transition: background-color 0.3s ease; /* Sanfter Übergang bei Hover */
+}
+
+/* Button-Hover-Effekt in Schritt 8 */
+.equipment-button:hover {
+    background-color: #a36a42; /* Hellere Kupferfarbe bei Hover */
+}
+
+
+/* Item-Tabellen in Bereich 3 */
+.item-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    text-align: left;
+    font-size: 0.85em;
+}
+
+.item-table th, .item-table td {
+    border: 1px solid black; /* Rahmenfarbe Schwarz */
+    padding: 5px;
+    vertical-align: middle;
+}
+
+.item-table th {
+    background-color: #e8d8b5; /* Helle Hintergrundfarbe */
+    color: #000000; /* Schwarze Schriftfarbe */
+}
+
+/* Stil für die Eingabe im Feld "Anzahl" (Punkt 6) */
+.item-table input[type="number"] {
+    width: 40px;
+    padding: 2px;
+    text-align: center;
+    margin: 0;
+    font-size: 0.9em;
+    height: 25px;
+}
+
+#equipmentTablesContainer hr {
+    border: none;
+    border-top: 2px solid #e8d8b5; /* Devider in heller Farbe */
+    margin: 30px auto; /* Vertikaler Abstand */
+}
+
+/* Stil für durchgestrichene Preise (Punkt 6) */
+.strikethrough-cost {
+    text-decoration: line-through;
+    color: #ff5555; /* Rot zur Verdeutlichung */
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.normal-cost {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* --- Spezifisches Styling für Varianten-Dropdowns in Tabellen --- */
+
+.varies-dropdown {
+    font-size: 0.85em; 
+    padding: 2px 5px;
+    height: auto;
+    margin: 0;
+    background-color: #2e2e33; 
+    border: 1px solid #8b5e34; 
+    color: #e8d8b5;    
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Spezifische Anpassung für Tabelle (falls nötig, z.B. Breite) */
+.item-table .varies-dropdown {
+    width: 95%;      
+    min-width: 100px;
+}
+
+/* Spezifische Anpassung für Infobox (falls nötig) */
+.info-box .varies-dropdown {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* --- STILE FÜR PACK-KOMPONENTEN (Ein-/Ausklappen) --- */
+
+/* Optische Anpassung für klickbare Hauptzeile */
+.pack-main-row {
+    cursor: pointer;
+    font-weight: bold;
+    /* Optional: Hintergrund bei Hover leicht hervorheben */
+    transition: background-color 0.2s;
+}
+.pack-main-row:hover {
+    background-color: rgba(139, 94, 52, 0.2); /* Leichte Kupferfarbe */
+}
+
+/* Stil für Pack-Komponenten Zeilen */
+.pack-component-row td {
+    font-size: 0.9em;
+    padding-left: 20px !important; /* Einzug zur Unterscheidung */
+    background-color: rgba(122, 67, 29, 0.1); /* Leichter Hintergrund */
+    /* Fügt eine weiche Transition für das Ausblenden hinzu */
+    transition: opacity 0.3s ease, max-height 0.3s ease;
+}
+
+.pack-component-row td input[type="number"] {
+    opacity: 0.5; /* Ausgrauen des Input-Felds */
+}
+
+/* Zustand: Zeilen ausblenden, wenn die Hauptzeile auf 'pack-collapsed' steht */
+.pack-component-row.pack-collapsed {
+    /* Setzt die Zeile auf unsichtbar und entfernt sie aus dem Layout */
+    display: none; 
+}
+
+.pack-component-row.pack-collapsed td {
+    border: none !important; /* Entfernt jeglichen Rahmen auf den Zellen selbst */
+    padding: 0 !important;   /* Entfernt Padding, falls dieses die Höhe beeinflusst */
+}
+
+.pack-arrow {
+    display: inline-block; /* Wichtig für Transformationen */
+    margin-left: 5px;      /* Abstand zum Text "Pack" */
+    font-size: 0.8em;      /* Etwas kleiner als der Text */
+    color: #d4a017;        /* Goldene Farbe passend zum Theme */
+    transition: transform 0.3s ease; /* Weiche Animation beim Drehen */
+}
+
+/* Zustand: Ausgeklappt (Pfeil zeigt nach unten) */
+.pack-arrow.arrow-down {
+    transform: rotate(0deg);
+}
+
+/* Zustand: Eingeklappt (Pfeil zeigt nach oben - oder zur Seite, wie gewünscht) */
+.pack-arrow.arrow-up {
+    transform: rotate(180deg); /* Dreht den Pfeil nach oben */
+    /* Alternativ: rotate(-90deg); für einen Pfeil nach rechts */
+}
+
+/* --- Spezifische Styles für Schritt 9 (Story) --- */
+
+.story-wrapper {
+    overflow: hidden;           /* Sorgt dafür, dass das Textfeld nicht über die runden Ecken schlägt */
+    display: flex;              /* Verhindert Ghost-Spaces am Boden */
+}
+
+.story-inner-textarea {
+    width: 100%;                /* Nutzt die volle Breite der .class-section */
+    height: 400px;              /* Deine gewünschte Höhe */
+    background: transparent;    /* Nutzt den Hintergrund der .class-section */
+    border: none;               /* Entfernt den eigenen Rahmen des Textfelds */
+    color: #e8d8b5;             /* Textfarbe */
+    font-family: 'Garamond', serif; /* Schriftart */
+    font-size: 1.0em;           /* Schriftgröße */
+    padding: 0px;              /* kein wieterer innerer Rand */
+    box-sizing: border-box;     /* WICHTIG: Padding bleibt innerhalb der 100% Breite */
+    resize: vertical;           /* Nur vertikale Skalierung erlauben */
+    outline: none;              /* Entfernt den blauen Fokus-Rahmen */
+}
+
+.story-counter-position {
+    max-width: 85%;             /* Gleiche Breite wie die .class-section */
+    margin: -2% auto 3%;        /* Schiebt den Zähler ganz nah unter die Box */
+}
+
+.full-width-input {
+    max-width: 100% !important;  /* Erlaubt dem Input, die komplette Breite der Sektion zu füllen */
+    width: 100% !important;      /* Setzt die Breite fest auf 100% des verfügbaren Platzes */
+}
+
+.community-input-group {
+    margin-bottom: 5px;          /* Verringert den Abstand zwischen Name und Beschreibung */
+}
+
+.small-spacing {
+    margin-bottom: 5px;          /* Hält den Zähler der Gemeinschaft nah am Eingabefeld */
+}
+
+.story-textarea {
+    width: 100%;                 /* Standardbreite für Textfelder innerhalb von Sektionen */
+    height: 300px;               /* Standardhöhe für das Feld */
+    text-align: left;            /* Text beginnt immer links oben */
+    padding: 15px;               /* Innenabstand für bessere Lesbarkeit */
+    resize: vertical;            /* Nur vertikale Größenänderung möglich */
+}
+
+.community-textarea {
+    width: 100%;                 /* Nutzt die volle Breite innerhalb der Gemeinschafts-Sektion */
+    height: 250px;               /* Kompakte Höhe für kurze Beschreibungen */
+    text-align: left;            /* Linksbündige Ausrichtung */
+    padding: 10px;               /* Abstand vom Text zum Rand */
+    resize: vertical;            /* Verhindert horizontales Verzerren des Layouts */
+}
+
+#communityDescInput {
+    max-width: 100%;
+    margin-bottom: 0px; 
+}
+
+.text-left-input {
+    text-align: left !important;    /* Erzwingt die Linksbündigkeit auch in zentrierten Formularen */
+    padding-left: 15px !important;  /* Schafft einen festen Einzug für den Textanfang */
+}
+
+.char-counter {
+    text-align: right;           /* Platziert die Zeichenzahl am rechten Rand */
+    font-size: 0.8em;            /* Macht die Information kleiner als den Haupttext */
+    color: #d4a017;              /* Färbt den Zähler im Gold-Ton des Designs */
+}
+
+.spacer-bottom {
+    margin-bottom: 15px;         /* Erzeugt Platz zum nächsten Element */
+}
+
+.radio-group-centered {
+    display: flex;               /* Ermöglicht das Nebeneinandersetzen von Radio-Buttons */
+    justify-content: center;     /* Zentriert die Auswahlmöglichkeiten horizontal */
+    margin-bottom: 20px;         /* Abstand zur nächsten Unter-Sektion */
+    gap: 20px;                   /* Bestimmt den Platz zwischen den Buttons */
+}
+
+.setting-selection {
+    text-align: left;            /* Richtet die Welt-Auswahl linksbündig aus */
+    margin-bottom: 15px;         /* Erzeugt Abstand vor den Pantheon-Listen */
+}
+
+.info-sub-box {
+    margin-top: 10px;            /* Lücke zwischen Dropdown und Info-Anzeige */
+    padding: 10px;               /* Innenraum für Gesinnungs- und Symboltext */
+    border-top: 1px dashed #d4a017; /* Gestrichelte Goldlinie zur Abgrenzung */
+}
+
+.story-flex-container {
+    display: flex;               /* Aktiviert flexible Anordnung */
+    flex-direction: column;      /* Stapelt Labels und Dropdowns vertikal untereinander */
+}
+
+
+#deityFreeName, 
+#communityNameInput {
+    margin-top: 0px;
+    margin-bottom: 0.5vh;
+}
+
+#nameOfCommunityLabel,
+#nameOfDeityLabel {
+    margin-bottom: 0px;
+}
+
+/* Das Grid-System für die Ausrichtung */
+.deity-grid {
+    display: grid;
+    grid-template-columns: 120px 1fr; /* 120px für Labels, der Rest für Werte */
+    gap: 8px 10px;                   /* 8px Abstand zwischen Zeilen, 10px zwischen Spalten */
+    text-align: left;
+}
+
+/* Styling für die Labels (links) */
+.deity-label {
+    color: #d4a017;                  /* Goldener Ton für die Bezeichnung */
+    font-weight: bold;
+}
+
+/* Styling für die Werte (rechts) */
+.deity-value {
+    color: #e8d8b5;                  /* Hellere Farbe für die eigentlichen Infos */
+}
+
+/* Falls die IDs noch den globalen 5vh-Abstand haben, hier die Brechstange: */
+#valDeityAlignment, #valDeitySymbol {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* --- PERSÖNLICHKEIT & GESINNUNG (Schritt 10) --- */
+
+.personality-wrapper {
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15%;
+}
+
+/* Das Pseudo-Textfeld */
+#personalityEditor {
+    min-height: 180px;
+    height: auto;
+    max-height: 450px;
+    overflow-y: auto;
+    padding: 10px;
+    text-align: left;
+    white-space: pre-wrap;
+    cursor: text;
+    line-height: 1.4;
+    outline: none; /* Entfernt den blauen Rahmen beim Klicken */
+    color: #e8d8b5 !important; /* Standardfarbe für allen Text im Feld */
+}
+
+
+/* Nur die Spans (die reingezogenen Traits) dürfen ihre eigene Farbe haben */
+#personalityEditor span {
+    /* Wir erzwingen hier keine Farbe, damit das inline-style aus JS greift */
+    font-weight: bold;
+    display: inline; /* Wichtig, damit der Textfluss natürlich bleibt */
+}
+
+/* Placeholder-Logik für ContentEditable */
+#personalityEditor:empty:before {
+    content: attr(data-placeholder);
+    color: rgba(232, 216, 181, 0.4);
+}
+
+/* Verhindert, dass leere Spans den Cursor "einfangen" */
+#personalityEditor span:empty {
+    display: none;
+}
+
+.personality-counter-layout {
+    margin: 0 20px 10px auto;
+}
+
+.personality-divider {
+    border: none;
+    border-top: 1px dashed rgba(212, 160, 23, 0.6);
+    margin: 0;
+}
+
+/* --- Reset-Icon --- */
+#resetTraitsButton {
+    background-color: #8b5e34;
+    border-radius: 8px;
+    padding: 8px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+#resetTraitsButton .reset-icon {
+    width: 16px !important;  /* Brechstange gegen "Riesig" */
+    height: 16px !important;
+    pointer-events: none;    /* Verhindert, dass das Icon gezogen wird */
+}
+
+
+/* Trait Tabelle */
+.trait-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.3);
+    min-height: 150px; /* Sicherstellen, dass sie Platz einnimmt */
+}
+
+.trait-column {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.trait-header {
+    font-size: 0.75em;
+    font-weight: bold;
+    color: #d4a017;
+    margin-bottom: 5px;
+    text-align: center; /* Zentriert */
+    text-transform: uppercase;
+}
+
+.draggable-trait-item {
+    display: flex;
+    min-height: 20px;
+    padding: 6px 2px;
+    font-size: 0.8em;
+    border-radius: 4px;
+    cursor: grab;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Trait Farben nach Kategorie */
+.trait-bg-good    { background-color: #7a9eb5; color: #fff; } /* Staubiges Blau */
+.trait-bg-lawful  { background-color: #a68d52; color: #fff; } /* Altgold / Ocker */
+.trait-bg-neutral { background-color: #b0b0b0; color: #fff; } /* Helleres Silbergrau */
+.trait-bg-chaotic { background-color: #a34a4a; color: #fff; } /* Gedämpftes Weinrot */
+.trait-bg-evil    { background-color: #38383d; color: #fff; } /* Tiefes Anthrazit *
+
+/* Alignment 3x3 Raster */
+.alignment-matrix {
+    display: grid;
+    grid-template-columns: repeat(3, 110px);
+    grid-template-rows: repeat(3, 110px);
+    justify-content: center;
+    margin: 40px auto;
+    gap: 5px;
+}
+
+.alignment-circle-item {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 2px dashed rgba(232, 216, 181, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.8em;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.alignment-circle-item.active-selection {
+    border: 3px solid #fff !important;
+    transform: scale(1.1);
+    z-index: 10;
+    box-shadow: 0 0 15px white;
+}
+
+/* Alignment Farben */
+#align-lg { background-color: #5a7a5a; color: #fff; } /* Moosgrün */
+#align-ng { background-color: #7a9eb5; color: #fff; } /* Staubiges Blau */
+#align-cg { background-color: #7a6a8a; color: #fff; } /* Gedämpftes Pflaume/Violett */
+
+#align-ln { background-color: #a68d52; color: #fff; } /* Altgold */
+#align-n  { background-color: #b0b0b0; color: #fff; } /* Helleres Silbergrau */
+#align-cn { background-color: #a34a4a; color: #fff; } /* Weinrot (ehemals Orange) */
+
+#align-le { background-color: #5e543a; color: #fff; } /* Dunkles, schmutziges Ocker */
+#align-ne { background-color: #252529; color: #fff; } /* Beinahe Schwarz */
+#align-ce { background-color: #5c3535; color: #fff; } /* Dunkles, schmutziges Rostrot */
+
+.trait-table-controls {
+    display: flex;
+    justify-content: flex-end;
+    /* Gleicher Abstand nach oben (zur gestrichelten Linie) und nach unten (zum grauen Bereich) */
+    padding: 10px 15px !important; 
+    background-color: transparent;
+}
+
+/* Für normale Textareas */
+input::placeholder,
+textarea::placeholder,
+.story-inner-textarea::placeholder {
+    color: rgba(232, 216, 181, 0.4) !important;
+    font-family: inherit;
+    font-size: 1em; /* Bei kleinen Inputs oft etwas schöner, wenn minimal kleiner */
+    opacity: 1;
+}
+
+/* --- SCHRITT 11: APPEARANCE --- */
+
+.appearance-grid {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.appearance-row {
+    display: grid;
+    grid-template-columns: 60% 0.5fr auto; /* Breite Spalte für Label + ⌀ Text */
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.appearance-label {
+    color: #e8d8b5;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.85em;
+    display: flex;
+    flex-direction: column;
+}
+
+.orientation-text {
+    opacity: 0.5;
+    font-size: 1em;
+    text-transform: none;
+    margin-top: 2px;
+}
+
+.appearance-value {
+    color: #e8d8b5;
+    font-size: 0.95em;
+}
+
+.highlight-gold {
+    color: #d4a017;
+    font-weight: bold;
+}
+
+.app-small-input {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(212, 160, 23, 0.3);
+    color: #e8d8b5;
+    padding: 6px 12px;
+    border-radius: 4px;
+    width: 250px;
+    font-family: inherit;
+}
+
+.size-input-width {
+    width: 90px !important;
+}
+
+.input-with-unit {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.unit-text {
+    font-size: 0.85em;
+    color: #e8d8b5;
+}
+
+.app-small-input:focus {
+    outline: none;
+    border-color: #d4a017;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.app-small-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#selectGender {
+    margin-bottom: 0 !important; /* !important nur, falls andere Regeln stören */
+    width: 120px;
+}
+
+#inputAge {
+    margin-bottom: 0 !important; /* !important nur, falls andere Regeln stören */
+    width: 90px;
+}
+
+/* Individuelle Korrektur für die Inputs */
+#inputEyeColor, 
+#inputHairColor, 
+#inputSkinTone, 
+#inputSize {
+    margin-bottom: 0 !important; /* !important nur, falls andere Regeln stören */
+    width: 120px;
+}
+
+.name-inner-textarea {
+    width: 100%;
+    height: 50px;
+    background: transparent;
+    border: none;
+    color: #e8d8b5;
+    font-family: 'Garamond', serif;
+    font-size: 1.5em; /* Größer für den Namen */
+    font-weight: bold; /* Macht den Text fett */
+    padding: 12px 15px;
+    box-sizing: border-box;
+    resize: none; /* Deaktiviert das manuelle Vergrößern */
+    outline: none;
+    overflow: hidden; /* Verhindert Scrollbalken */
+    display: block;
+}

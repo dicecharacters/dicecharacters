@@ -1,0 +1,1607 @@
+/* ==========================================================================
+   GRUNDEINSTELLUNGEN & DRUCK-SETUP
+   ========================================================================== */
+
+@page {
+    size: A4 portrait;
+    margin: 5mm;
+}
+
+html {
+    font-size: 62.5%; /* Setzt 1rem = 10px für einfache Umrechnung */
+}
+
+body {
+    background-color: #555;
+    font-family: 'Bahnschrift Light', 'Arial', sans-serif;
+    font-size: 1.1rem; /* Alte Basis-Schriftgröße war 11px */
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.page {
+    background: white;
+    width: 210mm;
+    min-height: 297mm; /* GEÄNDERT: Die Seite darf jetzt wachsen */
+    margin: 3rem auto;
+    box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.3);
+    box-sizing: border-box;
+}
+
+/* --- GEMEINSAMES BUTTON DESIGN --- */
+.control-group {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    
+    display: flex;
+    flex-direction: column; /* Untereinander stapeln */
+    gap: 10px;              /* Fester Abstand zwischen den Buttons (skaliert mit) */
+    
+    z-index: 2000;
+    transform-origin: bottom right; /* Zieht sich in die Ecke zurück beim Schrumpfen */
+    transition: all 0.2s ease;
+}
+
+/* Hover über die gesamte Gruppe: Alles wieder sichtbar & groß machen */
+.control-group:hover {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+}
+
+/* --- BUTTON DESIGN (Aussehen) --- */
+.control-btn {
+    /* Keine Positionierung mehr hier, das macht der Container! */
+    width: 220px;
+    height: 50px;
+    padding: 0 20px;
+    
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 16px;
+    color: white;
+    
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+    filter: brightness(110%);
+    box-shadow: 0 6px 8px rgba(0,0,0,0.4);
+}
+
+.control-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* --- FARBEN --- */
+
+/* Bearbeiten (Oben) */
+.edit-btn {
+    background-color: #007bff; 
+}
+.edit-btn.active {
+    background-color: #dc3545; 
+}
+
+/* Download (Unten) */
+.download-btn {
+    background-color: #000000; 
+}
+
+
+/* --- ZOOM & TRANSPARENZ LOGIK --- */
+/* Skaliert den gesamten Container inkl. Abstand.
+   Ab 1000px und abwärts wird es transparent. */
+
+@media (max-width: 1600px) {
+    .control-group { transform: scale(0.9); }
+}
+@media (max-width: 1400px) {
+    .control-group { transform: scale(0.8); }
+}
+@media (max-width: 1200px) {
+    .control-group { transform: scale(0.7); }
+}
+@media (max-width: 1000px) {
+    .control-group { 
+        transform: scale(0.6); 
+        opacity: 0.5; /* Halb transparent */
+    }
+}
+@media (max-width: 800px) {
+    .control-group { 
+        transform: scale(0.5); 
+        opacity: 0.3; /* Stark transparent */
+    }
+}
+
+
+@media print {
+    html { -webkit-text-size-adjust: 100%; }
+    body { background: none; }
+    .page { 
+        margin: 0; 
+        box-shadow: none; 
+        height: 297mm;      /* NEU: Feste Höhe für den Druck */
+        overflow: hidden;   /* NEU: Überlauf im Druck abschneiden */
+    }
+    .control-group { display: none !important; }
+    .control-btn { display: none !important; }
+}
+
+/* Stellt das A4-Format für den PDF-Export wieder her */
+.pdf-export-mode .page {
+    height: 297mm !important;
+    max-height: 297mm !important;
+    overflow: hidden !important; 
+    margin: 0 !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+}
+
+/* Zusätzliche Sicherheit, um Überlauf im inneren Container zu verhindern */
+.pdf-export-mode .character-sheet {
+    height: 100% !important;
+    max-height: 100% !important;
+    box-sizing: border-box !important;
+    /* Der magische Trick: minmax(0, 1fr) zwingt das Grid, in der A4-Seite zu bleiben! */
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto !important; 
+}
+
+/* Seite 2, 3 und 4 haben eine Zeile weniger (keine Info-Blöcke) */
+.pdf-export-mode .character-sheet.simple-layout {
+    grid-template-rows: auto auto minmax(0, 1fr) auto !important; 
+}
+
+/* 3. DER ABSTAND VOR DEM FOOTER */
+.pdf-export-mode .sheet-main-content {
+    height: auto !important; 
+    min-height: 0 !important; 
+    
+    /* KORREKTUR: Auf 0 setzen! Das Grid-System selbst macht bereits 1rem Abstand. 
+       Vorher waren es in Summe 2rem, weshalb zu früh abgeschnitten wurde! */
+    margin-bottom: 0 !important; 
+    
+    padding-bottom: 2px !important; 
+    overflow: hidden !important;
+}
+
+/* 4. DIE INNEREN BOXEN ZWINGEN, DEN PLATZ ZU NUTZEN */
+/* Verhindert, dass auf Seite 3 & 4 Lücken entstehen */
+.pdf-export-mode .simple-content-override,
+.pdf-export-mode .page4-main,
+.pdf-export-mode .inventory-grid {
+    height: 100% !important; 
+    min-height: 0 !important;
+    margin-bottom: 0 !important; /* Löscht alte, störende Abstände */
+}
+
+/* 5. FOOTER NORMAL BELASSEN */
+.pdf-export-mode .sheet-footer {
+    margin: 0 !important;
+}
+
+/* 1. Zwingt alle 3 Spalten auf Seite 1, exakt dieselbe Höhe einzunehmen */
+.pdf-export-mode .attributes-column,
+.pdf-export-mode .right-column {
+    height: 100% !important;
+}
+
+/* 2. Sagt dem Trainings-Bereich in der rechten Spalte, dass er nach unten wachsen soll */
+.pdf-export-mode .trainings-container {
+    flex-grow: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* 3. Streckt die unterste Box (Werkzeuge), damit sie unten perfekt bündig mit "Charisma" abschließt */
+.pdf-export-mode .trainings-container .trainings-box:last-child {
+    flex-grow: 1 !important;
+}
+
+/* ==========================================================================
+   DAS CSS GRID FUNDAMENT
+   ========================================================================== */
+
+.character-sheet {
+    display: grid;
+    box-sizing: border-box;
+    /* Spalten: 2 für Attribute, 1 für die flexible rechte Spalte */
+    grid-template-columns: 18.8rem 18.8rem 1fr;
+    /* Reihen: Header, Divider, Info-Blöcke, Hauptinhalt (flexibel), Footer */
+    padding: 5mm;
+    grid-template-rows: auto auto auto 1fr auto;
+    gap: 1rem 1rem;
+    grid-template-areas:
+        "header header header"
+        "divider divider divider"
+        "infoblocks infoblocks infoblocks"
+        "main main main"
+        "footer footer footer";
+}
+
+.sheet-header         { grid-area: header; }
+.sheet-divider        { grid-area: divider; }
+.sheet-info-blocks    { grid-area: infoblocks; }
+.sheet-main-content   { grid-area: main; }
+.sheet-footer         { grid-area: footer; }
+
+/* --- Unter-Grids für die Hauptbereiche --- */
+
+.sheet-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1.2fr;
+    gap: 1rem;
+    align-items: center;
+}
+
+.sheet-info-blocks {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+}
+
+.sheet-main-content {
+    display: grid;
+    grid-template-columns: subgrid; /* Übernimmt die Spalten vom Elternelement */
+    grid-column: 1 / -1; /* Wichtig: Spannt über alle Spalten */
+    gap: 1.5rem 1rem;
+    align-items: stretch;
+}
+
+/* Zuweisung der Inhalte zu den Spalten im Main-Grid */
+.attributes-column#attributes-col-1 { grid-column: 1; }
+.attributes-column#attributes-col-2 { grid-column: 2; }
+.right-column                     { grid-column: 3; }
+
+/* Erzwingt einen identischen, festen Abstand der Boxen zur Fußzeile auf Seite 2, 3 und 4 */
+.simple-layout .sheet-footer {
+    margin-top: 1rem !important;
+}
+
+/* ==========================================================================
+   STYLING DER EINZELNEN KOMPONENTEN
+   ========================================================================== */
+
+/* --- HEADER-BEREICH --- */
+.char-name-group { display: flex; flex-direction: column; }
+.character-name-input { width: 100%; padding: 1rem; border: 0.1rem solid black; border-radius: 0.5rem; box-sizing: border-box; font-size: 1.6rem; background: transparent; }
+.character-name-label { font-size: 1.1rem; padding: 0.2rem; color: #333; }
+
+.level-xp { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem; height: 12rem; border: 0.1rem solid black; border-radius: 0.5rem; padding: 1rem; box-sizing: border-box; }
+.level-xp .field-group { display: flex; flex-direction: column; align-items: center; }
+.level-xp input { width: 5rem; padding: 0.5rem 0; font-size: 1.4rem; text-align: center; border: none; border-bottom: 0.1rem solid #333; background-color: transparent; }
+.level-xp label { font-size: 1.1rem; margin-top: 0.2rem; }
+
+.header { height: 100%; border: 0.1rem solid black; border-radius: 0.5rem; padding: 0.5rem 1.5rem; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1rem; align-content: space-evenly; }
+.header .field-group { display: flex; flex-direction: column-reverse; }
+.header input { width: 100%; border: none; border-bottom: 0.1rem solid #333; padding: 0.5rem 0; font-size: 1.4rem; background-color: transparent; }
+.header label { font-size: 1.1rem; margin-top: 0.2rem; }
+
+/* --- TRENNLINIE & INFO-BLÖCKE --- */
+.sheet-divider { grid-area: divider; display: flex; align-items: center; gap: 0.5rem; }
+.sheet-divider .line { flex-grow: 1; height: 0.2rem; background-color: #010101; }
+.sheet-divider #dragonDivider { height: 3rem; width: auto; flex-shrink: 0; }
+
+.block { flex: 1; height: 5rem; border: 0.1rem solid black; border-radius: 0.5rem; padding: 0.5rem; display: flex; flex-direction: column; justify-content: flex-end; text-align: center; }
+.block-header { font-weight: bold; font-size: 1.2rem; margin-bottom: 0.5rem; }
+.block-divider { border-top: 0.1rem solid black; margin-bottom: 0.5rem; }
+.block input { width: 50%; border: none; border-bottom: 0.1rem solid #333; background: transparent; text-align: center; font-size: 1.4rem; align-self: center; height: 2.1rem; line-height: 2.1rem; }
+
+/* --- HAUPTINHALT: ATTRIBUTE & RECHTE SPALTE --- */
+.attributes-column, .right-column { display: flex; flex-direction: column; gap: 1rem; }
+
+.attribute-box { border: 0.1rem solid black; border-radius: 0.5rem; padding: 1rem; box-sizing: border-box; display: flex; flex-direction: column; flex-grow: 1; }
+.attribute-header { text-align: center; font-weight: bold; margin-bottom: 1.1rem; margin-top: 0.3rem; font-size: 1.2rem; text-transform: uppercase; }
+.attribute-body { display: flex; flex-direction: column; gap: 0.7rem; flex-grow: 1; }
+.attribute-score { display: flex; justify-content: center; align-items: center; gap: 0.6rem; }
+.modifier-container, .score-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 1rem; gap: 0.3rem; }
+.modifier-circle { width: 5.3rem; height: 5.3rem; border: 0.2rem solid black; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.modifier-circle input { width: 100%; height: 5.3rem; font-size: 1.9rem; text-align: center; border: none; background: transparent; padding: 0; line-height: 5.3rem; }
+.score-box { border: 0.1rem solid black; width: 4rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; }
+.score-box input { width: 100%; height: 2.5rem; font-size: 1.3rem; text-align: center; border: none; background: transparent; padding: 0; line-height: 2.5rem; }
+.modifier-label, .score-label { font-size: 1rem; color: #333; }
+.saving-throw, .skills { border-top: 0.1rem solid black; padding-top: 1rem; }
+.saving-throw { display: flex; align-items: center; gap: 0.3rem; }
+.skills { display: flex; flex-direction: column; gap: 0.5rem; margin-top: auto; }
+.skill { display: flex; align-items: center; gap: 0.5rem; }
+.saving-throw input[type="text"], .skill .skill-value { width: 2rem; text-align: center; border: none; border-bottom: 0.1rem solid black; font-size: 1.4rem; }
+
+.stats-group { display: grid; grid-template-columns: auto 1fr; gap: 1rem; }
+.left-stats-column, .right-stats-column { display: flex; flex-direction: column; gap: 1rem; }
+.proficiency-bonus-container { display: flex; align-items: center; }
+.bonus-circle { width: 3.8rem; height: 3.8rem; border: 0.2rem solid black; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: -1.8rem; z-index: 5; background: white; position: relative; }
+.bonus-circle::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; border-radius: 50%; z-index: 1; }
+.bonus-circle input { width: 100%; height: 100%; padding: 0; box-sizing: border-box; font-size: 1.4rem; font-weight: bold; text-align: center; border: none; background: transparent; outline: none; position: relative; z-index: 2; line-height: 3.8rem; }
+.bonus-label { border: 0.1rem solid black; border-radius: 0.5rem; padding: 0.6rem 1.5rem 0.6rem 2.5rem; font-size: 1.2rem; font-weight: bold; text-transform: uppercase; }
+
+.icon-details-wrapper { display: flex; align-items: stretch; gap: 1rem; }
+.stat-container { position: relative; width: 11rem; flex-shrink: 0; }
+.stat-container .stat-background-image { width: 100%; display: block; }
+.stat-value-input { position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%); width: 5rem; background: transparent; border: none; border-bottom: 0.1rem solid #000; color: #333; font-size: 2.5rem; font-weight: bold; text-align: center; padding: 0; z-index: 10; }
+.sub-stat-label { position: absolute; top: 55%; left: 50%; transform: translateX(-50%); font-size: 1rem; }
+.stat-banner { position: absolute; bottom: 0.8rem; left: 50%; transform: translateX(-50%); width: 95%; background: white; border: 0.1rem solid #333; border-radius: 0.3rem; padding: 0.4rem; box-sizing: border-box; text-align: center; }
+.banner-label { font-size: 1.2rem; font-weight: bold; }
+
+.image-details-box { border: 0.1rem solid black; border-radius: 0.5rem; padding: 0.8rem; display: flex; flex-direction: column; justify-content: space-around; flex-grow: 1; }
+.image-details-box input[type="text"] { width: 90%; box-sizing: border-box; border: none; border-bottom: 0.1rem solid #333; background: transparent; font-size: 1.4rem; text-align: center; }
+.image-details-box .details-field > label { font-size: 1rem; text-align: center; margin-top: 0.2rem; width: 100%; }
+.image-details-box .details-field { display: flex; flex-direction: column; align-items: center; }
+
+.stat-info-box { border: 0.1rem solid black; border-radius: 0.5rem; padding: 1rem; box-sizing: border-box; display: flex; flex-direction: column; }
+.box-header { text-align: center; font-weight: bold; font-size: 1.2rem; margin-bottom: 0.5rem; }
+.box-divider { border-top: 0.1rem solid black; margin-bottom: 1rem; }
+.death-saves-box { height: 10rem; }
+.hit-dice-box { flex-grow: 1; }
+.saves-rows-container { display: flex; flex-direction: column; gap: 0.8rem; margin-top: auto; }
+.saves-row { display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; }
+.checkbox-group { display: flex; gap: 0.5rem; }
+.dice-fields-container { display: flex; flex-direction: column; justify-content: space-around; flex-grow: 1; }
+.hit-dice-field {
+    display: flex;
+    flex-direction: column;  /* Stapelt Input und Label untereinander */
+    align-items: center;    /* Zentriert den Stapel horizontal */
+    gap: 0.3rem;            /* Kleiner Abstand zwischen Input und Label */
+}
+.hit-dice-field input[type="text"] { width: 60%; border: none; border-bottom: 0.1rem solid #333; background: transparent; font-size: 1.4rem; text-align: center; padding: 0; height: 2.5rem; line-height: 2.5rem; }
+.hit-dice-field label { font-size: 1rem; margin-top: -0.3rem; text-align: center; }
+
+.trainings-container { display: flex; flex-direction: column; gap: 1rem; }
+.trainings-box { border: 0.1rem solid black; border-radius: 0.5rem; padding: 1rem; }
+.trainings-subheader { margin: 0 0 0.7rem 0; font-size: 1.2rem; font-weight: bold; }
+.checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.5rem; }
+.checkbox-item { display: flex; align-items: center; gap: 0.5rem; }
+.checkbox-item label { font-size: 1.1rem; }
+.trainings-box textarea { width: 100%; box-sizing: border-box; border: 0.1rem solid #ccc; border-radius: 0.3rem; padding: 0.5rem; font-size: 1.2rem; font-family: inherit; resize: none; }
+.section-divider { border: none; border-top: 0.1rem dotted #ccc; margin: 0.8rem 0; }
+
+/* --- FOOTER & ALLGEMEINE ELEMENTE --- */
+.sheet-footer {
+    border-top: 0.2rem solid black;
+    padding-top: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 1rem;
+}
+.footer-left { display: flex; align-items: baseline; gap: 0.5rem; }
+.footer-left input { border: none; border-bottom: 0.1rem solid #333; background: transparent; font-size: 1rem; }
+
+input[type="checkbox"].rounded-checkbox {
+    -webkit-appearance: none; -moz-appearance: none; appearance: none;
+    width: 1.3rem; height: 1.3rem;
+    border-radius: 50%; flex-shrink: 0;
+    background-color: #fff; border: 0.1rem solid #808080;
+    cursor: pointer; position: relative;
+    display: inline-block; vertical-align: middle;
+}
+input[type="checkbox"].rounded-checkbox:checked { background-color: #000; }
+
+
+/* ==========================================================================
+   LAYOUT FÜR FOLGESEITEN (SEITE 2+)
+   ========================================================================== */
+
+/* 1. Grid-Anpassung: Info-Blöcke entfernen */
+.character-sheet.simple-layout {
+    /* Header, Divider, Main (Rest), Footer */
+    grid-template-rows: auto auto 1fr auto; 
+    grid-template-areas: 
+        "header header header"
+        "divider divider divider"
+        "main main main"
+        "footer footer footer";
+    gap: 0 1rem; 
+    
+    /* NEU: Wichtig, damit der Footer nach ganz unten rutscht */
+    height: 100%; 
+    box-sizing: border-box;
+}
+
+/* 2. Header Aufbau */
+.simple-header {
+    grid-area: header;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end; /* Text auf einer Linie unten ausgerichtet */
+    padding: 1.5rem 0.5rem 0.2rem 0.5rem; /* Platz nach oben */
+    height: auto;
+}
+
+/* Links: Name */
+.header-left-simple {
+    display: flex;
+    flex-direction: column;
+    width: 45%; 
+}
+
+.simple-input-name {
+    border: none;
+    background: transparent;
+    font-size: 1.6rem;
+    font-family: inherit;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    color: #000;
+}
+
+/* Rechts: Titel */
+.header-right-simple {
+    text-align: right;
+    width: 50%;
+    padding-bottom: 0.2rem; /* Optische Korrektur zur Grundlinie des Inputs */
+}
+
+.page-title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #000;
+    line-height: 1;
+}
+
+/* 3. Divider Linie */
+.simple-divider-line {
+    grid-area: divider;
+    width: 100%;
+    height: 0.2rem;
+    background-color: #000;
+    margin: 0 0 1rem 0; /* KORREKTUR: Der 1rem Abstand zum Hauptinhalt ist wieder da! */
+}
+
+/* Footer Anpassung für leere linke Seite */
+.sheet-footer .footer-left:empty {
+    display: none;
+}
+
+/* --- STYLING FÜR SEITE 2 CONTENT --- */
+
+/* Override für den Main-Content auf Seite 2:
+   Auf Seite 1 ist das ein Grid mit 3 Spalten. 
+   Auf Seite 2 wollen wir volle Breite (Block). */
+.simple-content-override {
+    display: flex !important;
+    flex-direction: column;
+    padding: 0; 
+    overflow: hidden; 
+    height: 100%; /* Zwingt den Inhalt, den Raum voll zu nutzen */
+    margin-bottom: 0 !important; /* Keine versteckten Abstände mehr */
+}
+
+.full-width-box {
+    width: 100%;
+    margin-bottom: 0.1rem;
+}
+
+/* --- ANGRIFFS-TABELLE --- */
+.attack-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1rem;
+    table-layout: fixed; 
+}
+
+/* Header Cells */
+.attack-table th {
+    font-weight: bold;
+    font-size: 0.9rem;
+    border-bottom: 0.1rem solid #000;
+    /* Vertikale Trennlinie (gepunktet) */
+    border-right: 0.1rem dotted #888;
+    padding: 0.2rem 0.4rem;
+    vertical-align: bottom;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Body Cells */
+.attack-table td {
+    border-bottom: 0.1rem solid #ccc;
+    /* Vertikale Trennlinie (gepunktet) */
+    border-right: 0.1rem dotted #ccc;
+    padding: 0;
+    height: 2.8rem; 
+    vertical-align: middle;
+}
+
+/* Letzte Spalte hat keinen rechten Rand */
+.attack-table th:last-child,
+.attack-table td:last-child {
+    border-right: none;
+}
+
+/* Entfernt den unteren Rand der allerletzten Zeile im Body */
+.attack-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Die Inputs in der Tabelle */
+.table-input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    padding: 0 0.4rem;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 1.1rem;
+}
+
+/* Ausrichtungs-Klassen (werden in HTML genutzt) */
+.align-left {
+    text-align: left;
+}
+
+.align-center {
+    text-align: center;
+}
+
+/* Header Alignment */
+.attack-table th.align-left { text-align: left; }
+.attack-table th.align-center { text-align: center; }
+
+/* Hover-Effekt */
+.attack-table tr:hover td {
+    background-color: rgba(0,0,0,0.02);
+}
+
+/* --- DIVIDER MIT TEXT --- */
+.labeled-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.0rem 0 0.0rem 0;
+}
+.labeled-divider .line {
+    flex-grow: 1;
+    height: 0.1rem;
+    background-color: #000;
+}
+.labeled-divider .divider-text {
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 1.1rem;
+    white-space: nowrap;
+}
+
+/* --- INVENTAR GRID LAYOUT --- */
+.inventory-grid {
+    display: grid;
+    
+    /* Links (1fr), Mitte (1fr), Rechts (5.5rem für die großen Münzen) */
+    grid-template-columns: 1fr 1fr 5.5rem; 
+    
+    gap: 1rem 1.0rem; /* Horizontaler Abstand zwischen Inventory-Tabellen */
+    align-items: stretch;
+    flex-grow: 1; 
+    margin-bottom: 0; /* Auf 0 setzen */
+}
+.inventory-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.inventory-box {
+    /* Standard Box Style, aber wir stellen sicher, dass sie nicht kollabiert */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Die Box, die den restlichen Platz einnehmen soll (Gear) */
+.flex-grow-box {
+    flex-grow: 1;
+}
+
+/* Zwingt die jeweils unterste Box (Gear & Reittiere) dazu, bis zum unteren Rand zu wachsen */
+.flex-grow-box,
+.inventory-col .inventory-box:last-child {
+    flex-grow: 1;
+}
+
+/* Anpassung der Tabellen in den kleinen Boxen */
+.inventory-table td {
+    height: 2.2rem; /* Etwas kompaktere Zeilen für das Inventar */
+}
+
+/* --- GELDBÖRSE (PURSE) --- */
+.purse-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 0.5rem;
+}
+
+.purse-header {
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-bottom: 2.2rem;
+    text-transform: uppercase;
+    writing-mode: vertical-rl; /* Optional: Text vertikal, falls Platz eng wird? Nein, lassen wir horizontal */
+    text-align: center;
+}
+
+.purse-chain {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.coin-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    position: relative;
+}
+
+/* --- UPDATE: GELDBÖRSE GRÖSSER --- */
+.coin-input {
+    width: 4.5rem;
+    height: 4.5rem;
+    
+    border-radius: 50%;
+    border: 0.1rem solid #000;
+    text-align: center;
+    font-size: 1.4rem; /* Schriftgröße passend zum Kreis */
+    background: transparent;
+    z-index: 2; 
+    background-color: white; 
+}
+
+/* Update Label Abstand, damit es gut aussieht */
+.coin-label {
+    font-size: 0.85rem; /* Etwas kleiner */
+    font-weight: bold;
+    margin-bottom: 0.1rem;
+    color: #444;       /* Etwas dunkleres Grau statt Schwarz */
+    text-align: center;
+    width: 100%;
+}
+
+.coin-link {
+    width: 0.1rem;
+    min-height: 2.5rem; 
+    flex-grow: 1; /* Linie wächst, um Lücken zu füllen */
+    background-color: #000;
+    margin: 0rem 0; 
+    z-index: 1;
+}
+
+/* --- ZENTRIERUNG FÜR TABELLEN-CHECKBOXEN --- */
+.checkbox-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%; /* Füllt die Tabellenzelle */
+}
+
+/* Stil für deaktivierte Inventar-Zeilen */
+.disabled-inventory-row {
+    opacity: 1;
+    pointer-events: none; /* Verhindert Klicks */
+    filter: grayscale(100%);
+}
+
+/* Damit die Checkbox trotzdem erkennbar bleibt, falls nötig */
+.disabled-inventory-row input[type="checkbox"] {
+    cursor: not-allowed;
+}
+
+/* ==========================================================================
+   SPEZIAL-FIX SEITE 2: PDF VERTICAL ALIGN & LABELS
+   ========================================================================== */
+
+
+/* Kein Versatz der Tabellen */
+
+/* 1. Der Haupt-Container für den Inhalt */
+.pdf-export-mode .simple-content-override {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;       /* KORREKTUR: Lässt den Inhalt sauber im Grid stoppen */
+    padding-bottom: 2px !important; 
+}
+
+/* 2. Das Grid-Layout ausdehnen */
+.pdf-export-mode .inventory-grid {
+    flex-grow: 1 !important;
+    display: grid !important;
+    align-content: stretch !important;
+    min-height: 0 !important; /* KORREKTUR: Statt fester Höhe, damit das Padding-Bottom greifen kann */
+    margin-bottom: 0 !important; 
+}
+
+/* 3. WICHTIG: Die Spalten-Container selbst müssen wachsen */
+.pdf-export-mode .inventory-col {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+
+/* 4. BEIDE Boxen (Reittiere links & Sonstiges rechts) füllen den Raum auf */
+/* Wir sprechen die Box mit der ID 3 (Reittiere) und die Box mit der ID 5 (Sonstiges) an */
+.pdf-export-mode .inventory-box:has(#th_amount_3),
+.pdf-export-mode .flex-grow-box {
+    flex-grow: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* 5. Tabellen-Verhalten innerhalb dieser wachsenden Boxen */
+.pdf-export-mode .inventory-box:has(#th_amount_3) table,
+.pdf-export-mode .flex-grow-box table {
+    height: auto !important;
+    margin-bottom: 0 !important;
+}
+
+/* 6. Tabellen-Zeilen manuell korrigieren */
+.pdf-export-mode .inventory-table th,
+.pdf-export-mode .inventory-table td {
+    height: 2.17rem;
+    line-height: 2.17rem;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* Zellen Zentrierung */
+
+/* --- GRUNDSATZ: Alle Zellen vertikal zentriert --- */
+.pdf-export-mode td .table-input {
+    display: flex !important;
+    align-items: center !important;
+    height: 100% !important;
+    line-height: normal !important;
+}
+
+/* --- 1. TABELLE: PHYSISCHE ANGRIFFE --- */
+/* Spalte 1 (Waffen): Linksbündig */
+.pdf-export-mode .attack-table td:nth-child(1) .table-input { justify-content: flex-start !important; text-align: left !important; }
+/* Spalte 2 (Bonus): Zentriert */
+.pdf-export-mode .attack-table td:nth-child(2) .table-input { justify-content: center !important; text-align: center !important; }
+/* Spalte 3 (Schaden/Art): Zentriert */
+.pdf-export-mode .attack-table td:nth-child(3) .table-input { justify-content: center !important; text-align: center !important; }
+/* Spalte 4 (Eigenschaften): Linksbündig */
+.pdf-export-mode .attack-table td:nth-child(4) .table-input { justify-content: flex-start !important; text-align: left !important; }
+/* Spalte 5 (Meisterschaft): Zentriert (KORRIGIERT) */
+.pdf-export-mode .attack-table td:nth-child(5) .table-input { justify-content: center !important; text-align: center !important; }
+/* Spalte 6 (Beschreibung): Linksbündig */
+.pdf-export-mode .attack-table td:nth-child(6) .table-input { justify-content: flex-start !important; text-align: left !important; }
+
+
+/* --- 2. INVENTAR-TABELLEN (Waffen, Rüstung, Reittiere, Werkzeuge, Sonstiges) --- */
+
+/* Spalte 1 (Anzahl): Zentriert (KORRIGIERT) */
+.pdf-export-mode .inventory-table td:nth-child(1) .table-input { 
+    justify-content: center !important; 
+    text-align: center !important; 
+}
+
+/* Spalte 2 (Bezeichnung): Linksbündig (KORRIGIERT) */
+.pdf-export-mode .inventory-table td:nth-child(2) .table-input { 
+    justify-content: flex-start !important; 
+    text-align: left !important; 
+}
+
+/* Spalte 3 (Spezial-Behandlung je nach Tabelle) */
+
+/* Checkboxen (Waffen & Rüstung - "Angelegt"): Zentriert (KORRIGIERT) */
+.pdf-export-mode .inventory-table .checkbox-cell {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+/* Text-Felder (Kapazität/Typ): Zentriert (Bleibt KORREKT) */
+.pdf-export-mode .inventory-table td:nth-child(3) .table-input { 
+    justify-content: center !important; 
+    text-align: center !important; 
+}
+
+.coin-input {
+    display: flex !important;
+    align-items: center !important;     /* Vertikal zentriert */
+    justify-content: center !important;  /* Horizontal zentriert */
+    text-align: center !important;
+    padding: 0 !important;
+    line-height: normal !important;      /* Verhindert Versatz durch Zeilenhöhe */
+}
+
+/* Spezifisch für den PDF-Export, falls die Engine die Flex-Box ignoriert */
+.pdf-export-mode .coin-input {
+    line-height: 4.5rem !important;      /* Nutzt die volle Höhe des Kreises zur Zentrierung */
+    vertical-align: middle !important;
+}
+
+
+/* Attacken-Tabelle, Beschriebungsspalte: Kein Verrutschen der Dropdown-Asuwahl */
+
+/* 1. NUR Attacken-Tabelle: Letzte Spalte (Beschreibung) -> Linksbündig für Dropdown */
+.pdf-export-mode .attack-table td:last-child {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important; /* Zwingt Inhalt nach links */
+    padding-left: 4px !important;
+}
+
+/* 2. NUR Inventar-Tabellen: Letzte Spalte (Angelegt) -> Zurück auf Zentriert */
+/* Wir nutzen hier die Klasse .inventory-table, um die Attacken-Tabelle auszuschließen */
+.pdf-export-mode .inventory-table td:last-child {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important; /* Zwingt Checkbox in die Mitte */
+    padding-left: 0 !important;
+}
+
+/* Sicherstellen, dass die Checkbox-Zelle selbst auch zentriert bleibt */
+.pdf-export-mode .inventory-table .checkbox-cell {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+/* Gelsbörse Postion und Ausrichtung */
+
+/* 3. Geldbörse Label (purchaseLabel) vertikal erzwingen */
+.pdf-export-mode #purseLabel {
+    writing-mode: vertical-rl !important;
+    transform: rotate(90deg) !important;
+    height: 7.3% !important;
+    z-index: 9999 !important; 
+    background: transparent !important;
+}
+
+/* Justierung der Spalte, damit das vertikale Label Platz hat */
+.pdf-export-mode .purse-col {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    min-width: 4rem !important;
+}
+
+/* --- GELDBÖRSE: Münzen nach unten schieben --- */
+.pdf-export-mode .purse-chain {
+    margin-top: 4rem !important; 
+    background: transparent !important; /* Verhindert das weiße Feld */
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+
+/* ==========================================================================
+   LAYOUT SEITE 3: FINAL (Begrenzte Höhe & Scrollbare Boxen)
+   ========================================================================== */
+
+/* 1. DER ANKER: Zwingt Seite 3 auf exakt A4 und verhindert das Wachsen */
+.page.fixed-page {
+    height: 297mm;       /* Harte Grenze */
+    overflow: hidden;    /* Alles was übersteht, wird abgeschnitten/gemanagt */
+    display: flex;       /* Ermöglicht Flexbox für das Kind */
+    flex-direction: column;
+}
+
+/* 2. Haupt-Container: Füllt den Anker zu 100% */
+#page3-sheet {
+    flex: 1;             /* Füllt die .page komplett aus */
+    display: flex;
+    flex-direction: column;
+    height: 100%;        /* Redundant aber sicher */
+    box-sizing: border-box;
+}
+
+/* 3. Mittelteil: Wächst und füllt den Platz zwischen Header und Footer */
+#page3-sheet .sheet-main-content {
+    flex: 1;             /* Das hier drückt die Boxen auf! */
+    display: flex;              
+    flex-direction: column;
+    overflow: hidden;    /* Wichtig: Scrollbalken sollen IN den Boxen sein, nicht hier */
+    padding: 0;
+    
+    /* Abstand zum Footer exakt wie Seite 1/2 */
+    margin-bottom: 0rem; 
+}
+
+/* 4. Spalten-Layout: 100% Breite und Höhe des Mittelteils */
+.features-layout {
+    display: flex;
+    flex-direction: row;
+    height: 100%;       /* Füllt den verfügbaren Platz im Main */
+    gap: 1em;         /* Abstand zwischen Links und Rechts */
+    overflow: hidden;
+}
+
+/* LINKE SPALTE (Breiter) */
+.features-col-left {
+    display: flex;
+    flex-direction: column;
+    /* Hier stellen wir die Breite ein (55 Teile) */
+    flex: 55;           
+    overflow: hidden;   
+}
+
+/* RECHTE SPALTE (Etwas schmaler) */
+.features-col-right {
+    display: flex;
+    flex-direction: column;
+    /* Hier der Rest (45 Teile) */
+    flex: 45;           
+    gap: 1.5em;         /* Abstand zwischen Subclass-Box und Feats-Box */
+    overflow: hidden;
+}
+
+/* 5. Spalten-Definition */
+#page3-sheet .features-col-left,
+#page3-sheet .features-col-right {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Verhindert, dass Flex-Items ausbrechen */
+}
+
+#page3-sheet .features-col-right {
+    gap: 1rem; 
+}
+
+/* 6. Die Boxen */
+
+/* Linke Box: Nimmt 100% der linken Spalte */
+#page3-sheet .full-height-box {
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0; 
+}
+
+/* Rechte Boxen: Aufteilung via Flex-Gewichtung */
+#page3-sheet .subclass-box {
+    flex: 45;                   /* ~45% */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+#page3-sheet .feats-box {
+    flex: 55;                   /* ~55% */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* 7. Der Text-Inhalt (Hier entstehen die Scrollbalken) */
+#page3-sheet .feature-content-area {
+    flex: 1;            /* Füllt den gesamten Raum in der Box */
+    height: 100%;       /* Zwingt das Element auf volle Höhe */
+    
+    padding: 0.8rem;
+    
+    /* Scroll-Verhalten: */
+    overflow-y: auto;   /* Scrollbar erscheint automatisch wenn Text zu lang */
+    overflow-x: hidden; /* Kein horizontales Scrollen */
+    
+    font-size: 1rem;
+    line-height: 0;
+    white-space: pre-wrap;
+    
+    /* Input-Styling */
+    background-color: transparent;
+    outline: none;
+    cursor: text;
+}
+
+/* 8. Footer Positionierung */
+#page3-sheet .sheet-footer {
+    margin-top: auto;
+}
+
+/* --- DRUCK-OPTIMIERUNG --- */
+@media print {
+    /* Im Druck heben wir die fixe Höhe auf, damit nichts abgeschnitten wird */
+    .page.fixed-page {
+        height: auto;
+        overflow: visible;
+        display: block;
+    }
+    
+    #page3-sheet {
+        display: block; 
+        height: auto;
+    }
+    
+    #page3-sheet .sheet-main-content {
+        display: block;
+        height: auto;
+    }
+
+    #page3-sheet .features-layout {
+        display: flex; 
+        height: 260mm; /* Fixe Höhe nur für das Layout im Druck */
+    }
+    
+    /* Text soll im Druck voll sichtbar sein, keine Scrollbalken */
+    #page3-sheet .feature-content-area {
+        overflow: visible;
+        height: auto;
+        display: block;
+    }
+    
+    #page3-sheet .sheet-footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+    }
+}
+
+/* --- FEATURE BOX STYLES (Finales Layout) --- */
+
+/* 1. Hauptcontainer */
+.feature-block {
+    margin-bottom: 1.2rem; /* Abstand zwischen den Merkmalen */
+    page-break-inside: avoid;
+    display: block;
+}
+
+/* 2. Header (Titel + Linie) */
+.feature-header {
+    border-bottom: 1px dotted #000;
+    margin-bottom: 0.3rem !important; /* Abstand zwischen Linie und dem Beschreibungstext darunter */
+    padding-bottom: 0 !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    line-height: 1;
+}
+
+.feature-title {
+    font-weight: bold;
+    text-transform: uppercase; /* Grossbuchstaben */
+    font-size: 0.95rem; /* Abstand nach Klassenmarkmal Titel */
+    line-height: 1;
+}
+
+.feature-level {
+    font-size: 0.95rem;; /* Schriftgrösse Klassenmerkmale Stufenangabe */
+    color: #444;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+/* 3. Text (Beschreibung) */
+.feature-text {
+    text-align: justify;
+    font-size: 0.95rem !important; /* Schriftgrösse Klassenmerkmale Beschreibungen */
+    line-height: 1.1;
+    margin-top: 1px !important;
+    padding-top: 0 !important;
+    text-indent: 0 !important;
+}
+
+.feature-text p {
+    margin: 0 !important;
+    padding: 0 !important;
+    text-indent: 0 !important;
+}
+
+/* --- LISTEN (Einrücken) --- */
+.feature-text ul, .feature-text ol, .compact-list {
+    margin: 0;
+    padding-left: 2rem; /* Hier rücken wir die Punkte ein */
+}
+.feature-text li, .compact-list li {
+    margin-bottom: 0;
+}
+
+/* --- APPEND (Erweiterungen) --- */
+.feature-append {
+    margin-top: 0 !important;
+    border-top: none !important; /* Divider WEG */
+    padding-top: 0 !important;
+    margin-bottom: 1rem;  /* Abstand nach Klassenmarkmal Erweiterung */
+}
+
+.feature-append-header {
+    font-size: 0.95rem;   /* Schriftgrösse Klassenmarkmal Titel */
+    font-weight: normal !important; /* NICHT Fett */
+    font-style: italic;
+    color: #444;
+    line-height: 1;
+    margin-bottom: 0 !important;
+}
+
+/* Marker für automatisierte Talente/Merkmale */
+.auto-marker {
+    color: #888888; /* Dezent Grau */
+    font-size: 0.85em; /* Etwas kleiner als der Text */
+    margin-left: 3px;
+    cursor: help; /* Mauszeiger wird zum Fragezeichen */
+}
+
+/* Optional: Wird etwas dunkler, wenn man mit der Maus drüberfährt */
+.auto-marker:hover {
+    color: #555555; 
+}
+
+/* Versteckt das Zahnrad (und damit den Tooltip) im PDF */
+.pdf-export-mode .auto-marker {
+    display: none !important;
+}
+
+/* ==========================================================================
+   LAYOUT SEITE 4: AUSSEHEN & PERSÖNLICHKEIT
+   ========================================================================== */
+
+.page4-main {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0;
+    margin: 0 !important; /* Keine Margins mehr, das macht jetzt der Footer */
+    height: 100%; 
+}
+
+/* HÄLFTE 1: Aussehen (Grid 4 Spalten x 3 Reihen) */
+.page4-top-half {
+    flex: 1; /* Nimmt 50% der Seite minus Divider ein */
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr; /* 1/4, 1/4, 2/4 */
+    grid-template-rows: 1fr 2fr;        /* 1/3, 2/3 */
+    gap: 1rem;
+    min-height: 0; 
+}
+
+.portrait-box { grid-area: 1 / 1 / 2 / 2; padding: 0.5rem; }
+.physical-box { grid-area: 1 / 2 / 2 / 3; }
+.appearance-desc-box { grid-area: 2 / 1 / 3 / 3; }
+.species-traits-box { grid-area: 1 / 3 / 3 / 4; }
+
+/* Portrait Platzhalter */
+.portrait-placeholder {
+    width: 100%; height: 100%;
+    border: 0.1rem dashed #ccc;
+    display: flex; align-items: center; justify-content: center;
+    color: #aaa; font-style: italic; font-size: 1rem;
+}
+
+/* Physische Merkmale Liste */
+.phys-grid {
+    display: flex; flex-direction: column; justify-content: space-between; height: 100%;
+}
+.phys-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 0.1rem dotted #ddd;
+    font-size: 0.9rem; /* Etwas kleiner wie besprochen */
+}
+.phys-row label { color: #555; white-space: nowrap; }
+.phys-row input {
+    width: 60%; text-align: right; border: none; background: transparent;
+    font-size: 0.95rem; font-family: inherit; padding: 0.1rem 0;
+}
+
+/* Textareas (Clean Style) */
+.clean-textarea {
+    width: 100%; height: 100%; flex-grow: 1;
+    border: none; background: transparent; resize: none;
+    font-family: inherit; font-size: 1rem; line-height: 1.2;
+    padding: 0; outline: none;
+}
+.single-line-textarea { line-height: 1.5; }
+
+#speciesTraitsContent.feature-content-area {
+padding: 0.8rem
+}
+
+/* Divider zwischen Hälften */
+.page4-divider { margin: 1.5rem 0; }
+
+/* HÄLFTE 2: Persönlichkeit (2 Spalten Flexbox) */
+.page4-bottom-half {
+    flex: 1; 
+    display: flex; gap: 1rem; min-height: 0;
+}
+.p4-col-left, .p4-col-right {
+    flex: 1; display: flex; flex-direction: column; gap: 1rem; min-height: 0;
+}
+
+/* Linke Spalte Gewichtung */
+.story-box { flex: 12; display: flex; flex-direction: column; }
+.lang-box { flex: 2; display: flex; flex-direction: column; }
+
+.story-subtitle {
+    text-align: center; font-style: font-size: 1rem;
+    color: #666; margin-top: -0.3rem; margin-bottom: 0.5rem;
+}
+
+/* Rechte Spalte Gewichtung */
+.personality-box { flex: 4; display: flex; flex-direction: column; } /* ca 1/3 */
+.faith-box { flex: 2; display: flex; flex-direction: column; }       /* ca 1/6 */
+.community-box { flex: 6; display: flex; flex-direction: column; }   /* ca 1/2 */
+
+/* Gesinnungs-Reihe in Personality Box */
+.alignment-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-top: 0.1rem solid #000; padding-top: 0.5rem; margin-top: 0.5rem;
+    font-weight: bold; font-size: 1.1rem;
+}
+.alignment-row input {
+    width: 60%; text-align: right; font-weight: normal; font-size: 1.1rem;
+}
+
+/* ==========================================================
+   FIX: Community Box (Scrollen & Textumbruch) 
+   ========================================================== */
+.community-name-input {
+    width: 100%; border: none;
+    font-size: 1.2rem; font-weight: bold; text-align: center;
+    background: transparent; margin-bottom: 0.5rem; padding-bottom: 0.2rem;
+}
+
+.community-box { 
+    flex: 6; 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 0; /* ESSENTIELL: Verhindert, dass die Box endlos nach unten wächst */
+}
+
+.community-content-wrapper { 
+    flex: 1; 
+    min-height: 0; 
+    min-width: 0;      /* Verhindert, dass die Flexbox durch den Inhalt breiter gedrückt wird */
+    width: 100%;       /* Nimmt exakt 100% des verfügbaren Platzes ein */
+    box-sizing: border-box;
+    overflow-y: auto; 
+    overflow-x: hidden; 
+    padding-right: 0.3rem;
+}
+
+/* HIER GEÄNDERT: Strenge Vorgaben für das Textfeld */
+#communityDesc {
+    min-height: 100%;
+    width: 100%;       /* Darf nicht breiter als der Wrapper werden */
+    max-width: 100%;   /* Zusätzliche Sicherheit */
+    box-sizing: border-box;
+    outline: none;
+    white-space: pre-wrap;     
+    overflow-wrap: break-word; 
+    word-break: break-word;    /* Bricht auch extrem lange, zusammenhängende Buchstabenketten hart um */
+}
+
+/* Wappen-Platzhalter (wird vom Text umflossen) */
+.community-symbol-placeholder {
+    float: right; 
+    width: 6rem; height: 6rem;
+    border: 0.1rem dashed #ccc; border-radius: 0.5rem;
+    margin: 0 0 0.5rem 0.5rem; 
+    display: flex; align-items: center; justify-content: center;
+    color: #aaa; font-style: italic; font-size: 0.9rem;
+}
+
+#languagesList {
+    background-color: rgba(0, 0, 0, 0.05); 
+    border: 0.1rem solid #ccc;                /* HIER: Der feine graue Rahmen */
+    border-radius: 0.3rem;                    
+    resize: none;                          
+    width: 100%;                           
+    min-height: 50px;                      
+    padding: 0.5rem;                          
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 1.2rem;
+}
+
+/* --- SEITE 5: ZAUBERBUCH STYLES --- */
+
+.spell-sheet-box {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: none !important; /* Kein Rahmen um die Box, die Tabelle hat schon Linien */
+    padding: 0 !important;
+}
+
+.spell-table {
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem; /* Etwas kleiner, damit viel drauf passt */
+    table-layout: fixed;
+}
+
+.spell-table th {
+    border-bottom: 2px solid #000;
+    padding: 2px 4px;
+    font-size: 0.9rem;
+    text-align: center;
+    vertical-align: bottom;
+    font-weight: bold;
+}
+.spell-table th.align-left { text-align: left; }
+
+/* Zeilenhöhe fixieren, damit das Layout nicht springt */
+.spell-table td {
+    border-bottom: 1px solid #ccc;
+    border-right: 1px dotted #ccc;
+    height: 2.3rem; /* Basis-Höhe */
+    padding: 0 4px;
+    vertical-align: middle;
+}
+.spell-table td:last-child { border-right: none; }
+
+/* TRENNZEILEN (Zaubergrade) */
+.spell-level-header {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    border-top: 2px solid #000;
+    border-bottom: 1px solid #000 !important;
+    height: 2.0rem !important;
+}
+
+/* Container für die Slot-Checkboxen */
+.spell-slots-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Rechtsbündig */
+    gap: 0.5rem;
+    padding-right: 1rem;
+    font-weight: normal;
+    text-transform: none;
+}
+
+/* CSS für die runden Zauberplatz-Checkboxen */
+.slot-checkbox {
+    width: 1.3rem;           /* Etwas größer für bessere Klickbarkeit */
+    height: 1.3rem;
+    border: 1px solid #333;   /* Fetterer Rand, passend zu Seite 1 */
+    border-radius: 50%;       /* DAS macht sie rund */
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    cursor: pointer;
+    background-color: transparent; /* Transparenter Hintergrund wenn leer */
+    margin-left: 4px;        /* Kleiner Abstand zwischen den Kreisen */
+    vertical-align: middle;   /* Zentriert sie vertikal zum Text */
+}
+
+.slot-checkbox:checked {
+    background-color: #333;   /* Solide schwarze Füllung beim Anhaken */
+}
+
+/* Input-Felder in der Tabelle (Readonly Optik) */
+.spell-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    padding: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.center-text { text-align: center; }
+
+/* PDF OPTIMIERUNG FÜR SEITE 5 */
+.pdf-export-mode .spell-sheet-box {
+    overflow: hidden !important;
+}
+.pdf-export-mode .spell-table {
+    height: 100% !important;
+}
+/* Kompakter im PDF, damit alles drauf passt */
+.pdf-export-mode .spell-table td {
+    height: 1.9rem !important; 
+    font-size: 0.85rem !important;
+}
+.pdf-export-mode .spell-level-header {
+    height: 1.6rem !important;
+}
+
+/* ==========================================================================
+   SEITE 6: ZAUBERBUCH LAYOUT
+   ========================================================================== */
+
+.spellbook-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 Spalten a 1/3 */
+    grid-template-rows: repeat(12, 1fr);   /* 12 Reihen für perfekte Brüche (1/2, 1/4, 1/6) */
+    gap: 1rem;
+    height: 100%;
+    min-height: 0;
+    margin-bottom: 0 !important;
+}
+
+/* Die 9 Boxen anordnen */
+.sb-box { display: flex; flex-direction: column; overflow: hidden; padding: 0.5rem; }
+.sb-box-1 { grid-area: 1 / 1 / 7 / 2; }   /* Links oben: 6/12 = 1/2 */
+.sb-box-2 { grid-area: 7 / 1 / 13 / 2; }  /* Links unten: 6/12 = 1/2 */
+.sb-box-3 { grid-area: 1 / 2 / 7 / 3; }   /* Mitte oben: 6/12 = 1/2 */
+.sb-box-4 { grid-area: 7 / 2 / 13 / 3; }  /* Mitte unten: 6/12 = 1/2 */
+.sb-box-5 { grid-area: 1 / 3 / 4 / 4; }   /* Rechts 1: 3/12 = 1/4 */
+.sb-box-6 { grid-area: 4 / 3 / 7 / 4; }   /* Rechts 2: 3/12 = 1/4 */
+.sb-box-7 { grid-area: 7 / 3 / 9 / 4; }   /* Rechts 3: 2/12 = 1/6 */
+.sb-box-8 { grid-area: 9 / 3 / 11 / 4; }  /* Rechts 4: 2/12 = 1/6 */
+.sb-box-9 { grid-area: 11 / 3 / 13 / 4; } /* Rechts 5: 2/12 = 1/6 */
+
+.sb-content-area {
+    flex: 1;
+    overflow-y: auto; /* Erlaubt Scrollen falls zu viele Zauber in der Box sind */
+    overflow-x: hidden;
+}
+
+.sb-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.sb-table th { border-bottom: 1px dotted #000; padding: 2px 0; font-size: 0.9rem; }
+.sb-table td { border-bottom: 1px dotted #ccc; padding: 2px 0; vertical-align: middle; height: 1.8rem; }
+
+/* Die runde Checkbox im Zauberbuch */
+.spellbook-checkbox {
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 1px solid #333;
+    border-radius: 50%; /* Rund */
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    cursor: pointer;
+    background-color: white;
+    vertical-align: middle;
+}
+.spellbook-checkbox:checked { background-color: #333; }
+.spellbook-checkbox:disabled { cursor: not-allowed; opacity: 0.6; }
+
+/* ==========================================================================
+   BILDER UPLOADS (PORTRAIT & SYMBOL)
+   ========================================================================== */
+
+/* Allgemeine Bild-Eigenschaften für die Container */
+.has-image {
+    background-size: cover !important;
+    background-position: center top !important;
+    background-repeat: no-repeat !important;
+    border: none !important; /* Entfernt den gestrichelten Rahmen */
+}
+
+/* Versteckt den Placeholder-Text, wenn ein Bild da ist */
+.has-image span {
+    display: none !important;
+}
+
+/* Hover-Effekt im Bearbeitungsmodus */
+.editable-image-box {
+    position: relative;
+    transition: filter 0.2s ease;
+}
+
+/* Dunkelt das Bild leicht ab beim Hovern */
+.editable-image-box:hover {
+    filter: brightness(80%);
+}
+
+/* Kleiner Hinweis "Bild ändern" beim Hovern */
+.editable-image-box::after {
+    content: attr(data-hover-text);
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 0.8rem;
+    padding: 3px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.editable-image-box:hover::after {
+    opacity: 1;
+}
+
+/* Im PDF-Export den Hover-Text immer ausblenden */
+.pdf-export-mode .editable-image-box::after {
+    display: none !important;
+}
+
+/* ==========================================================================
+   ANHANG: ZAUBERBESCHREIBUNGEN
+   ========================================================================== */
+
+/* Grid für 2 Spalten im Anhang */
+.appendix-layout {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    min-height: 0;
+    gap: 1rem;
+    overflow: hidden;
+}
+
+.appendix-col {
+    flex: 1; /* Nimmt genau 50% der Breite */
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+    min-height: 0;
+}
+
+/* Die Zauberbox */
+.spell-desc-box {
+    border: 0.1rem solid black;
+    border-radius: 0.5rem;
+    padding: 0.8rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Die Höhen-Klassen für den Tetris-Algorithmus (1/3, 2/3, 3/3) 
+   Der calc() Befehl zieht den Gap (1rem) ab, damit es perfekt passt */
+.box-h1 { flex: 0 0 calc(33.333% - 0.66rem); } 
+.box-h2 { flex: 0 0 calc(66.666% - 0.33rem); }
+.box-h3 { flex: 0 0 100%; }
+
+/* Box Inhalte */
+.sd-header {
+    border-bottom: 1px solid #000;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.2rem;
+}
+.sd-title {
+    font-weight: bold;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    display: block;
+}
+.sd-subtitle {
+    font-size: 0.9rem;
+    font-style: italic;
+    color: #444;
+}
+.sd-meta {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+.sd-meta-item { margin-bottom: 0.1rem; }
+
+.sd-text {
+    font-size: 0.95rem;
+    line-height: 1.2;
+    text-align: justify;
+    flex: 1;
+    overflow: hidden; /* Überlauf abschneiden! */
+}
+
+/* Dynamische Schriftgrößen bei viel Text */
+.text-small .sd-meta, .text-small .sd-text { font-size: 0.85rem; }
+.text-tiny .sd-meta, .text-tiny .sd-text { font-size: 0.75rem; }
+
+.spell-summon-link {
+    color: #004085;
+    text-decoration: underline;
+    cursor: help;
+}
+
+/* Spezifische PDF Korrektur für Anhang */
+.pdf-export-mode .appendix-layout { height: 100% !important; margin-bottom: 0 !important; }

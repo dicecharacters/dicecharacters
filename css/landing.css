@@ -1,0 +1,245 @@
+/* landing.css */
+
+:root {
+    --bg-dark: #1b1b1f;
+    --gold: #d4a017;
+    --copper: #8b5e34;
+    --text-light: #e8d8b5;
+    --glass: rgba(58, 58, 65, 0.85);
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    font-family: 'Garamond', serif;
+    margin: 0;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+}
+
+/* Floating Languages */
+#floatingLang {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+#floatingLang button {
+    background: none;
+    border: 2px solid var(--copper);
+    border-radius: 50%;
+    padding: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#floatingLang img { width: 30px; border-radius: 50%; }
+.active-lang { border-color: var(--gold) !important; box-shadow: 0 0 15px var(--gold); transform: scale(1.1); }
+
+/* Hero Section */
+.hero {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* --- DER D20 HINTERGRUND (EINGELOGGT) --- */
+.hero::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 92vmin; 
+    height: 92vmin;
+    
+    /* Geometrie ist fix. 
+       ÄNDERUNG 1: Deckkraft massiv gesenkt (von 0.04 auf 0.015)
+       für maximale Verschmelzung mit dem Hintergrund.
+    */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='none' stroke='rgba(255, 255, 255, 0.015)' stroke-width='4' d='M256 16 L463.8 136 L463.8 376 L256 496 L48.2 376 L48.2 136 Z M256 96 L394.5 336 L117.5 336 Z M256 96 L256 16 M256 96 L463.8 136 M256 96 L48.2 136 M394.5 336 L463.8 136 M394.5 336 L463.8 376 M394.5 336 L256 496 M117.5 336 L256 496 M117.5 336 L48.2 376 M117.5 336 L48.2 136'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 0;
+    pointer-events: none;
+    
+    /* Weicher Übergang für den Hover-Effekt */
+    transition: background-image 0.4s ease-in-out;
+}
+
+/* --- HOVER-INTERAKTION: DUNKLES, MATTES KUPFER --- */
+.hero:has(.btn-start:hover)::before {
+    /* Farbe: #5a3e2b (Rustikales Bronze-Kupfer)
+       Dieses Kupfer ist dunkler und weniger gesättigt, was den "matten" Look erzeugt.
+    */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='none' stroke='%235a3e2b' stroke-width='4' d='M256 16 L463.8 136 L463.8 376 L256 496 L48.2 376 L48.2 136 Z M256 96 L394.5 336 L117.5 336 Z M256 96 L256 16 M256 96 L463.8 136 M256 96 L48.2 136 M394.5 336 L463.8 136 M394.5 336 L463.8 376 M394.5 336 L256 496 M117.5 336 L256 496 M117.5 336 L48.2 376 M117.5 336 L48.2 136'/%3E%3C/svg%3E");
+    opacity: 0.6; /* Durch Senken der Opazität des gesamten Elements wirkt die Farbe noch dezenter */
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1; /* Text liegt über dem Würfel */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hero-content h1 {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    line-height: 1;
+    margin: 0;
+    text-transform: none;
+    letter-spacing: 2px;
+    filter: drop-shadow(0 0 8px rgba(212, 160, 23, 0.4));
+}
+.gold-text { color: var(--gold); }
+.motto-text {
+    font-size: 1.3rem;
+    font-style: italic;
+    margin: 2px 0px 40px 0px;
+    opacity: 0.8;
+    text-align: center; /* Erzwungene Zentrierung */
+    width: 100%;
+}
+
+/* Universe Selector */
+.universe-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 50px;
+}
+#universeLabel {
+    font-size: 1.1rem; /* Entspricht Standard-Textgröße */
+    color: var(--text-light);
+}
+.dropdown-fancy {
+    background: var(--bg-dark);
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 1.1rem;
+}
+
+/* CTA Area & Arrow */
+.cta-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+}
+.btn-start {
+    background: linear-gradient(145deg, var(--copper), #5a3d22);
+    color: white;
+    padding: 14px 60px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    border: 2px solid var(--gold);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn-start:hover { transform: scale(1.05); box-shadow: 0 0 25px var(--gold); }
+
+.scroll-indicator {
+    font-size: 1.5rem;
+    color: var(--gold);
+    animation: bounce 2s infinite;
+}
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+    40% {transform: translateY(-10px);}
+    60% {transform: translateY(-5px);}
+}
+
+/* Cards & Titles */
+.info-section, .contact-section { padding: 80px 20px; display: flex; justify-content: center; }
+.info-card, .contact-card {
+    background: var(--glass);
+    border: 1px solid var(--gold);
+    border-radius: 12px;
+    padding: 50px;
+    max-width: 550px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+}
+
+/* NEU: Titel zentriert */
+h2 { 
+    color: var(--gold); 
+    margin-top: 0; 
+    font-size: 1.8rem; 
+    text-align: center; 
+}
+
+p { line-height: 1.6; font-size: 1.1rem; margin-bottom: 25px; text-align: justify; }
+
+.divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+    margin: 30px 0;
+}
+
+/* NEU: Fußzeile schlicht (nicht fett, nicht kursiv) */
+.highlight-text {
+    color: var(--gold);
+    font-weight: normal;
+    font-style: normal;
+    text-align: center;
+    margin-top: 40px;
+}
+
+/* Contact Form */
+.input-group { margin-bottom: 25px; text-align: left; }
+.input-group label { display: block; margin-bottom: 8px; color: var(--gold); font-weight: bold; }
+input[type="text"], textarea {
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--copper);
+    color: var(--text-light);
+    padding: 12px;
+    border-radius: 4px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+textarea { height: 200px; }
+.btn-send {
+    width: 100%;
+    background-color: var(--copper);
+    color: var(--text-light);
+    padding: 16px;
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.btn-send:hover { background-color: var(--gold); color: black; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    #floatingLang { top: auto; bottom: 20px; flex-direction: row; right: auto; left: 50%; transform: translateX(-50%); }
+    .hero-content h1 { font-size: 2.8rem; }
+}
