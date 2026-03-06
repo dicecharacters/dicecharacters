@@ -1289,7 +1289,7 @@ button[type="button"]:hover {
 /* Stil für Dropdowns und Radio-Inputs */
 .dropdown {
     width: 100%; /* Setzt die Breite der Dropdowns */
-    max-width: 300px; /* Begrenzung der maximalen Breite der Dropdowns */
+    max-width: 100%; /* Begrenzung der maximalen Breite der Dropdowns */
     padding: 5px; /* Fügt Innenabstände hinzu */
     font-size: 16px; /* Setzt die Schriftgröße der Dropdowns */
     border-radius: 5px; /* Macht die Ecken der Dropdowns abgerundet */
@@ -3091,3 +3091,456 @@ textarea::placeholder,
 }
 
 
+/* =======================================================================
+   MOBILE ONBOARDING MASK
+   ======================================================================= */
+
+#swipeOnboarding {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 25vh; /* Unteres Viertel */
+    z-index: 9999;
+    pointer-events: none; /* Klicks gehen durch zum Body-Listener */
+    background-color: rgba(0, 0, 0, 0.2); /* Hauchdünne Abdunklung */
+}
+
+.onboarding-divider {
+    width: 100%;
+    /* Von 2px auf 4px erhöht für bessere Sichtbarkeit */
+    border-top: 3px dashed rgba(212, 160, 23, 0.9); 
+    margin-bottom: 10px;
+}
+
+.onboarding-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px 50px;
+    box-sizing: border-box;
+    color: rgba(212, 160, 23, 0.8); /* Dein Goldton, leicht transparent */
+    font-family: 'Garamond', serif;
+}
+
+.arrow-wrapper {
+    width: 33%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.arrow-wrapper span {
+    font-size: 0.9rem; /* Text etwas größer */
+    font-weight: bold;
+    text-transform: uppercase;
+    max-width: 90%; /* Verhindert Überlappung in der Mitte */
+}
+
+.onboarding-arrow {
+    /* Größer und fetter */
+    font-size: 3rem; 
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 2px;
+    /* Ein leichter Schein nach außen macht sie "breiter" */
+    text-shadow: 0 0 10px rgba(212, 160, 23, 0.5);
+}
+
+.onboarding-footer {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+    left: 0;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
+/* --- ANIMATIONEN --- */
+@keyframes bounceToRight {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(15px); } /* Drückt nach innen */
+}
+
+/* Animation für den "Weiter"-Pfeil (rechts, bounct nach links) */
+@keyframes bounceToLeft {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(-15px); } /* Drückt nach innen */
+}
+
+.bounce-right { animation: bounceToRight 1.5s infinite ease-in-out; }
+.bounce-left { animation: bounceToLeft 1.5s infinite ease-in-out; }
+
+
+/* =======================================================================
+   MOBILE - Schritt 3: Lineage-Dropdown
+   ======================================================================= */
+
+@media screen and (max-width: 600px) {
+    /* 1. Die gesamte Lineage-Box im MainContent zentrieren */
+    .lineage-details {
+        position: relative !important;
+        left: 0 !important;
+        transform: none !important;
+        margin: 20px auto !important;
+        
+        /* Standard-Breite für Mobile-Sektionen */
+        width: 100% !important; 
+        box-sizing: border-box !important;
+
+        /* DEIN STANDARD-DESIGN FÜR SEKTIONEN */
+        background-color: rgba(58, 58, 65, 0.85) !important;
+        border: 2px solid #d4a017 !important;
+        border-radius: 10px !important;
+        padding: 15px !important;
+        
+        /* Schein/Glow explizit entfernen */
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0) !important; 
+        display: none; /* Wird weiterhin über JS (block) gesteuert */
+    }
+
+    /* Zentrierung von Label und Dropdown beibehalten */
+    .lineage-details div[style*="text-align: left"] {
+        text-align: center !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+
+    #spellAbility {
+        margin: 10px auto !important;
+        width: 200px !important;
+        max-width: 100% !important;
+    }
+
+    /* 4. Das Label über dem Dropdown */
+    .lineage-details label {
+        text-align: center !important;
+        width: 100% !important;
+        margin-top: 15px !important;
+    }
+}
+
+
+/* =======================================================================
+   MOBILE - Schritt 4: Attribrute & Drag and Drop
+   ======================================================================= */
+
+@media screen and (max-width: 600px) {
+    /* 1. Methodenwahl & Labels komplett weg */
+    #attributeMethodSelection, 
+    #distributionMethodsLabel,
+    .attribute-label-live { 
+        display: none !important; 
+    }
+
+    /* 2. RADIKALER CLEANUP der Reihen */
+    /* Wir verstecken: 
+       - Die 2. Box (Total Score)
+       - Das 3. Element (Das "=" Zeichen)
+       - Die 5. Box (Der ursprüngliche Background-Bonus Bereich)
+    */
+    .attribute-row .interactive-elements > .attribute-component:nth-child(2),
+    .attribute-row .interactive-elements > .formula-symbol,
+    .attribute-row .interactive-elements > .attribute-component:nth-child(5) {
+        display: none !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Platzoptimierung für die verbleibenden 2 Boxen + Stepper */
+    .interactive-elements {
+        width: 100% !important;
+        justify-content: center !important;
+        gap: 5px !important;
+    }
+
+    /* 3. Der goldene Bonus-Kreis (Badge) */
+    .attribute-component {
+        position: relative;
+    }
+
+    .mobile-background-bonus {
+        position: absolute;
+        top: -8px; 
+        right: -5px; 
+        background-color: #d4a017; 
+        color: #1b1b1f; 
+        border-radius: 50%;
+        width: 24px; /* Etwas breiter für "+1" */
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        border: 2px solid #fce181;
+        z-index: 10;
+    }
+
+    /* 4. Symmetrische Stepper-Pfeile */
+    .mobile-stepper-ui {
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        margin-left: 10px;
+    }
+
+    .active-stepper {
+        display: flex !important;
+    }
+
+    .stepper-btn {
+        background-color: #2e2e33;
+        color: #e8d8b5;
+        border: 1px solid #8b5e34;
+        width: 45px;
+        height: 25px;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stepper-btn:first-child { border-radius: 4px 4px 0 0; border-bottom: none; }
+    .stepper-btn:last-child { border-radius: 0 0 4px 4px; }
+}
+
+
+/* =======================================================================
+   MOBILE - Schritt 7: Zuaberliste
+   ======================================================================= */
+
+@media screen and (max-width: 600px) {
+
+    /* 1. Zauberliste von 2 Spalten auf 1 Spalte umstellen */
+    ul.master-spell-ul {
+        grid-template-columns: 1fr !important; 
+        gap: 8px 0 !important; /* Mehr vertikaler Abstand zwischen den Zaubern */
+    }
+
+    /* 2. Die einzelnen Listeneinträge für Daumen-Bedienung optimieren */
+    ul.master-spell-ul li {
+        padding: 10px 5px !important; /* Größere Klickfläche */
+        border-bottom: 1px solid rgba(232, 216, 181, 0.1); /* Hauchdünne Trennlinie */
+    }
+
+    /* 3. Platz für den Namen maximieren */
+    .spell-marker-container {
+        width: 65px !important; /* Etwas schmaler, um links Platz zu sparen */
+        gap: 2px !important;
+    }
+
+    .spell-name {
+        font-size: 0.95rem;
+        white-space: normal; /* Erlaubt Zeilenumbruch bei sehr langen Zaubernamen */
+    }
+
+    /* 4. Den Sektions-Container (Vorbereitet, Zauberbuch etc.) anpassen */
+    .spell-section-container {
+        padding: 10px !important;
+        margin-bottom: 15px !important;
+    }
+}
+
+
+/* =======================================================================
+   MOBILE - Schritt 8: Ausrüstungen
+   ======================================================================= */
+
+@media screen and (max-width: 600px) {
+    /* --- 1. Sektion 1: Labels auf Anfangsbuchstaben kürzen --- */
+    #classLabel, #backgroundLabel {
+        font-size: 0 !important; /* Versteckt den Originaltext */
+        width: 40px !important;
+        text-align: center;
+    }
+    #classLabel::before { content: "C"; font-size: 1rem; color: #d4a017; font-weight: bold; }
+    #backgroundLabel::before { content: "B"; font-size: 1rem; color: #d4a017; font-weight: bold; }
+
+    /* --- 2. Sektion 2: Geldbörse (Purse) vertikal stapeln --- */
+    #purseInputs {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+    .coin-column {
+        flex-direction: row !important; /* Label und Input nebeneinander */
+        justify-content: space-between;
+        width: 100%;
+        max-width: 180px; /* Kompakte Breite */
+        border-bottom: 1px solid rgba(212, 160, 23, 0.2);
+        padding-bottom: 5px;
+    }
+    .coin-column label { margin-bottom: 0 !important; }
+
+    /* --- 3. Sektion 3: Ausrüstungstabellen (Spalten-Logik) --- */
+    
+    /* A: Generell alle Spalten außer 1 (Menge) und 2 (Name) verstecken */
+    .item-table th:nth-child(n+3), 
+    .item-table td:nth-child(n+3) {
+        display: none !important;
+    }
+
+    /* B: Bei Tools und Gear die Spalte 4 (Variante) wieder einblenden */
+    #toolsTable th:nth-child(4), #toolsTable td:nth-child(4),
+    #gearTable th:nth-child(4), #gearTable td:nth-child(4) {
+        display: table-cell !important;
+    }
+
+    /* Tabellen-Layout optimieren */
+    .item-table {
+        font-size: 0.8rem !important;
+        table-layout: auto;
+    }
+    .item-table td {
+        padding: 5px 2px !important;
+    }
+
+    /* Versteckt die "Keine"-Zelle am Ende der Zeilen in Sektion 1 */
+    #classEquipmentRow td:last-child,
+    #backgroundEquipmentRow td:last-child {
+        display: none !important;
+    }
+
+    /* Damit das Layout bündig bleibt, passen wir die Tabellenbreite an */
+    #equipmentOptionsTable {
+        width: 100%;
+    }
+}
+
+/* =======================================================================
+   MOBILE - Schritt 10: Alignment
+   ======================================================================= */
+
+@media screen and (max-width: 600px) {
+    /* --- Schritt 10: Trait-Pool ausblenden --- */
+    .personality-divider,
+    .trait-table-controls,
+    #traitPoolGrid {
+        display: none !important;
+    }
+
+    /* Das Textfeld etwas größer für bessere Daumen-Eingabe */
+    #personalityEditor {
+        min-height: 250px !important;
+    }
+
+    /* --- Schritt 10: Alignment Matrix (30% kleiner) --- */
+    /* 110px * 0.7 = 77px -> Wir nehmen 75px für ein sauberes Grid */
+    .alignment-matrix {
+        grid-template-columns: repeat(3, 75px) !important;
+        grid-template-rows: repeat(3, 75px) !important;
+        gap: 8px !important;
+        margin: 20px auto !important;
+    }
+
+    .alignment-circle-item {
+        width: 75px !important;
+        height: 75px !important;
+        font-size: 0.65rem !important; /* Schriftgröße angepasst */
+        padding: 5px !important;
+        line-height: 1.1 !important;
+    }
+}
+
+
+/* =======================================================================
+   MOBILE - Schritt 11: Appearance
+   ======================================================================= */
+
+@media screen and (max-width: 600px) {
+    /* --- Schritt 11: Kompakt-Inputs --- */
+    
+    /* 1. Schriftart und allgemeine Größe reduzieren */
+    #step11 input[type="text"], 
+    #step11 input[type="number"],
+    #selectGender.dropdown,
+    .app-small-input {
+        font-size: 15px !important;
+        height: 35px !important;
+        padding: 4px 8px !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important; /* Wir regeln den Abstand über das Grid */
+        width: 55px !important; /* Schmaler machen */
+        margin-left: 35% !important;
+    }
+
+    /* 2. Die Spaltenverteilung im Grid anpassen, damit Labels links mehr Platz haben */
+    .appearance-row {
+        grid-template-columns: 1fr 110px !important; /* Label links, Input rechts fixiert */
+        gap: 15% !important;
+        margin-bottom: 12px !important;
+        text-align: left;
+    }
+
+    /* 3. Dropdown-Spezialfall (Gender) */
+    #selectGender {
+        width: 110px !important;
+    }
+
+    /* 4. Das "Alter"-Feld und andere Einheiten-Inputs */
+    .input-with-unit {
+        justify-content: flex-end; /* Rechtsbündig zum Rand */
+    }
+
+    /* Label-Text etwas kleiner, damit er nicht umbricht */
+    .appearance-label {
+        font-size: 0.75rem !important;
+    }
+}
+
+
+/* =======================================================================
+   MOBILE - Schritt 12: Naming
+   ======================================================================= */
+
+@media screen and (max-width: 600px) {
+
+    /* --- Schritt 12: Name kompakter --- */
+    #characterNameInput.name-inner-textarea {
+        font-size: 1.1rem !important; /* Deutlich kleiner als die 1.5em vom Desktop */
+        padding: 10px 15px !important;
+        height: 45px !important;
+        text-align: center;
+    }
+
+    /* --- Summary Grid: Rein funktionale Ausrichtung --- */
+    #step12 .appearance-row {
+        display: grid !important;
+        /* Wir geben der linken Spalte eine feste Breite, 
+           dadurch starten alle Werte rechts exakt an der gleichen Linie */
+        grid-template-columns: 100px 1fr !important; 
+        gap: 10px !important;
+        align-items: flex-start !important;
+        text-align: left !important;
+        
+        /* Entfernt alle Linien oder Abstände aus meinem vorherigen Vorschlag */
+        border: none !important;
+        padding: 0 !important;
+        margin-bottom: 5px !important;
+    }
+
+    #step12 .appearance-label {
+        /* Keine Farbänderung - nutzt globale Stile */
+        word-wrap: break-word;
+    }
+
+    #step12 .appearance-value {
+        /* Keine Farbänderung - nutzt globale Stile */
+        text-align: left !important; 
+    }
+
+}
