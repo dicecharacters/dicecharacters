@@ -266,7 +266,7 @@ const classCoreTraitsList = [
     "translationLabel": "cleric",
     "primaryAbility": "wisdomLabel",
     "hitPointDie": "D8",
-    "savingThrowProficiencies": ["intelligenceLabel", "charismaLabel"],
+    "savingThrowProficiencies": ["wisdomLabel", "charismaLabel"],
     "skillCategoryNumber": [6, 7, 10, 14, 15],
     "spellcastingLabel": 1,
     "spellcastingAbility": "wisdomLabel",
@@ -959,4 +959,5 @@ const genderList = [
     "genderLabel": "notDefinedLabel",
     "genderAbbrLabel": "notDefinedAbbrLabel"
   }
+
 ];
