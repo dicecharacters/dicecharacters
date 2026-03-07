@@ -1080,7 +1080,7 @@ function showLineageDetails(lineageLabel) {
     });
     tableHTML += `</tbody></table>`;
 
-    const imagePath = `images/${lineageLabel.toLowerCase()}.png`;
+    const imagePath = `images/${lineageLabel}.png`;
 
     // 1. TEXT-INHALT (Ohne Bild, mit Klassen für Breakpoints)
     lineageDetailBox.innerHTML = `
@@ -10203,3 +10203,4 @@ function adjustValue(stringId, delta) {
         triggerSaveAnimation(); // Dein goldener Glow-Effekt
     }
 }
+
