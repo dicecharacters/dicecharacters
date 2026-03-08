@@ -8637,8 +8637,11 @@ function initializeAlignmentView() {
     const charMax = document.getElementById('personalityCharMax');
     const elements = translations[currentLang];
 
+    const isMobile = window.innerWidth <= 1024;
+    const placeholderKey = isMobile ? 'alignmentPlaceholderMobileText' : 'alignmentPlaceholderText';
+
     // 1. UI-Setup & Placeholder
-    editor.setAttribute('data-placeholder', elements.alignmentPlaceholderText || "Beschreibe deinen Charakter...");
+    editor.setAttribute('data-placeholder', elements[placeholderKey] || "Beschreibe deinen Charakter...");
     charMax.innerText = MAX_PERSONALITY_LENGTH;
 
     // 2. UI-Komponenten aufbauen
@@ -10216,3 +10219,107 @@ function adjustValue(stringId, delta) {
         triggerSaveAnimation(); // Dein goldener Glow-Effekt
     }
 }
+
+
+
+// TABLET - Schritt 10: Präzises Drag & Drop für Traits
+
+let currentTrait = null;
+
+document.addEventListener('touchstart', function(e) {
+    // Greife das Element, solange es im Pool liegt und keine Überschrift ist
+    const item = e.target.closest('#traitPoolGrid button, #traitPoolGrid div:not(.trait-grid)');
+    
+    if (item && document.getElementById('traitPoolGrid').contains(item)) {
+        currentTrait = item;
+        const touch = e.touches[0];
+        
+        // Wir speichern die Verschiebung zum Finger-Mittelpunkt
+        const rect = currentTrait.getBoundingClientRect();
+        currentTrait.dataset.offsetX = touch.clientX - rect.left;
+        currentTrait.dataset.offsetY = touch.clientY - rect.top;
+        
+        currentTrait.classList.add('dragging-active');
+        // Initialposition setzen
+        currentTrait.style.left = rect.left + "px";
+        currentTrait.style.top = rect.top + "px";
+        currentTrait.style.width = rect.width + "px";
+    }
+}, { passive: false });
+
+document.addEventListener('touchmove', function(e) {
+    if (!currentTrait) return;
+    e.preventDefault(); 
+    
+    const touch = e.touches[0];
+    // Position direkt am Finger
+    currentTrait.style.left = (touch.clientX - parseFloat(currentTrait.dataset.offsetX)) + "px";
+    currentTrait.style.top = (touch.clientY - parseFloat(currentTrait.dataset.offsetY)) + "px";
+}, { passive: false });
+
+document.addEventListener('touchend', function(e) {
+    if (!currentTrait) return;
+    
+    const touch = e.changedTouches[0];
+    const editor = document.getElementById('personalityEditor');
+    
+    // "Durchschauen", was unter dem Finger liegt
+    currentTrait.style.pointerEvents = 'none';
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    currentTrait.style.pointerEvents = 'auto';
+
+    const isOverEditor = target && (target === editor || editor.contains(target));
+
+    if (isOverEditor) {
+        const text = currentTrait.innerText.trim();
+        const style = window.getComputedStyle(currentTrait);
+        
+        // --- 1. FARB-LOGIK EXAKT WIE AM PC ---
+        let color = style.backgroundColor; // Standard: Hintergrundfarbe
+
+        // Prüfung auf die "böse" Klasse
+        if (currentTrait.classList.contains('trait-bg-evil')) {
+            color = "#000000"; 
+        }
+
+        // --- 2. SPAN ERSTELLEN ---
+        const span = document.createElement('span');
+        span.style.color = color;
+        span.style.fontWeight = 'bold';
+        span.innerText = text;
+        editor.appendChild(span);
+
+        // --- 3. SEPARATOR (KOMMA) DAHINTER ---
+        const separator = document.createTextNode(", ");
+        editor.appendChild(separator);
+
+        // --- 4. ELEMENT VERSTECKEN ---
+        // Wir nutzen visibility wie im PC-Code, damit das Layout nicht springt
+        currentTrait.style.visibility = 'hidden'; 
+
+        // --- 5. ZÄHLER AKTUALISIEREN ---
+        // Berücksichtigt das unsichtbare Zeichen \u200B
+        const cleanText = editor.innerText.replace(/\u200B/g, '');
+        const counterEl = document.getElementById('personalityCharCount');
+        if (counterEl) {
+            counterEl.innerText = cleanText.length;
+        }
+
+        // --- 6. CURSOR ANS ENDE ---
+        if (typeof placeCaretAtEnd === "function") {
+            placeCaretAtEnd(editor);
+        }
+        
+        // Trigger für weitere Skripte
+        editor.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    // Reset der Drag-Styles
+    currentTrait.classList.remove('dragging-active');
+    currentTrait.style.position = "";
+    currentTrait.style.left = "";
+    currentTrait.style.top = "";
+    currentTrait.style.width = "";
+    currentTrait.style.pointerEvents = 'auto';
+    currentTrait = null;
+});

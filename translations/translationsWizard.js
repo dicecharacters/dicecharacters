@@ -11,11 +11,11 @@ Object.assign(translations.de, {
     "abjurerLabel": "Bannmagier",
     "divinerLabel": "Weissager",
     "evokerLabel": "Beschwörer",
-    "IllusionistLabel": "Illusionist",
+    "illusionistLabel": "Illusionist",
     "abjurerDLabel": "Beschütze Gefährten und verbanne Feinde. Dein Studium der Magie konzentriert sich auf Zauber, die blockieren, verbannen oder schützen – schädliche Effekte beenden, böse Einflüsse verbannen und die Schwachen schützen. Bannmagier werden gerufen, wenn bösartige Geister exorziert werden müssen, wenn Orte vor magischer Spionage geschützt werden müssen und wenn Portale zu anderen Existenzebenen geschlossen werden müssen. Abenteurergruppen schätzen Bannmagier für den Schutz, den sie gegen eine Vielzahl feindlicher Magie und anderer Angriffe bieten.",
     "divinerDLabel": "Erforsche die Geheimnisse des Multiversums. Der Rat eines Weissagers wird von denen gesucht, die ein klareres Verständnis von Vergangenheit, Gegenwart und Zukunft wünschen. Als Weissager strebst du danach, die Schleier von Raum, Zeit und Bewusstsein zu lüften. Du arbeitest daran, Zauber der Erkenntnis, Fernsicht, übernatürlichen Wissens und Voraussicht zu meistern.",
     "evokerDLabel": "Erschaffe explosive Elementareffekte. Dein Studium konzentriert sich auf Magie, die mächtige Elementareffekte erzeugt, wie beißende Kälte, sengende Flammen, rollenden Donner, knisternden Blitz und brennende Säure. Einige Beschwörer finden Arbeit in militärischen Streitkräften und dienen als Artillerie, um Armeen aus der Ferne zu vernichten. Andere nutzen ihre Macht, um andere zu schützen, während einige nur ihren eigenen Vorteil suchen.",
-    "IllusionistDLabel": "Webe subtile Zauber der Täuschung. Du spezialisierst dich auf Magie, die die Sinne blendet und den Verstand täuscht, und die Illusionen, die du erschaffst, lassen das Unmögliche real erscheinen.",
+    "illusionistDLabel": "Webe subtile Zauber der Täuschung. Du spezialisierst dich auf Magie, die die Sinne blendet und den Verstand täuscht, und die Illusionen, die du erschaffst, lassen das Unmögliche real erscheinen.",
 
     // Magier: Merkmale
     "ritualAdeptLabel": "Ritualexperte",
@@ -89,11 +89,11 @@ Object.assign(translations.en, {
     "abjurerLabel": "Abjurer",
     "divinerLabel": "Diviner",
     "evokerLabel": "Evoker",
-    "IllusionistLabel": "Illusionist",
+    "illusionistLabel": "Illusionist",
     "abjurerDLabel": "Shield Companions and Banish Foes. Your study of magic is focused on spells that block, banish, or protect - ending harmful effects, banishing evil influences, and protecting the weak. Abjurers are sought when baleful spirits require exorcism, when locations must be guarded against magical spying, and when portals to other planes of existence must be closed. Adventuring parties value Abjurers for the protection they provide against a variety of hostile magic and other attacks.",
     "divinerDLabel": "Learn the Secrets of the Multiverse. The counsel of a Diviner is sought by those who want a clearer understanding of the past, present, and future. As a Diviner, you strive to part the veils of space, time, and consciousness. You work to master spells of discernment, remote viewing, supernatural knowledge, and foresight.",
     "evokerDLabel": "Create Explosive Elemental Effects. Your studies focus on magic that creates powerful elemental effects such as bitter cold, searing flame, rolling thunder, crackling lightning, and burning acid. Some Evokers find employment in military forces, serving as artillery to blast armies from afar. Others use their power to protect others, while some seek their own gain.",
-    "IllusionistDLabel": "Weave Subtle Spells of Deception. You specialize in magic that dazzles the senses and tricks the mind, and the illusions you craft make the impossible seem real.",
+    "illusionistDLabel": "Weave Subtle Spells of Deception. You specialize in magic that dazzles the senses and tricks the mind, and the illusions you craft make the impossible seem real.",
 
     // Wizard: Features
     "ritualAdeptLabel": "Ritual Adept",

@@ -387,8 +387,9 @@ const translations = {
 
     //Placeholder Texte
     "storyPlaceholderText": "Beschreibungen deiner bisherigen Erlebnisse allein oder in einer Gemeinschaft, deiner Schicksalsschläge und Triumphe sowie Einblicke in deine Sehnsüchte, Makel und Ideale",
-    "communityPlaceholderText": "Beschreibe die Gemeinschaft, Organisation, den Orden, Kult, Clan, die Kaste, Gruppierung oder das Adelshaus, dem du angehörst. Beschreibe euer Zeichen, Symbol oder Wappen. Beschreibe die Riten, Bräuche und Traditionen deiner Gemeinschaft.",
+    "communityPlaceholderText": "Beschreibe die Gemeinschaft, Organisation, Kaste, Gruppierung, den Orden, Kult, Clan oder das Adelshaus, dem du angehörst.",
     "alignmentPlaceholderText": "Liste Persönlichkeitsmerkmale auf. Führe die Grundsätze, Ideale und Werte deines Charakters an. Du kannst aus der untenstehenden Tabelle Merkmale in diese Textbox ziehen und auch eigene hineinschreiben.",
+    "alignmentPlaceholderMobileText": "Liste Persönlichkeitsmerkmale auf. Führe die Grundsätze, Ideale und Werte deines Charakters an.",
     "appearancePlaceholderText": "Beschreibe dein Aussehen. Führe körperliche Merkmale auf, welche dich von anderen abheben.",
     "namePlaceholderText": "Name deines Charakters",
     "portraitPlaceholderText": "Portrait",
@@ -423,7 +424,7 @@ const translations = {
     "luggageLabel": "Gepäck & Reichtümer",
     "storyAndAlignmentLabel": "Geschichte & Gesinnung",
     "changePicText": "Bild ändern",
-    "autoValueText": "Dieser Wert wird automatisch berechnet",
+    "zoomWarningText": "Hinweis: Dein System oder Browser verwendet eine Bildschirmskalierung (Zoom).\n\nDadurch könnte das PDF eventuell leicht verschoben aussehen. Für das perfekte Ergebnis wird ein Browser-Zoom von 100% empfohlen (Strg+0).\n\nMöchtest du das PDF trotzdem jetzt herunterladen?",
     "editButtonLabel": "Bearbeiten",
     "downloadPdfLabel": "Als PDF herunterladen"
 },
@@ -814,8 +815,9 @@ const translations = {
 
     //Placeholder texts
     "storyPlaceholderText": "Descriptions of your past experiences alone or as part of a community; your hardships and triumphs; and insights into your longings, flaws, and ideals",
-    "communityPlaceholderText": "Describe the community, organization, order, cult, clan, caste, group, or noble house you belong to. Describe your emblem, symbol, or coat of arms. Describe the rites, customs, and traditions of your community.",
+    "communityPlaceholderText": "Describe the community, organization, caste, group, order, cult, clan, or noble house to which you belong.",
     "alignmentPlaceholderText": "List personality traits. Outline your character’s principles, ideals, and values. You can drag traits from the table below into this textbox and also write your own.",
+    "alignmentPlaceholderMobileText": "List personality traits. Outline your character’s principles, ideals, and values.",
     "appearancePlaceholderText": "Describe your appearance. List physical characteristics that set you apart from others.",
     "namePlaceholderText": "Name of your character",
     "portraitPlaceholderText": "Portrait",
@@ -851,6 +853,7 @@ const translations = {
     "storyAndAlignmentLabel": "Story & Alignment",
     "changePicText": "Change image",
     "autoValueText": "This value is calculated automatically",
+    "zoomWarningText": "Note: Your system or browser is using screen scaling (Zoom).\n\nThis might cause the PDF to look slightly misaligned. For the best result, a browser zoom of 100% is recommended (Ctrl+0).\n\nDo you want to download the PDF anyway?",
     "editButtonLabel": "Edit",
     "downloadPdfLabel": "Download as PDF"
   }

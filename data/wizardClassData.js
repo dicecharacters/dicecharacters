@@ -1085,7 +1085,7 @@ const subclassListWizard = [
   },
   {
     "subclassCategoryNumber": 4,
-    "translationLabel": "IllusionistLabel",
-    "subclassD": "IllusionistDLabel"
+    "translationLabel": "illusionistLabel",
+    "subclassD": "illusionistDLabel"
   }
 ];

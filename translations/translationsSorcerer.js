@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Zauberer
     // ----------------------------------------------------------------------------------------
     "sorcerer": "Zauberer",
-    "sorcererText": "Zauberer beherrschen angeborene Magie, die in ihrem Wesen verankert ist. Einige Zauberer können den Ursprung ihrer Macht nicht benennen, während andere sie auf seltsame Ereignisse in ihrer persönlichen oder familiären Geschichte zurückführen. Der Segen eines Drachen oder einer Dryade bei der Geburt eines Babys oder der Schlag eines Blitzes aus heiterem Himmel könnte das Geschenk eines Zauberers entzünden. Ebenso könnte das Geschenk einer Gottheit, die Exposition gegenüber der seltsamen Magie einer anderen Existenzebene oder ein Einblick in die inneren Abläufe der Realität.",
+    "sorcererText": "Zauberer beherrschen angeborene Magie, die in ihrem Wesen verankert ist. Einige Zauberer können den Ursprung ihrer Macht nicht benennen, während andere sie auf seltsame Ereignisse in ihrer persönlichen oder familiären Geschichte zurückführen. Der Segen eines Drachen oder einer Dryade bei der Geburt eines Babys oder der Schlag eines Blitzes aus heiterem Himmel könnte das Geschenk eines Zauberers entzünden.",
 
     // Zauberer: Unterklassen
     "aberrantSorceryLabel": "Abbarante Zauberei",
@@ -130,7 +130,7 @@ Object.assign(translations.en, {
     // Class: Sorcerer
     // ----------------------------------------------------------------------------------------
     "sorcerer": "Sorcerer",
-    "sorcererText": "Sorcerers command innate magic that is woven into their being. Some sorcerers cannot name the origin of their power, while others trace it to strange events in their personal or familial history. The blessing of a dragon or a dryad at a baby’s birth, or the strike of lightning from a clear sky, might ignite a sorcerer’s gift. Likewise, the gift of a deity, exposure to the strange magic of another plane of existence, or a glimpse into the inner workings of reality could spark a sorcerer’s abilities.",
+    "sorcererText": "Sorcerers command innate magic that is woven into their being. Some sorcerers cannot name the origin of their power, while others trace it to strange events in their personal or familial history. The blessing of a dragon or a dryad at a baby’s birth, or the strike of lightning from a clear sky, might ignite a sorcerer’s gift.",
 
     // Sorcerer: Subclasses
     "aberrantSorceryLabel": "Aberrant Sorcery",

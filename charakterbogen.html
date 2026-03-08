@@ -1048,6 +1048,11 @@ let currentLanguage = 'de';
 let totalPages = 6; // Hier änderst du die Zahl zentral
 window.spellAppendixPages = {};
 
+// PDF-Export Methode
+// 1 = nativer Browser-Druck (Standard, extrem robust)
+// 0 = Screenshot-Methode via html2pdf.js (altes Verhalten)
+const PDF_OPTION = 1;
+
 /* ==========================================================================
    AREAL 1: INITIALISIERUNG (CONTROLLER)
    ========================================================================== */
@@ -5401,122 +5406,135 @@ function lockInput(element, shouldLock) {
     }
 }
 
-async function downloadPDF() {
-  const isDefaultZoom = Math.abs(1 - window.devicePixelRatio) < 0.02;
-  if (!isDefaultZoom) {
-    alert("Bitte setzen Sie den Browser-Zoom auf 100% (Strg+0).");
-    return;
-  }
+/* ==========================================================================
+   PDF EXPORT & DRUCK LOGIK
+   ========================================================================== */
 
-  const root = document.getElementById('sheetRoot');
-  if (!root) {
-    alert('sheetRoot nicht gefunden.');
-    return;
-  }
-
-  // ==========================================================
-  // DYNAMISCHER DATEINAME
-  // ==========================================================
-  
-  // 1. Namen aus dem Feld holen (oder Fallback "Unbekannt")
-  const nameInput = document.getElementById('characterName');
-  let charName = nameInput && nameInput.value ? nameInput.value.trim() : "Unbekannt";
-
-  // 2. Sonderzeichen durch "_" ersetzen
-  // Filtert: \ / : * ? " < > | , ;
-  let safeName = charName.replace(/[\\/:\*\?"<>|;,]/g, '_');
-  
-  // Doppelte Unterstriche (z.B. "Peter__der") zu einem zusammenfassen
-  safeName = safeName.replace(/_+/g, '_');
-
-  // Leerzeichen direkt vor oder nach einem Unterstrich entfernen (für saubere Optik)
-  safeName = safeName.replace(/_ /g, '_').replace(/ _/g, '_');
-
-  // 3. Datum im Format DDMMMYYYY generieren
-  const d = new Date();
-  const day = String(d.getDate()).padStart(2, '0'); // z.B. "05"
-  const monthArr = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-  const month = monthArr[d.getMonth()]; // z.B. "MAR"
-  const year = d.getFullYear(); // z.B. "2026"
-  const dateString = `${day}${month}${year}`;
-
-  // 4. Dateinamen zusammensetzen
-  const finalFilename = `${safeName}_Character-Sheet_${dateString}.pdf`;
-  
-  // ==========================================================
-
-  document.body.classList.add('pdf-export-mode');
-
-  const options = {
-    filename: finalFilename,
-    margin: 0,
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-
-  try {
-    // 1) Rendern
-    const worker = html2pdf().from(root).set(options).toPdf();
-
-    // 2) PDF-Instanz holen und überschüssige Seiten löschen
-    await worker.get('pdf').then(pdf => {
-      // Seitenzahl ermitteln (kompatibel je nach jsPDF-Version)
-      const getTotal = () => {
-        if (typeof pdf.getNumberOfPages === 'function') return pdf.getNumberOfPages();
-        if (pdf.internal && pdf.internal.getNumberOfPages) return pdf.internal.getNumberOfPages();
-        return null;
-      };
-
-      const total = getTotal();
-      
-      // Wir nutzen jetzt die globale Variable 'totalPages' (aktuell 6)
-      const finalAllowedPages = totalPages + appendixTotalPages;
-
-      if (!total || total <= finalAllowedPages) return;
-
-      // Seiten hinter der letzten gewollten Seite entfernen
-      if (typeof pdf.deletePage === 'function') {
-        for (let p = total; p > finalAllowedPages; p--) {
-          pdf.deletePage(p);
-        }
-      } else {
-        console.warn('pdf.deletePage nicht verfügbar – kann überzählige Seiten nicht entfernen.');
-      }
-    });
-
-    // 3) Speichern
-    await worker.save();
-  } catch (e) {
-    console.error(e);
-    alert('PDF-Export ist fehlgeschlagen. Siehe Konsole für Details.');
-  } finally {
-    document.body.classList.remove('pdf-export-mode');
-  }
-}
-
-/* --- BILDER-UPLOAD LOGIK (Mit Canvas Auto-Resize) --- */
-
-function setupImageUploads() {
-    const portraitContainer = document.getElementById('portraitContainer');
-    const portraitInput = document.getElementById('portraitInput');
-    
-    const symbolContainer = document.getElementById('communitySymbolBox');
-    const symbolInput = document.getElementById('symbolInput');
-
-    // 1. Klick auf Box öffnet den Dateidialog (nur wenn im Edit-Mode)
-    if (portraitContainer && portraitInput) {
-        portraitContainer.addEventListener('click', () => {
-            if (isEditMode) portraitInput.click();
-        });
-        // 2. Datei ausgewählt -> Verarbeiten
-        portraitInput.addEventListener('change', (e) => processAndSaveImage(e, portraitContainer, 'portraitImage', 800));
+// 1. Die Weiche (Router), die beim Klick auf den Button aufgerufen wird
+function downloadPDF() {
+    // Wenn der Bearbeitungsmodus noch aktiv ist, beenden wir ihn, 
+    // damit das PDF keine grauen Felder hat.
+    if (isEditMode) {
+        toggleEditMode();
     }
 
-    if (symbolContainer && symbolInput) {
-        symbolContainer.addEventListener('click', () => {
-            if (isEditMode) symbolInput.click();
+    if (PDF_OPTION === 1) {
+        printPDFNatively();
+    } else {
+        generatePDFviaScreenshot();
+    }
+}
+
+// 2. Hilfsfunktion: Generiert den sauberen Dateinamen (z.B. "Fabiano_Character-Sheet_08MAR2026")
+function generateSafeFilename() {
+    const nameInput = document.getElementById('characterName');
+    let charName = nameInput && nameInput.value ? nameInput.value.trim() : "Unbekannt";
+
+    // Sonderzeichen durch "_" ersetzen (Filtert: \ / : * ? " < > | , ;)
+    let safeName = charName.replace(/[\\/:\*\?"<>|;,]/g, '_');
+    // Doppelte Unterstriche zusammenfassen
+    safeName = safeName.replace(/_+/g, '_');
+    // Leerzeichen direkt am Unterstrich entfernen
+    safeName = safeName.replace(/_ /g, '_').replace(/ _/g, '_');
+
+    // Datum generieren
+    const d = new Date();
+    const day = String(d.getDate()).padStart(2, '0');
+    const monthArr = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    const month = monthArr[d.getMonth()];
+    const year = d.getFullYear();
+    const dateString = `${day}${month}${year}`;
+
+    return `${safeName}_Character-Sheet_${dateString}`;
+}
+
+// 3. MODUS 1: Nativer Browser-Druck (Der neue Goldstandard)
+function printPDFNatively() {
+    const originalTitle = document.title; // "D&D Charakterbogen" speichern
+    const printFilename = generateSafeFilename();
+
+    // Genialer Trick: Wir ändern den Titel der Website kurz in den gewünschten Dateinamen.
+    // Der Browser übernimmt diesen Titel dann automatisch als Vorschlag zum Speichern!
+    document.title = printFilename;
+
+    // Druck-Dialog öffnen
+    window.print();
+
+    // Nach einem minimalen Delay setzen wir den Titel wieder auf das Original zurück,
+    // damit der Tab im Browser wieder normal heißt.
+    setTimeout(() => {
+        document.title = originalTitle;
+    }, 500);
+}
+
+// 4. MODUS 0: Alte Screenshot-Methode (html2pdf.js)
+async function generatePDFviaScreenshot() {
+    // Prüfen, ob das Gerät ein Smartphone oder Tablet ist
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // Zoom-Prüfung NUR auf dem PC/Mac durchführen
+    if (!isMobile) {
+        const isDefaultZoom = Math.abs(1 - window.devicePixelRatio) < 0.02;
+        if (!isDefaultZoom) {
+            const t = translations[currentLanguage] || translations['de'];
+            const warningMessage = t['zoomWarningText'] || "Hinweis: Dein System oder Browser verwendet eine Bildschirmskalierung (Zoom).\n\nDadurch könnte das PDF eventuell leicht verschoben aussehen. Für das perfekte Ergebnis wird ein Browser-Zoom von 100% empfohlen (Strg+0).\n\nMöchtest du das PDF trotzdem jetzt herunterladen?";
+            
+            const proceed = confirm(warningMessage);
+            if (!proceed) return; 
+        }
+    }
+
+    const root = document.getElementById('sheetRoot');
+    if (!root) {
+        alert('sheetRoot nicht gefunden.');
+        return;
+    }
+
+    // Name via Hilfsfunktion generieren und Dateiendung anhängen
+    const finalFilename = generateSafeFilename() + ".pdf";
+
+    document.body.classList.add('pdf-export-mode');
+
+    const options = {
+        filename: finalFilename,
+        margin: 0,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2,           
+            useCORS: true, 
+            scrollY: 0
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    try {
+        const worker = html2pdf().from(root).set(options).toPdf();
+        await worker.get('pdf').then(pdf => {
+            const getTotal = () => {
+                if (typeof pdf.getNumberOfPages === 'function') return pdf.getNumberOfPages();
+                if (pdf.internal && pdf.internal.getNumberOfPages) return pdf.internal.getNumberOfPages();
+                return null;
+            };
+
+            const total = getTotal();
+            const finalAllowedPages = totalPages + appendixTotalPages;
+
+            if (!total || total <= finalAllowedPages) return;
+
+            if (typeof pdf.deletePage === 'function') {
+                for (let p = total; p > finalAllowedPages; p--) {
+                    pdf.deletePage(p);
+                }
+            } else {
+                console.warn('pdf.deletePage nicht verfügbar.');
+            }
         });
-        symbolInput.addEventListener('change', (e) => processAndSaveImage(e, symbolContainer, 'symbolImage', 400));
+        await worker.save();
+    } catch (e) {
+        console.error(e);
+        alert('PDF-Export ist fehlgeschlagen. Siehe Konsole für Details.');
+    } finally {
+        document.body.classList.remove('pdf-export-mode');
     }
 }
 

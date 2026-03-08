@@ -1013,44 +1013,6 @@ input[type="checkbox"].rounded-checkbox:checked { background-color: #000; }
     margin-top: auto;
 }
 
-/* --- DRUCK-OPTIMIERUNG --- */
-@media print {
-    /* Im Druck heben wir die fixe Höhe auf, damit nichts abgeschnitten wird */
-    .page.fixed-page {
-        height: auto;
-        overflow: visible;
-        display: block;
-    }
-    
-    #page3-sheet {
-        display: block; 
-        height: auto;
-    }
-    
-    #page3-sheet .sheet-main-content {
-        display: block;
-        height: auto;
-    }
-
-    #page3-sheet .features-layout {
-        display: flex; 
-        height: 260mm; /* Fixe Höhe nur für das Layout im Druck */
-    }
-    
-    /* Text soll im Druck voll sichtbar sein, keine Scrollbalken */
-    #page3-sheet .feature-content-area {
-        overflow: visible;
-        height: auto;
-        display: block;
-    }
-    
-    #page3-sheet .sheet-footer {
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-    }
-}
-
 /* --- FEATURE BOX STYLES (Finales Layout) --- */
 
 /* 1. Hauptcontainer */
@@ -1605,3 +1567,122 @@ padding: 0.8rem
 
 /* Spezifische PDF Korrektur für Anhang */
 .pdf-export-mode .appendix-layout { height: 100% !important; margin-bottom: 0 !important; }
+
+
+/* =========================================
+   DRUCK- & PDF-EXPORT EINSTELLUNGEN
+   ========================================= */
+@media print {
+    /* 1. Zwingt den Browser, ALLE Farben, Hintergründe und Linien mitzudrucken */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body {
+        background-color: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* 2. Format auf DIN A4 setzen. margin: 0mm löscht das Datum/URL des Browsers! */
+    @page {
+        size: A4 portrait;
+        margin: 0mm !important; 
+    }
+
+    /* 3. Menüleiste ausblenden */
+    .control-group {
+        display: none !important;
+    }
+
+    /* 4. PERFEKTE A4 SEITEN (Wie im PDF Export) */
+    .page, .fixed-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        max-height: 297mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important; 
+        page-break-after: always !important;
+        break-after: page !important;
+        
+        /* Löst den "Seite 3 Bug" */
+        position: relative !important; 
+        display: block !important;
+    }
+
+    .page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+
+    /* 5. GRID ZWINGEN, DEN PLATZ ZU NUTZEN */
+    .character-sheet {
+        height: 100% !important;
+        max-height: 100% !important;
+        box-sizing: border-box !important;
+        grid-template-rows: auto auto auto minmax(0, 1fr) auto !important; 
+    }
+
+    .character-sheet.simple-layout {
+        grid-template-rows: auto auto minmax(0, 1fr) auto !important; 
+    }
+
+    /* 6. INHALT DRÜCKT DIE FUSSZEILE NACH UNTEN */
+    .sheet-main-content {
+        height: auto !important; 
+        min-height: 0 !important; 
+        margin-bottom: 0 !important; 
+        padding-bottom: 2px !important; 
+        overflow: hidden !important;
+    }
+
+    /* 7. FUSSZEILE (Wieder im Grid!) */
+    .sheet-footer {
+        position: relative !important; /* KEIN absolute mehr! */
+        margin: 0 !important;
+    }
+
+    /* 8. Die kleinen PDF-Fixes für Boxen auch auf den Druck anwenden */
+    .simple-content-override,
+    .page4-main,
+    .inventory-grid {
+        height: 100% !important; 
+        min-height: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .attributes-column,
+    .right-column { height: 100% !important; }
+
+    .trainings-container { flex-grow: 1 !important; display: flex !important; flex-direction: column !important; }
+    .trainings-container .trainings-box:last-child { flex-grow: 1 !important; }
+
+    /* Zentrierung für Tabellen */
+    td .table-input { display: flex !important; align-items: center !important; height: 100% !important; line-height: normal !important; }
+    .attack-table td:nth-child(1) .table-input, .attack-table td:nth-child(4) .table-input, .attack-table td:nth-child(6) .table-input { justify-content: flex-start !important; text-align: left !important; }
+    .attack-table td:nth-child(2) .table-input, .attack-table td:nth-child(3) .table-input, .attack-table td:nth-child(5) .table-input { justify-content: center !important; text-align: center !important; }
+    .inventory-table td:nth-child(1) .table-input, .inventory-table td:nth-child(3) .table-input { justify-content: center !important; text-align: center !important; }
+    .inventory-table td:nth-child(2) .table-input { justify-content: flex-start !important; text-align: left !important; }
+    .inventory-table .checkbox-cell { display: flex !important; justify-content: center !important; align-items: center !important; width: 100% !important;}
+    .attack-table td:last-child { justify-content: flex-start !important; padding-left: 4px !important; }
+    .inventory-table td:last-child { justify-content: center !important; padding-left: 0 !important; }
+    
+    /* Geldbörse Fix */
+    #purseLabel { writing-mode: vertical-rl !important; transform: rotate(0deg) !important; height: auto !important; margin: 0 auto 2rem auto !important; z-index: 9999 !important; background: transparent !important; }
+    .purse-col { display: flex !important; flex-direction: column !important; justify-content: flex-start !important; align-items: center !important; min-width: 4rem !important; }
+    .purse-chain { margin-top: 0 !important; background: transparent !important; position: relative !important; z-index: 1 !important; }
+    .coin-input { line-height: 4.5rem !important; vertical-align: middle !important; }
+    
+    /* Zauber & Anhang Fix */
+    .spell-sheet-box { overflow: hidden !important; }
+    .spell-table { height: 100% !important; }
+    .spell-table td { height: 1.9rem !important; font-size: 0.85rem !important; }
+    .spell-level-header { height: 1.6rem !important; }
+    .appendix-layout { height: 100% !important; margin-bottom: 0 !important; }
+    .auto-marker { display: none !important; }
+}

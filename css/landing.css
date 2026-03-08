@@ -243,3 +243,49 @@ textarea { height: 200px; }
     #floatingLang { top: auto; bottom: 20px; flex-direction: row; right: auto; left: 50%; transform: translateX(-50%); }
     .hero-content h1 { font-size: 2.8rem; }
 }
+
+/* =======================================================================
+   MOBILE ANPASSUNGEN (index.html)
+   ======================================================================= */
+
+@media (max-width: 768px) {
+    /* 1. Zweites Info-Textfeld ausblenden (für besseren Lesefluss) */
+    #aboutText2 {
+        display: none !important;
+    }
+
+    /* 2. Platzhalter-Styling für Kontaktformular (Betreff & Nachricht) */
+    /* Verhindert zu große/kleine Schrift im Vergleich zum Tipp-Text */
+    
+    #subjectInput::placeholder, 
+    #messageInput::placeholder {
+        font-size: 1.1rem !important;
+        opacity: 0.5 !important;
+        line-height: normal !important;
+        font-family: 'Garamond', serif !important;
+    }
+
+    /* Vendor-Prefixes für mobile Safari & Chrome (iOS/Android) */
+    #subjectInput::-webkit-input-placeholder,
+    #messageInput::-webkit-input-placeholder {
+        font-size: 1.1rem !important;
+        opacity: 0.5 !important;
+    }
+
+    #subjectInput::-moz-placeholder,
+    #messageInput::-moz-placeholder {
+        font-size: 1.1rem !important;
+        opacity: 0.5 !important;
+    }
+
+    /* 3. Padding der Cards auf Mobile etwas reduzieren */
+    .info-card, .contact-card {
+        padding: 30px 20px !important;
+    }
+
+    /* 4. Hero Subtitle Abstände optimieren */
+    .motto-text {
+        font-size: 1.1rem;
+        margin-bottom: 25px;
+    }
+}

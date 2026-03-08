@@ -248,7 +248,7 @@ const speciesTraitList = [
         "spellLabel": "lightLabel",
         "skillLabel": 0,
         "featLabel": 0,
-        "characterSheet": 1,
+        "characterSheet": 0,
         "speciesTraitDSheet": "lightBearerDSheet",
         "speciesTraitDLabel": "lightBearerD",
         "speciesTraitShortDLabel": "lightBearerShortD"

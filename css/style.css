@@ -407,7 +407,7 @@ body::before {
     display: none;
     transition: all 0.3s ease;
 
-    /* NEU: Scrollbalken entfernen, Box passt sich dem Inhalt an */
+    /* Scrollbalken entfernen, Box passt sich dem Inhalt an */
     max-height: none !important; 
     overflow: visible !important; 
 }
@@ -3017,6 +3017,28 @@ textarea::placeholder,
     opacity: 1;
 }
 
+
+/* Tablet Modus: Drag & Drop */
+/* Verhindert, dass das Tablet überhaupt versucht zu scrollen oder zu zoomen */
+#traitPoolGrid * {
+    touch-action: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+}
+
+/* Verhindert, dass Überschriften gezogen werden */
+#traitPoolGrid h3, #traitPoolGrid h4 {
+    pointer-events: none !important;
+}
+
+.dragging-active {
+    position: fixed !important; /* Fixed statt Relative für absolute Kontrolle am Finger */
+    z-index: 10000 !important;
+    pointer-events: none !important;
+    opacity: 0.9;
+    transform: scale(1.1);
+}
+
 /* --- SCHRITT 11: APPEARANCE --- */
 
 .appearance-grid {
@@ -3522,37 +3544,46 @@ textarea::placeholder,
 }
 
 /* =======================================================================
-   MOBILE - Schritt 10: Alignment
+   MOBILE - Schritt 10: Alignment (Präzise Matrix)
    ======================================================================= */
 
 @media screen and (max-width: 600px) {
-    /* --- Schritt 10: Trait-Pool ausblenden --- */
+    /* --- Trait-Pool ausblenden --- */
     .personality-divider,
     .trait-table-controls,
     #traitPoolGrid {
         display: none !important;
     }
 
-    /* Das Textfeld etwas größer für bessere Daumen-Eingabe */
     #personalityEditor {
         min-height: 250px !important;
     }
 
-    /* --- Schritt 10: Alignment Matrix (30% kleiner) --- */
-    /* 110px * 0.7 = 77px -> Wir nehmen 75px für ein sauberes Grid */
+    /* --- Alignment Matrix (Exakt angrenzend) --- */
     .alignment-matrix {
+        display: grid !important;
+        /* Wir nutzen 3x 75px ohne Gap für direktes Angrenzen */
         grid-template-columns: repeat(3, 75px) !important;
         grid-template-rows: repeat(3, 75px) !important;
-        gap: 8px !important;
-        margin: 20px auto !important;
+        gap: 0 !important; /* Kein Abstand, damit sie sich berühren */
+        margin: 30px auto !important;
+        justify-content: center !important; /* Zentriert die Matrix auf dem Screen */
+        width: fit-content !important;
     }
 
     .alignment-circle-item {
         width: 75px !important;
         height: 75px !important;
-        font-size: 0.65rem !important; /* Schriftgröße angepasst */
-        padding: 5px !important;
+        margin: 0 !important; /* Verhindert Überlappung durch Rest-Margins */
+        font-size: 0.65rem !important;
+        padding: 4px !important;
         line-height: 1.1 !important;
+        box-sizing: border-box !important; /* Wichtig, damit Padding nicht die Größe sprengt */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        border: 1px solid rgba(212, 160, 23, 0.3) !important; /* Dezente Trennung */
     }
 }
 
@@ -3657,6 +3688,13 @@ textarea::placeholder,
         line-height: normal !important;
         /* Optional: Ein bisschen Transparenz, damit er sich vom echten Text abhebt */
         opacity: 0.5; 
+    }
+
+    /* 2. Webkit (Safari, Chrome auf iOS, ältere Android-Browser) */
+    #characterNameInput::-webkit-input-placeholder {
+    font-size: 1.1rem !important;
+    opacity: 0.5 !important;
+    text-align: center !important;
     }
 
     /* --- Summary Grid: Rein funktionale Ausrichtung --- */
