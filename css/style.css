@@ -646,6 +646,74 @@ input[type="radio"]:checked + label {
 }
 
 
+/* =======================================================================
+   INDIVIDUELLE PFEILE FÜR ZAHLEN-INPUTS (STEPPER) (Global)
+   ======================================================================= */
+
+/* 1. Den Standard-Look der Pfeile entfernen */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+    
+    /* 2. Unser eigenes Design als Hintergrund (Goldene Pfeile) */
+    /* Wir nutzen ein SVG mit einem Pfeil nach oben und einem nach unten */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='20' viewBox='0 0 16 20'><path d='M8 2l6 7H2z' fill='%23d4a017'/><path d='M8 18l6-7H2z' fill='%23d4a017'/></svg>");
+    background-repeat: no-repeat;
+    background-position: center;
+    
+    /* 3. Größe und Klickbereich */
+    width: 20px;
+    height: 30px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+/* 4. Leuchteffekt bei Hover */
+input[type="number"]::-webkit-inner-spin-button:hover {
+    opacity: 1;
+    filter: drop-shadow(0 0 2px #fce181);
+}
+
+/* Korrektur für Firefox: 
+   Firefox lässt das Styling der inneren Pfeile leider kaum zu. 
+   Hier blenden wir sie meistens aus, damit das Design konsistent bleibt. */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* TABLET & MOBILE ANPASSUNG: Stepper ausblenden */
+
+@media screen and (max-width: 1000px) {
+    /* Ab Tablet-Größe werden die Pfeile entfernt */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        display: none !important; /* Entfernt die Pfeile komplett */
+        -webkit-appearance: none !important;
+    }
+
+    /* Sicherstellen, dass auch Firefox auf Touch-Geräten keine Pfeile zeigt */
+    input[type="number"] {
+        -moz-appearance: textfield !important;
+    }
+}
+
+/* Verstecke Stepper in schreibgeschützten oder deaktivierten Feldern */
+input[type="number"][readonly]::-webkit-inner-spin-button,
+input[type="number"][readonly]::-webkit-outer-spin-button,
+input[type="number"]:disabled::-webkit-inner-spin-button,
+input[type="number"]:disabled::-webkit-outer-spin-button {
+    display: none !important;
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+/* Firefox-Support für schreibgeschützte Felder */
+input[type="number"][readonly],
+input[type="number"]:disabled {
+    -moz-appearance: textfield !important;
+}
 
 /* =======================================================================
    SCHRITT 1: KLASSEN-SYMBOL (Zentriert im MainContent)
@@ -1328,6 +1396,38 @@ button[type="button"]:hover {
     overflow: auto; /* Ermöglicht Scrollen bei langem Text */
     max-width: 300px; /* Begrenzung der maximalen Breite */
     margin: 0 auto; /* Zentriert den Container innerhalb des Elternblocks */
+}
+
+/* GENERELLES STYLING FÜR GESPERRTE DROPDOWNS (EMOJI-LOOK) */
+
+select:disabled {
+    /* 1. Standard-Pfeil entfernen */
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+
+    /* 2. Das echte Emoji 🔒 als Hintergrund-Bild (SVG-Text-Trick) */
+    /* Wir nutzen hier das exakte Symbol aus deiner JS-Logik */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><text x='0' y='16' font-size='16'>🔒</text></svg>") !important;
+    
+    background-repeat: no-repeat !important;
+    background-position: right 10px center !important;
+    background-size: 18px !important; /* Größe des Emojis am Rand */
+
+    /* 3. Zeiger und Farben */
+    cursor: not-allowed !important;
+    opacity: 1 !important; /* Volle Sichtbarkeit, da das Schloss die Sperre erklärt */
+    color: #e8d8b5 !important;
+    background-color: rgba(45, 45, 50, 0.8) !important; /* Etwas dunkler als aktive Felder */
+    border-color: #7a431d !important;
+    padding-right: 35px !important; /* Platz für das Schloss-Emoji */
+}
+
+/* Optional: Damit das Schloss am Handy nicht hinter dem System-Pfeil verschwindet */
+@media screen and (max-width: 1000px) {
+    select:disabled {
+        background-position: right 8px center !important;
+    }
 }
 
 /* =======================================================================
@@ -3458,50 +3558,84 @@ textarea::placeholder,
 
 
 /* =======================================================================
-   MOBILE - Schritt 11: Appearance
+   MOBILE - Schritt 11: Appearance (Horizontal kompakt & bündig)
    ======================================================================= */
 
 @media screen and (max-width: 600px) {
-    /* --- Schritt 11: Kompakt-Inputs --- */
-    
-    /* 1. Schriftart und allgemeine Größe reduzieren */
+    /* 1. Das Raster für Schritt 11: 110px für die rechte Eingabe-Zone */
+    #step11 .appearance-row {
+        display: grid !important;
+        grid-template-columns: 1fr 110px !important; 
+        gap: 10px !important;
+        align-items: center !important;
+        margin-bottom: 8px !important;
+        text-align: left !important;
+    }
+
+    /* 2. Inputs: Horizontal kurz & Vertikal flach */
     #step11 input[type="text"], 
     #step11 input[type="number"],
-    #selectGender.dropdown,
-    .app-small-input {
-        font-size: 15px !important;
-        height: 35px !important;
-        padding: 4px 8px !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important; /* Wir regeln den Abstand über das Grid */
-        width: 55px !important; /* Schmaler machen */
-        margin-left: 35% !important;
+    #step11 .app-small-input,
+    #step11 #selectGender.dropdown {
+        width: 80px !important;  /* Schön kurz */
+        height: 28px !important; /* Schön flach */
+        font-size: 14px !important;
+        padding: 2px 5px !important;
+        margin: 0 !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
     }
 
-    /* 2. Die Spaltenverteilung im Grid anpassen, damit Labels links mehr Platz haben */
-    .appearance-row {
-        grid-template-columns: 1fr 110px !important; /* Label links, Input rechts fixiert */
-        gap: 15% !important;
-        margin-bottom: 12px !important;
-        text-align: left;
-    }
-
-    /* 3. Dropdown-Spezialfall (Gender) */
-    #selectGender {
+    /* 3. Bereich mit Einheiten (Alter & Größe) */
+    #step11 .input-with-unit {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
         width: 110px !important;
     }
 
-    /* 4. Das "Alter"-Feld und andere Einheiten-Inputs */
-    .input-with-unit {
-        justify-content: flex-end; /* Rechtsbündig zum Rand */
+    /* Der Zahlen-Input innerhalb der Einheiten-Zeile noch etwas kürzer */
+    #step11 .input-with-unit input {
+        width: 55px !important; 
+        flex: 0 0 55px !important;
+        height: 28px !important;
     }
 
-    /* Label-Text etwas kleiner, damit er nicht umbricht */
-    .appearance-label {
-        font-size: 0.75rem !important;
+    /* 4. Die Einheiten-Kürzel */
+    #step11 #yearsLabel {
+        font-size: 0 !important; /* Versteckt Originaltext */
+        margin-left: 5px !important;
+	width: 10px;
+    }
+    #step11 #yearsLabel::before {
+        content: "y." !important;
+        font-size: 0.85rem !important;
+        color: #e8d8b5;
+    }
+
+    #step11 #unitIndicator {
+        font-size: 0.8rem !important;
+        margin-left: 5px !important;
+    }
+
+    #step11 #selectGender {
+        width: 80px !important;
+        height: 28px !important;
+        font-size: 14px !important;
+        padding: 0 5px !important; /* Vertikales Padding auf 0, da Höhe fix ist */
+        margin: 0 !important;
+        background-color: #2e2e33 !important;
+        border: 1px solid #8b5e34 !important;
+        color: #e8d8b5 !important;
+        border-radius: 5px !important;
+        box-sizing: border-box !important;
+        
+        /* Sorgt dafür, dass der Text im Dropdown vertikal mittig sitzt */
+        line-height: 26px !important; 
     }
 }
-
 
 /* =======================================================================
    MOBILE - Schritt 12: Naming
@@ -3515,6 +3649,14 @@ textarea::placeholder,
         padding: 10px 15px !important;
         height: 45px !important;
         text-align: center;
+    }
+
+   /* Den Platzhalter (Placeholder) exakt an die Schriftgröße anpassen */
+    #characterNameInput::placeholder {
+        font-size: 1.1rem !important;
+        line-height: normal !important;
+        /* Optional: Ein bisschen Transparenz, damit er sich vom echten Text abhebt */
+        opacity: 0.5; 
     }
 
     /* --- Summary Grid: Rein funktionale Ausrichtung --- */

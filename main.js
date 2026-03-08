@@ -10030,9 +10030,9 @@ document.addEventListener('touchend', e => {
     const screenWidth = window.innerWidth;
     const edgeThreshold = 50; 
 
-    // Sicherheits-Check: NUR im unteren Viertel (ab 75% der Höhe)
+    // Sicherheits-Check: NUR im unteren Viertel (ab 80% der Höhe)
     // Wir ignorieren den "isAtEdge" Check hier, um nur unten zu swipen
-    const isAtBottomQuarter = touchstartY > (screenHeight * 0.95);
+    const isAtBottomQuarter = touchstartY > (screenHeight * 0.80);
 
     if (isAtBottomQuarter) {
         handleGesture();
@@ -10063,7 +10063,8 @@ document.addEventListener('focusout', function(e) {
 });
 
 
-// Tablet - Schritt 4: Attribrute Drag & Drop
+
+// TABLET - Schritt 4: Attribute Drag & Drop mit Auto-Scroll
 
 document.addEventListener('touchstart', function(e) {
     if (e.target.classList.contains('draggable-value')) {
@@ -10071,23 +10072,49 @@ document.addEventListener('touchstart', function(e) {
         e.target.dataset.startX = touch.clientX;
         e.target.dataset.startY = touch.clientY;
         
-        // Element hervorheben und über alles andere legen
+        // NEU: Den Scroll-Stand beim Start merken
+        e.target.dataset.initialScrollY = window.scrollY;
+        
         e.target.style.zIndex = "1000";
         e.target.style.position = "relative";
-        e.target.style.transition = "none"; // Sofortige Reaktion
+        e.target.style.transition = "none"; 
     }
 }, { passive: false });
 
 document.addEventListener('touchmove', function(e) {
     if (e.target.classList.contains('draggable-value')) {
-        e.preventDefault(); // Verhindert das Scrollen der Seite während des Draggens
+        e.preventDefault(); 
         
         const touch = e.touches[0];
-        const deltaX = touch.clientX - e.target.dataset.startX;
-        const deltaY = touch.clientY - e.target.dataset.startY;
+        const draggedEl = e.target;
         
-        // Bewege das Element mit dem Finger
-        e.target.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.1)`;
+        // 1. Differenz der Fingerbewegung berechnen
+        const deltaX = touch.clientX - parseFloat(draggedEl.dataset.startX);
+        const deltaY = touch.clientY - parseFloat(draggedEl.dataset.startY);
+
+        // 2. AUTO-SCROLL LOGIK
+        const scrollThreshold = 100;
+        const scrollSpeed = 12;
+        const mouseY = touch.clientY;
+        const windowHeight = window.innerHeight;
+
+        if (mouseY < scrollThreshold) {
+            window.scrollBy(0, -scrollSpeed);
+        } else if (mouseY > windowHeight - scrollThreshold) {
+            window.scrollBy(0, scrollSpeed);
+        }
+
+        // 3. NEU: Die Scroll-Differenz berechnen
+        // Wir schauen, wie weit die Seite seit dem Start gescrollt wurde
+        const currentScrollY = window.scrollY;
+        const scrollDiff = currentScrollY - parseFloat(draggedEl.dataset.initialScrollY);
+
+        // 4. Das Element verschieben
+        // Wir addieren die scrollDiff zum deltaY, damit das Element dem Finger folgt,
+        // auch wenn die Seite unter ihm wegscrollt.
+        const totalY = deltaY + scrollDiff;
+        
+        draggedEl.style.transform = `translate(${deltaX}px, ${totalY}px) scale(1.1)`;
     }
 }, { passive: false });
 
@@ -10096,49 +10123,35 @@ document.addEventListener('touchend', function(e) {
         const touch = e.changedTouches[0];
         const draggedEl = e.target;
 
-        // --- DER TRICK: Pointer-Events ausschalten ---
         draggedEl.style.pointerEvents = 'none'; 
-        
-        // Jetzt "hindurchschauen" auf das Element an der Position
         const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
-        
-        // Pointer-Events sofort wieder aktivieren
         draggedEl.style.pointerEvents = 'auto';
 
-        // Prüfen, ob wir über einer Drop-Zone sind
         const dropZone = targetElement ? targetElement.closest('.attribute-score-input') : null;
 
         if (dropZone) {
             const value = draggedEl.innerText;
-
-            // Falls du eine zentrale Drop-Logik hast:
             if (typeof handleDropLogic === "function") {
                 handleDropLogic(value, dropZone); 
             } else {
-                // Manuelle Zuweisung (deine Fallback-Logik)
                 const previousValue = dropZone.value;
                 dropZone.value = value;
-                
-                // Triggere die Berechnung (Update Modifikatoren etc.)
                 dropZone.dispatchEvent(new Event('change')); 
-                dropZone.dispatchEvent(new Event('input')); // Sicherstellen, dass alles reagiert
-
-                // Element aus dem Pool entfernen
+                dropZone.dispatchEvent(new Event('input'));
                 draggedEl.style.display = 'none';
-
-                // Falls das Feld schon einen Wert hatte, schicke ihn zurück in den Pool
                 if (previousValue && previousValue !== "") {
                     createDraggableValue(previousValue, 'standardArrayValues');
                 }
             }
-            triggerSaveAnimation(); // Dein goldener Glow
+            triggerSaveAnimation(); 
         }
 
-        // Styles zurücksetzen
+        // Styles & Datasets zurücksetzen
         draggedEl.style.zIndex = "";
         draggedEl.style.transform = "";
         draggedEl.style.position = "";
         draggedEl.style.transition = "";
+        delete draggedEl.dataset.initialScrollY;
     }
 });
 
@@ -10203,4 +10216,3 @@ function adjustValue(stringId, delta) {
         triggerSaveAnimation(); // Dein goldener Glow-Effekt
     }
 }
-

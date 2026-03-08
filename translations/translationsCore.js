@@ -18,7 +18,7 @@ const translations = {
     "step12Title": "Schritt 12: Namensgebung",
     "step1Description": "Wähle die Klasse deines Charakters.",
     "step2Description": "Wähle den Hintergrund deines Charakters.",
-    "step3Description": "Wähle den Volk deines Charakters.",
+    "step3Description": "Wähle das Volk deines Charakters.",
     "step4Description": "Bestimme die Schwächen und Stärken deines Charakters.",
     "step5Description": "Wähle eine Stufe (1-20) für deinen Charakter.",
     "step6Description": "Wähle Fähigkeiten basierend auf Klasse und Level.",
