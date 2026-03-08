@@ -3563,8 +3563,8 @@ textarea::placeholder,
     .alignment-matrix {
         display: grid !important;
         /* Wir nutzen 3x 75px ohne Gap für direktes Angrenzen */
-        grid-template-columns: repeat(3, 75px) !important;
-        grid-template-rows: repeat(3, 75px) !important;
+        grid-template-columns: repeat(3, 80px) !important;
+        grid-template-rows: repeat(3, 80px) !important;
         gap: 0 !important; /* Kein Abstand, damit sie sich berühren */
         margin: 30px auto !important;
         justify-content: center !important; /* Zentriert die Matrix auf dem Screen */
@@ -3572,8 +3572,8 @@ textarea::placeholder,
     }
 
     .alignment-circle-item {
-        width: 75px !important;
-        height: 75px !important;
+        width: 80px !important;
+        height: 80px !important;
         margin: 0 !important; /* Verhindert Überlappung durch Rest-Margins */
         font-size: 0.65rem !important;
         padding: 4px !important;
@@ -3594,10 +3594,14 @@ textarea::placeholder,
 
 @media screen and (max-width: 600px) {
     /* 1. Das Raster für Schritt 11: 110px für die rechte Eingabe-Zone */
+    #step11 .appearance-grid {
+	padding: 0px;
+    }
+
     #step11 .appearance-row {
         display: grid !important;
         grid-template-columns: 1fr 110px !important; 
-        gap: 10px !important;
+        /* gap: 10px !important; */
         align-items: center !important;
         margin-bottom: 8px !important;
         text-align: left !important;
@@ -3637,18 +3641,28 @@ textarea::placeholder,
     /* 4. Die Einheiten-Kürzel */
     #step11 #yearsLabel {
         font-size: 0 !important; /* Versteckt Originaltext */
-        margin-left: 5px !important;
+        margin-left: 3px !important;
 	width: 10px;
+        display: inline-block;
     }
     #step11 #yearsLabel::before {
-        content: "y." !important;
         font-size: 0.85rem !important;
         color: #e8d8b5;
     }
 
+    /* Deutsche Version: j. */
+    body[data-lang="de"] #step11 #yearsLabel::before {
+    content: "J." !important;
+    }
+
+    /* Englische Version: y. */
+    body[data-lang="en"] #step11 #yearsLabel::before {
+    content: "y." !important;
+    }
+
     #step11 #unitIndicator {
         font-size: 0.8rem !important;
-        margin-left: 5px !important;
+        margin-left: 3px !important;
     }
 
     #step11 #selectGender {
@@ -3677,7 +3691,7 @@ textarea::placeholder,
     /* --- Schritt 12: Name kompakter --- */
     #characterNameInput.name-inner-textarea {
         font-size: 1.1rem !important; /* Deutlich kleiner als die 1.5em vom Desktop */
-        padding: 10px 15px !important;
+        padding: 10px 5px 5px 5px !important;
         height: 45px !important;
         text-align: center;
     }
@@ -3698,12 +3712,16 @@ textarea::placeholder,
     }
 
     /* --- Summary Grid: Rein funktionale Ausrichtung --- */
+    #step12 .appearance-grid {
+    padding: 5px;
+    }
+
     #step12 .appearance-row {
         display: grid !important;
         /* Wir geben der linken Spalte eine feste Breite, 
            dadurch starten alle Werte rechts exakt an der gleichen Linie */
-        grid-template-columns: 100px 1fr !important; 
-        gap: 10px !important;
+        grid-template-columns: 105px 1fr !important; 
+        gap: 20px !important;
         align-items: flex-start !important;
         text-align: left !important;
         

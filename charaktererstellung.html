@@ -891,6 +891,10 @@
         // Sprache setzen und im Speicher für die Landing Page aktuell halten
         currentLang = lang;
         localStorage.setItem("currentLanguage", lang);
+
+        // Zur Erkennung der aktuellen Sprache (in CSS)
+        document.body.setAttribute('data-lang', lang);
+
         console.log("Sprache eingestellt auf:", lang);
 
         // Texte der gesamten Webseite aktualisieren
