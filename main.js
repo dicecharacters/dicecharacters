@@ -10169,7 +10169,6 @@ document.addEventListener('focusout', function(e) {
 
 // TABLET - Schritt 4: Attribute Drag & Drop mit Auto-Scroll
 
-// TABLET - Schritt 4: High-Performance Touch Logik
 let activeTouchGhost = null;
 let activeTouchPoolEl = null;
 
@@ -10222,19 +10221,34 @@ document.addEventListener('touchstart', function(e) {
 document.addEventListener('touchmove', function(e) {
     if (!activeTouchGhost && !activeTouchPoolEl) return;
     
-    // WICHTIG: Verhindert das Ruckeln der Seite beim Ziehen
+    // Verhindert das Standard-Scrollen des Browsers, während wir ziehen
     e.preventDefault(); 
     const touch = e.touches[0];
+    const draggedEl = activeTouchGhost || activeTouchPoolEl;
 
+    // 1. POSITIONIERUNG (Hardware-beschleunigt)
     if (activeTouchGhost) {
-        // GPU-beschleunigte Bewegung für den Ghost
-        activeTouchGhost.style.transform = `translate3d(${touch.clientX - 25}px, ${touch.clientY - 50}px, 0) scale(1.1)`;
+        // Ghost folgt dem Finger mit dem definierten Offset
+        draggedEl.style.transform = `translate3d(${touch.clientX - 25}px, ${touch.clientY - 50}px, 0) scale(1.1)`;
     } else {
-        // GPU-beschleunigte Bewegung für das Pool-Element
-        const deltaX = touch.clientX - parseFloat(activeTouchPoolEl.dataset.startX);
-        const deltaY = touch.clientY - parseFloat(activeTouchPoolEl.dataset.startY);
-        const scrollDiff = window.scrollY - parseFloat(activeTouchPoolEl.dataset.initialScrollY);
-        activeTouchPoolEl.style.transform = `translate3d(${deltaX}px, ${deltaY + scrollDiff}px, 0) scale(1.1)`;
+        // Pool-Element folgt der relativen Fingerbewegung
+        const deltaX = touch.clientX - parseFloat(draggedEl.dataset.startX);
+        const deltaY = touch.clientY - parseFloat(draggedEl.dataset.startY);
+        const scrollDiff = window.scrollY - parseFloat(draggedEl.dataset.initialScrollY);
+        draggedEl.style.transform = `translate3d(${deltaX}px, ${deltaY + scrollDiff}px, 0) scale(1.1)`;
+    }
+
+    // 2. AUTO-SCROLL LOGIK
+    // Wir prüfen, ob der Finger nah am oberen oder unteren Bildschirmrand ist
+    const scrollThreshold = 80; // Pixel vom Rand entfernt
+    const scrollSpeed = 10;     // Wie schnell gescrollt werden soll
+
+    if (touch.clientY < scrollThreshold) {
+        // Finger ist oben -> Seite nach oben scrollen
+        window.scrollBy(0, -scrollSpeed);
+    } else if (touch.clientY > window.innerHeight - scrollThreshold) {
+        // Finger ist unten -> Seite nach unten scrollen
+        window.scrollBy(0, scrollSpeed);
     }
 }, { passive: false });
 
