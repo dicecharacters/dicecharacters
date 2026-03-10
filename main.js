@@ -1394,25 +1394,28 @@ function drop(e) {
 
     // Daten abrufen
     const newValue = e.dataTransfer.getData("text/plain");
-    const sourceInputId = e.dataTransfer.getData("sourceInputId");
+    const sourceInputId = e.dataTransfer.getData("sourceInputId"); // Existiert nur beim Tausch
     const oldValue = targetInput.value;
 
-    if (!newValue) return; // Sicherheitscheck
+    if (!newValue) return;
 
-    // SZENARIO 1: Tausch zwischen zwei Inputs (A -> B)
+    // Ermitteln, welcher Pool gerade aktiv ist
+    const activeMethod = document.querySelector('input[name="attributeMethod"]:checked').value;
+    const poolId = (activeMethod === 'standard') ? 'standardArrayValues' : 'randomlyGeneratedValues';
+
+    // FALL 1: Tausch zwischen zwei Inputs (A -> B)
     if (sourceInputId && sourceInputId !== targetInput.id) {
         const sourceInput = document.getElementById(sourceInputId);
-        sourceInput.value = oldValue; // Alten Wert in das Startfeld schieben (Swap)
-        
+        sourceInput.value = oldValue; // Alten Wert zurückschieben (Swap)
         updateTotalScore(sourceInputId.replace('Score', ''));
     } 
-    // SZENARIO 2: Wert kommt aus dem Pool in ein bereits volles Feld
+    // FALL 2: Aus dem POOL in ein befülltes Feld (Pool -> Input)
     else if (!sourceInputId && oldValue !== "") {
-        // Alten Wert zurück in den Pool werfen, damit er nicht verschwindet
-        createDraggableValue(oldValue, 'standardArrayValues');
+        // FIX: Der alte Wert wird nicht gelöscht, sondern zurück in den Pool geworfen
+        createDraggableValue(oldValue, poolId);
     }
 
-    // SZENARIO 3: Wert kommt aus dem Pool (Original im Pool löschen)
+    // Wenn der Wert aus dem Pool kam, löschen wir das gezogene Element dort
     if (!sourceInputId && draggedItem && draggedItem.classList.contains('draggable-value')) {
         draggedItem.remove();
     }
@@ -1420,7 +1423,7 @@ function drop(e) {
     // Den neuen Wert im Zielfeld setzen
     targetInput.value = newValue;
     
-    // Alles berechnen
+    // Berechnungen ausführen
     const stringId = targetInput.id.replace('Score', '');
     updateTotalScore(stringId);
     updateLiveAttributes();
@@ -1463,55 +1466,44 @@ function setupStandardArray() {
     attributeList.forEach(attr => {
         const stringId = attr.translationLabel.replace('Label', '');
         const scoreInput = document.getElementById(`${stringId}Score`);
-        
-        scoreInput.readOnly = true;
-        scoreInput.draggable = true; // Ermöglicht das Herausziehen
-
-        // Drag Start für das Input-Feld
-        scoreInput.addEventListener('dragstart', (e) => {
-            const val = e.target.value;
-            if (val === "") {
-                e.preventDefault();
-                return;
-            }
-
-            // --- DESIGN-SYNC: GHOST-IMAGE ERSTELLEN ---
-            // Wir erstellen ein temporäres Element, das wie ein Pool-Item aussieht
-            const dragIcon = document.createElement('div');
-            dragIcon.className = 'draggable-value'; // Nutzt dein CSS für die goldenen Badges
-            dragIcon.innerText = val;
-            
-            // Das Element muss kurzzeitig im DOM existieren, damit der Browser es "fotografieren" kann
-            dragIcon.style.position = "absolute";
-            dragIcon.style.top = "-1000px"; 
-            dragIcon.style.left = "-1000px";
-            document.body.appendChild(dragIcon);
-            
-            // Wir setzen das Drag-Bild. (20, 20) zentriert den 40px Badge an der Mausspitze
-            e.dataTransfer.setDragImage(dragIcon, 20, 20);
-            
-            // Sofortiges Löschen des Hilfselements nach dem Start
-            setTimeout(() => dragIcon.remove(), 1);
-
-            // Daten für die Drop-Logik hinterlegen
-            e.dataTransfer.setData("text/plain", val);
-            e.dataTransfer.setData("sourceInputId", e.target.id);
-            draggedItem = e.target;
-        });
-
-        scoreInput.addEventListener('dragover', dragOver);
-        scoreInput.addEventListener('dragenter', dragEnter);
-        scoreInput.addEventListener('dragleave', dragLeave);
-        scoreInput.addEventListener('drop', drop);
-
-        scoreInput.classList.add('highlight-target');
+        // Logik für Drag & Drop binden
+        attachAttributeDragListeners(scoreInput);
     });
 }
 
 function generateRandomScores() {
-    const container = document.getElementById('randomlyGeneratedValues');
-    container.querySelectorAll('.draggable-value').forEach(el => el.remove());
+    console.log("Setze befüllte Attribute zurück und würfle neu...");
 
+    // 1. Nur die WERTE leeren (Elemente und Listener bleiben erhalten)
+    attributeList.forEach(attr => {
+        const stringId = attr.translationLabel.replace('Label', '');
+        const scoreInput = document.getElementById(`${stringId}Score`);
+        
+        if (scoreInput) {
+            scoreInput.value = ''; // Wert im Feld löschen
+        }
+
+        // Interne Variablen zurücksetzen
+        if (stringId === 'strength') strengthScore = null;
+        if (stringId === 'dexterity') dexterityScore = null;
+        if (stringId === 'constitution') constitutionScore = null;
+        if (stringId === 'intelligence') intelligenceScore = null;
+        if (stringId === 'wisdom') wisdomScore = null;
+        if (stringId === 'charisma') charismaScore = null;
+
+        // UI-Anzeige (Gesamtwert & Modifikator-Kreis) auf Basiszustand bringen
+        updateTotalScore(stringId);
+    });
+
+    // 2. Den Pool-Container leeren (Button behalten)
+    const container = document.getElementById('randomlyGeneratedValues');
+    const button = container.querySelector('button');
+    container.innerHTML = '';
+    if (button) {
+        container.appendChild(button);
+    }
+
+    // 3. Neue Werte auswürfeln (4d6 drop lowest)
     for (let i = 0; i < 6; i++) {
         let rolls = [];
         for (let j = 0; j < 4; j++) {
@@ -1519,26 +1511,33 @@ function generateRandomScores() {
         }
         rolls.sort((a, b) => b - a);
         const sum = rolls[0] + rolls[1] + rolls[2];
+        
+        // 4. Die neuen Badges im Pool erstellen
         createDraggableValue(sum, 'randomlyGeneratedValues');
+    }
+
+    // 5. Alles final synchronisieren
+    updateLiveAttributes();
+    
+    if (typeof triggerSaveAnimation === "function") {
+        triggerSaveAnimation();
     }
 }
 
 function setupRandomGeneration() {
     const container = document.getElementById('randomlyGeneratedValues');
-    container.querySelectorAll('.draggable-value').forEach(el => el.remove());
+    // Button behalten, Rest leeren
+    const button = container.querySelector('button');
+    container.innerHTML = '';
+    if (button) container.appendChild(button);
 
     attributeList.forEach(attr => {
-        // GEÄNDERT: stringId ableiten, um das korrekte Element zu finden
         const stringId = attr.translationLabel.replace('Label', '');
         const scoreInput = document.getElementById(`${stringId}Score`);
         scoreInput.value = '';
-        scoreInput.readOnly = true;
-        scoreInput.addEventListener('dragover', dragOver);
-        scoreInput.addEventListener('dragenter', dragEnter);
-        scoreInput.addEventListener('dragleave', dragLeave);
-        scoreInput.addEventListener('drop', drop);
-
-    scoreInput.classList.add('highlight-target');
+        
+        // Auch hier die volle Drag & Drop Logik aktivieren!
+        attachAttributeDragListeners(scoreInput);
     });
 }
 
@@ -1614,6 +1613,42 @@ function updateModifier(stringId, totalScore) {
             modDisplay.textContent = (modifier >= 0) ? `+${modifier}` : modifier;
         }
     }
+}
+
+function attachAttributeDragListeners(scoreInput) {
+    scoreInput.draggable = true;
+    scoreInput.readOnly = true;
+    scoreInput.classList.add('highlight-target');
+
+    // Drag Start: Wert aus dem Feld herausziehen
+    scoreInput.addEventListener('dragstart', (e) => {
+        const val = e.target.value;
+        if (val === "") {
+            e.preventDefault();
+            return;
+        }
+
+        // Ghost-Image erstellen (Goldener Badge am Cursor)
+        const dragIcon = document.createElement('div');
+        dragIcon.className = 'draggable-value';
+        dragIcon.innerText = val;
+        dragIcon.style.position = "absolute";
+        dragIcon.style.top = "-1000px";
+        document.body.appendChild(dragIcon);
+        e.dataTransfer.setDragImage(dragIcon, 20, 20);
+        setTimeout(() => dragIcon.remove(), 1);
+
+        // Daten übergeben
+        e.dataTransfer.setData("text/plain", val);
+        e.dataTransfer.setData("sourceInputId", e.target.id);
+        draggedItem = e.target;
+    });
+
+    // Standard Drag-Events für das Ziel
+    scoreInput.addEventListener('dragover', dragOver);
+    scoreInput.addEventListener('dragenter', dragEnter);
+    scoreInput.addEventListener('dragleave', dragLeave);
+    scoreInput.addEventListener('drop', drop);
 }
 
 function initializeLiveAttributes() {
@@ -10134,57 +10169,52 @@ document.addEventListener('focusout', function(e) {
 
 // TABLET - Schritt 4: Attribute Drag & Drop mit Auto-Scroll
 
-// Hilfsvariablen für das globale Tracking der Touch-Bewegungen
+// TABLET - Schritt 4: High-Performance Touch Logik
 let activeTouchGhost = null;
 let activeTouchPoolEl = null;
 
 document.addEventListener('touchstart', function(e) {
+    if (currentStep !== 4) return;
+
     const isPoolItem = e.target.classList.contains('draggable-value');
     const isInput = e.target.classList.contains('attribute-score-input');
 
-    // Reagieren, wenn Pool-Item ODER befülltes Input berührt wird
     if (isPoolItem || (isInput && e.target.value !== "")) {
         const touch = e.touches[0];
 
         if (isInput) {
-            // --- FALL A: AUS INPUT HERAUSZIEHEN (Ghost-Logik) ---
+            // AUS INPUT ZIEHEN
             const val = e.target.value;
             const sourceId = e.target.id;
-            
-            // 1. Feld leeren und UI-Werte (Live-Attribute) aktualisieren
             e.target.value = ""; 
-            if (typeof updateTotalScore === "function") updateTotalScore(sourceId.replace('Score', ''));
-            if (typeof updateLiveAttributes === "function") updateLiveAttributes();
+            updateTotalScore(sourceId.replace('Score', ''));
 
-            // 2. Ghost-Element erstellen (Zahl "am Finger")
             const ghost = document.createElement('div');
-            ghost.className = 'draggable-value dragging-ghost'; // Nutzt CSS für korrektes Styling
+            ghost.className = 'draggable-value dragging-ghost';
             ghost.innerText = val;
-            
-            // Wichtige Daten am Ghost speichern für touchend
             ghost.dataset.sourceInputId = sourceId;
             ghost.dataset.value = val;
             
-            // Ghost direkt unter den Finger positionieren (Fixed)
+            // Startposition direkt setzen
             ghost.style.position = 'fixed';
             ghost.style.zIndex = "2000";
-            ghost.style.left = (touch.clientX - 25) + "px";
-            ghost.style.top = (touch.clientY - 25) + "px";
-            ghost.style.pointerEvents = "none"; // Verhindert, dass der Ghost das Ziel blockiert
+            ghost.style.pointerEvents = "none";
+            ghost.style.left = "0";
+            ghost.style.top = "0";
+            // Nutzung von translate3d für GPU-Beschleunigung
+            ghost.style.transform = `translate3d(${touch.clientX - 25}px, ${touch.clientY - 50}px, 0) scale(1.1)`;
             
             document.body.appendChild(ghost);
             activeTouchGhost = ghost;
-
         } else {
-            // --- FALL B: AUS POOL ZIEHEN (Deine Original-Logik) ---
+            // AUS POOL ZIEHEN
             activeTouchPoolEl = e.target;
             activeTouchPoolEl.dataset.startX = touch.clientX;
             activeTouchPoolEl.dataset.startY = touch.clientY;
             activeTouchPoolEl.dataset.initialScrollY = window.scrollY;
-            
             activeTouchPoolEl.style.zIndex = "1000";
-            activeTouchPoolEl.style.position = "relative";
-            activeTouchPoolEl.style.transition = "none";
+            activeTouchPoolEl.style.pointerEvents = "none";
+            activeTouchPoolEl.style.transition = "none"; // Sofortige Reaktion
         }
     }
 }, { passive: false });
@@ -10192,30 +10222,19 @@ document.addEventListener('touchstart', function(e) {
 document.addEventListener('touchmove', function(e) {
     if (!activeTouchGhost && !activeTouchPoolEl) return;
     
+    // WICHTIG: Verhindert das Ruckeln der Seite beim Ziehen
     e.preventDefault(); 
     const touch = e.touches[0];
 
     if (activeTouchGhost) {
-        // Ghost folgt dem Finger absolut (Fixed)
-        activeTouchGhost.style.left = (touch.clientX - 25) + "px";
-        activeTouchGhost.style.top = (touch.clientY - 25) + "px";
+        // GPU-beschleunigte Bewegung für den Ghost
+        activeTouchGhost.style.transform = `translate3d(${touch.clientX - 25}px, ${touch.clientY - 50}px, 0) scale(1.1)`;
     } else {
-        // Pool-Item folgt dem Finger relativ (Translate + Scroll-Differenz)
+        // GPU-beschleunigte Bewegung für das Pool-Element
         const deltaX = touch.clientX - parseFloat(activeTouchPoolEl.dataset.startX);
         const deltaY = touch.clientY - parseFloat(activeTouchPoolEl.dataset.startY);
         const scrollDiff = window.scrollY - parseFloat(activeTouchPoolEl.dataset.initialScrollY);
-        const totalY = deltaY + scrollDiff;
-        
-        activeTouchPoolEl.style.transform = `translate(${deltaX}px, ${totalY}px) scale(1.1)`;
-    }
-
-    // AUTO-SCROLL LOGIK
-    const scrollThreshold = 100;
-    const scrollSpeed = 12;
-    if (touch.clientY < scrollThreshold) {
-        window.scrollBy(0, -scrollSpeed);
-    } else if (touch.clientY > window.innerHeight - scrollThreshold) {
-        window.scrollBy(0, scrollSpeed);
+        activeTouchPoolEl.style.transform = `translate3d(${deltaX}px, ${deltaY + scrollDiff}px, 0) scale(1.1)`;
     }
 }, { passive: false });
 
@@ -10224,64 +10243,47 @@ document.addEventListener('touchend', function(e) {
     if (!draggedEl) return;
 
     const touch = e.changedTouches[0];
-    
-    // --- ELEMENT VERSTECKEN, UM DAS ZIEL DARUNTER ZU FINDEN ---
-    const originalDisplay = draggedEl.style.display;
-    draggedEl.style.display = 'none';
+    const activeMethod = document.querySelector('input[name="attributeMethod"]:checked').value;
+    const poolId = (activeMethod === 'standard') ? 'standardArrayValues' : 'randomlyGeneratedValues';
+
+    // Zielprüfung
+    draggedEl.style.visibility = 'hidden'; // Präziser als display:none
     const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
     const dropZone = targetElement ? targetElement.closest('.attribute-score-input') : null;
-    draggedEl.style.display = originalDisplay;
+    draggedEl.style.visibility = 'visible';
 
-    // Werte ermitteln
     const value = activeTouchGhost ? draggedEl.dataset.value : draggedEl.innerText;
     const sourceInputId = activeTouchGhost ? draggedEl.dataset.sourceInputId : null;
 
     if (dropZone) {
-        // --- ERFOLGREICHER DROP ---
         const previousValue = dropZone.value;
 
         if (sourceInputId) {
-            // Tausch (Swap): Alten Wert des Ziels in das Ursprungs-Feld schieben
             const sourceEl = document.getElementById(sourceInputId);
             sourceEl.value = previousValue; 
-            if (typeof updateTotalScore === "function") updateTotalScore(sourceInputId.replace('Score', ''));
+            updateTotalScore(sourceInputId.replace('Score', ''));
         } else if (previousValue !== "") {
-            // Pool -> Besetztes Feld: Alten Wert zurück in den Pool werfen
-            if (typeof createDraggableValue === "function") createDraggableValue(previousValue, 'standardArrayValues');
+            createDraggableValue(previousValue, poolId);
         }
 
-        // Neues Ziel befüllen
         dropZone.value = value;
-        if (typeof updateTotalScore === "function") updateTotalScore(dropZone.id.replace('Score', ''));
-        
-        // Original aus dem Pool entfernen, falls es von dort kam
-        if (!activeTouchGhost && activeTouchPoolEl) {
-            activeTouchPoolEl.remove();
-        }
-        
-        if (typeof triggerSaveAnimation === "function") triggerSaveAnimation();
-
+        updateTotalScore(dropZone.id.replace('Score', ''));
+        if (!activeTouchGhost) draggedEl.remove();
+        triggerSaveAnimation();
     } else {
-        // --- DROP IM "NIRGENDWO" ---
         if (sourceInputId) {
-            // Wenn man aus einem Input ins Leere zieht -> Wert landet im Pool
-            if (typeof createDraggableValue === "function") createDraggableValue(value, 'standardArrayValues');
+            createDraggableValue(value, poolId);
         } else {
-            // Wenn man aus dem Pool ins Leere zieht -> Reset der Position
-            draggedEl.style.zIndex = "";
             draggedEl.style.transform = "";
-            draggedEl.style.position = "";
-            draggedEl.style.transition = "";
+            draggedEl.style.zIndex = "";
+            draggedEl.style.pointerEvents = "auto";
         }
     }
 
-    // Cleanup & UI Update
     if (activeTouchGhost) activeTouchGhost.remove();
     activeTouchGhost = null;
     activeTouchPoolEl = null;
-    
-    if (typeof updateLiveAttributes === "function") updateLiveAttributes();
-    delete draggedEl.dataset.initialScrollY;
+    updateLiveAttributes();
 });
 
 // MOBILE - Schritt 4: Attribrute Pointcost
