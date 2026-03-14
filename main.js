@@ -9668,6 +9668,11 @@ function goToStep(step) {
 
     currentStep = step; // für mobile version
 
+    // Das hier sendet den aktuellen Schritt an Plausible
+    if (typeof plausible === 'function') {
+        plausible('Step Reach', { props: { number: step } });
+    }
+
     // Sprachumschalter-Element definieren
     const languageSwitcher = document.getElementById("languageSwitcher");
 
