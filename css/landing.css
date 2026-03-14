@@ -211,20 +211,57 @@ p { line-height: 1.6; font-size: 1.1rem; margin-bottom: 25px; text-align: justif
     margin-top: 40px;
 }
 
-/* Contact Form */
+/* Contact Form - Zusammengefasst für absolute Einheitlichkeit */
 .input-group { margin-bottom: 25px; text-align: left; }
 .input-group label { display: block; margin-bottom: 8px; color: var(--gold); font-weight: bold; }
-input[type="text"], textarea {
+
+/* Alle Eingabefelder (jetzt inklusive Email) */
+input[type="text"], 
+input[type="email"], 
+textarea {
     width: 100%;
     background: rgba(0,0,0,0.4);
     border: 1px solid var(--copper);
     color: var(--text-light);
     padding: 12px;
     border-radius: 4px;
-    font-family: inherit;
+    font-family: inherit; /* Vererbt 'Garamond' vom body */
+    font-size: 1.1rem;    /* Feste Größe für den Text */
     box-sizing: border-box;
+    display: block;
 }
-textarea { height: 200px; }
+
+/* Fokus-Effekt für alle Felder */
+input[type="text"]:focus,
+input[type="email"]:focus,
+textarea:focus {
+    border-color: var(--gold);
+    outline: none;
+    background: rgba(0,0,0,0.5);
+}
+
+/* PLATZHALTER STYLING - Hier wird die Schriftart & Größe erzwungen */
+::placeholder {
+    font-family: 'Garamond', serif !important;
+    font-size: 1.1rem;
+    opacity: 0.5;
+    color: var(--text-light);
+}
+
+/* Für Safari/Chrome */
+::-webkit-input-placeholder {
+    font-family: 'Garamond', serif !important;
+    font-size: 1.1rem;
+    color: var(--text-light);
+}
+
+/* Speziell für das Email-Feld, falls es unter dem Label steht */
+input[type="email"] {
+    margin-bottom: 5px;
+}
+
+textarea { height: 200px; resize: vertical; }
+
 .btn-send {
     width: 100%;
     background-color: var(--copper);
@@ -233,30 +270,11 @@ textarea { height: 200px; }
     border: 1px solid var(--gold);
     border-radius: 4px;
     font-weight: bold;
+    font-family: inherit;
     cursor: pointer;
     transition: background 0.3s;
 }
 .btn-send:hover { background-color: var(--gold); color: black; }
-
-/* Email-Feld Styling (damit es nicht weiß ist) */
-input[type="email"] {
-    width: 100%;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid var(--copper);
-    color: var(--text-light);
-    padding: 12px;
-    border-radius: 4px;
-    font-family: inherit;
-    box-sizing: border-box;
-    margin-bottom: 5px;
-}
-
-/* Hover/Focus Effekt wie bei den anderen Feldern */
-input[type="email"]:focus {
-    border-color: var(--gold);
-    outline: none;
-    background: rgba(0,0,0,0.5);
-}
 
 /* Styling für die Erfolgsnachricht */
 #contactSuccessMessage {
