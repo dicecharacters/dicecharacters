@@ -1686,3 +1686,40 @@ padding: 0.8rem
     .appendix-layout { height: 100% !important; margin-bottom: 0 !important; }
     .auto-marker { display: none !important; }
 }
+
+/* PDF Druck - Spezieller Block NUR für Safari (Desktop & Mobile) */
+@media not all and (min-resolution:.001dpcm) { 
+    @media print {
+        /* Hier kommen die Korrekturen rein, die NUR Safari sieht */
+
+        .page {
+            /* Safari hat oft Probleme mit min-height in mm beim Druck */
+            height: 296mm !important; 
+            overflow: hidden !important;
+            position: relative !important;
+            display: block !important; /* Falls Flexbox in Safari springt */
+        }
+
+        /* Falls deine Boxen in Safari verschoben sind, 
+           erzwingen wir hier eine stabilere Block-Ausrichtung */
+        .attribute-container, .stats-grid {
+            display: block !important;
+        }
+
+        /* Korrektur für den Viewport-Bug */
+        html, body {
+            width: 210mm !important;
+            height: 297mm !important;
+        }
+    }
+}
+
+/* Alternativer moderner Weg für Safari 14+ */
+@supports (-webkit-hyphens:none) {
+    @media print {
+        /* Zusätzliche Safari-spezifische Fixes */
+        * {
+            -webkit-print-color-adjust: exact !important;
+        }
+    }
+}

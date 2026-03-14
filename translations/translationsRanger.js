@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Waldläufer
     // ----------------------------------------------------------------------------------------
     "ranger": "Waldläufer",
-    "rangerText": "Weit entfernt von geschäftigen Städten, zwischen den Bäumen unerforschter Wälder und über weite Ebenen hinweg, halten Waldläufer ihre unendliche Wache in der Wildnis. Waldläufer lernen, ihre Beute wie ein Raubtier zu verfolgen, sich lautlos durch die Wildnis zu bewegen und sich im Gestrüpp und in Trümmern zu verstecken.",
+    "rangerText": "Fernab geschäftiger Städte, in den Schatten unerforschter Wälder und über endlose Ebenen hinweg, hält ein Waldläufer seine ewige Wache. Er beherrscht die Kunst, sich lautlos durch dichtes Gestrüpp zu bewegen und seine Beute mit der unerbittlichen Präzision eines Raubtieres zu verfolgen. In der Stille der Wildnis wird er eins mit seiner Umgebung, nutzt jedes Trümmerstück als Versteck und liest die verborgenen Zeichen der Natur wie ein offenes Buch. Er ist der einsame Beschützer der Grenzlande, dessen Instinkte ebenso geschärft sind wie seine Klinge oder sein Pfeil.",
 
     // Waldläufer: Unterklassen
     "beastMasterLabel": "Herr der Tiere",
@@ -116,7 +116,7 @@ Object.assign(translations.en, {
     // Class: Ranger
     // ----------------------------------------------------------------------------------------
     "ranger": "Ranger",
-    "rangerText": "Far from the bustle of cities, amid the trees of trackless forests and across wide plains, rangers keep their unending watch in the wilds. Rangers learn to track their prey like a predator, move silently through the wilderness, and hide in the brush and rubble.",
+    "rangerText": "Far from bustling cities, in the shadows of unexplored forests and across endless plains, a ranger keeps their eternal watch. They master the art of moving silently through dense undergrowth and stalking their prey with the relentless precision of a predator. In the silence of the wilderness, they become one with their surroundings, using every bit of debris as cover and reading nature's hidden signs like an open book. They are the lonely protector of the borderlands, with instincts as sharp as their blade or their arrow.",
 
     // Ranger: Subclasses
     "beastMasterLabel": "Beast Master",

@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Barde
     // ----------------------------------------------------------------------------------------
     "bard": "Barde",
-    "bardText": "Barden beschwören Magie durch Musik, Tanz und Verse. Sie sind Experten darin, andere zu inspirieren, Wunden zu heilen, Feinde zu entmutigen und Illusionen zu erschaffen. Barden glauben, dass das Multiversum ins Dasein gesprochen wurde und dass Überreste dieser Worte der Schöpfung auf jeder Existenzebene nachhallen und schimmern. Die Magie der Barden versucht, diese Worte zu nutzen, die über jede Sprache hinausgehen.",
+    "bardText": "Ein Barde weiß dass die Welt aus Echos und Rhythmen besteht die tief im Gefüge der Schöpfung schwingen. Mit einem Lied oder einem Tanz greift er in diese unsichtbaren Fäden und webt Magie aus bloßen Worten und Klängen. Er heilt Wunden mit tröstenden Versen und schenkt seinen Gefährten Mut wenn die Dunkelheit am dichtesten ist. Seine Kunst erschafft täuschende Illusionen und bricht den Willen seiner Feinde durch die Macht der Sprache die weit über jedes gewöhnliche Verstehen hinausreicht.",
 
     // Barde: Unterklassen
     "collegeOfDanceLabel": "Kolleg des Tanzes",
@@ -83,7 +83,7 @@ Object.assign(translations.en, {
     // Class: Bard
     // ----------------------------------------------------------------------------------------
     "bard": "Bard",
-    "bardText": "Bards invoke magic through music, dance, and verse. They are experts at inspiring others, soothing hurts, disheartening foes, and creating illusions. Bards believe the multiverse was spoken into existence, and remnants of its Words of Creation still resound on every plane of existence. Bardic magic attempts to harness those words that transcend any language.",
+    "bardText": "A bard knows that the world consists of echoes and rhythms vibrating deep within the fabric of creation. With a song or a dance he reaches into these invisible threads and weaves magic from mere words and sounds. He heals wounds with comforting verses and grants his companions courage when the darkness is thickest. His art creates deceptive illusions and breaks the will of his enemies through the power of language that reaches far beyond any ordinary understanding.",
 
     // Bard: Subclasses
     "collegeOfDanceLabel": "College of Dance",

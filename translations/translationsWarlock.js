@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Hexenmeister
     // ----------------------------------------------------------------------------------------
     "warlock": "Hexenmeister",
-    "warlockText": "Hexenmeister suchen nach Wissen, das im Gewebe des Multiversums verborgen liegt. Oft beginnen sie ihre Suche nach magischer Kraft, indem sie in verbotenen Überlieferungen stöbern, sich in Beschwörungen versuchen, die darauf abzielen, die Macht extraplanarer Wesen zu gewinnen, oder Orte der Macht aufsuchen, an denen der Einfluss dieser Wesen zu spüren ist. Schon bald wird jeder Hexenmeister in einen bindenden Pakt mit einem mächtigen Patron gezogen. Indem sie auf das alte Wissen von Wesen wie Engeln, Erzfeen, Dämonen, Teufeln, Hexen und fremden Entitäten aus dem Fernen Reich zurückgreifen, setzen Hexenmeister arkanes Wissen zusammen, um ihre eigene Macht zu stärken.",
+    "warlockText": "Ein bindender Pakt mit einem mächtigen Patron zieht den Hexenmeister in einen Kreis aus uraltem Wissen und gefährlicher Macht. Ob dieser Bund freiwillig gesucht, in der Not aufgezwungen oder völlig unbewusst geschlossen wurde, die Verbindung bleibt bestehen. Er greift auf die Essenz von Wesen wie Engeln, Erzfeen, Dämonen oder Entitäten aus fernen Reichen zurück, um sein arkanes Können Stück für Stück zu festigen. Dieser Bund ist ein Geben und Nehmen, ein Tribut für Macht, der in unterschiedlichsten Formen und Bedingungen das Leben des Hexenmeisters für immer zeichnet.",
 
     // Hexenmeister: Unterklassen
     "archfeyPatronLabel": "Schutzherr der Erzfeen",
@@ -149,7 +149,7 @@ Object.assign(translations.en, {
     // Class: Warlock
     // ----------------------------------------------------------------------------------------
     "warlock": "Warlock",
-    "warlockText": "Warlocks seek knowledge that lies hidden in the fabric of the multiverse. Often they begin their quest for magical power by delving into forbidden lore, attempting summoning rituals to gain the favor of extraplanar beings, or seeking out places of power where the influence of such beings is felt. Soon, every warlock is drawn into a binding pact with a powerful patron. By tapping into the ancient knowledge of beings such as angels, archfey, demons, devils, hags, and alien entities from the Far Realm, warlocks piece together arcane secrets to bolster their own power.",
+    "warlockText": "A binding pact with a powerful patron draws the warlock into a circle of ancient knowledge and dangerous power. Whether this bond was sought voluntarily, imposed in times of need, or formed completely unconsciously, the connection remains. They draw upon the essence of beings such as angels, archfey, demons, or entities from far realms to consolidate their arcane skills bit by bit. This bond is a matter of give and take, a tribute for power that forever marks the warlock's life in various forms and conditions.",
 
 
     // Warlock: Subclasses

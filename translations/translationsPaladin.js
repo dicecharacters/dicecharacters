@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Paladin
     // ----------------------------------------------------------------------------------------
     "paladin": "Paladin",
-    "paladinText": "Paladine sind durch ihre Eide vereint, gegen die Kräfte der Vernichtung und Korruption zu stehen. Ob vor dem Altar eines Gottes geschworen, in einer heiligen Lichtung vor Naturgeistern oder in einem Moment der Verzweiflung und Trauer mit den Toten als einzigen Zeugen, ist ein Paladineid ein mächtiges Band. Er ist eine Kraftquelle, die einen frommen Krieger in einen gesegneten Champion verwandelt.",
+    "paladinText": "Ein Paladin ist ein Streiter, dessen gesamte Existenz in einem unumstößlichen Eid wurzelt, der ihn gegen Korruption und Verderben wappnet. Dieses mächtige Band ist der tiefe Quell seiner Magie und zugleich der Ursprung seiner unerbittlichen Entschlossenheit mit Schwert und Schild. Ob er als strahlender Beschützer Hoffnung schenkt oder als rachsüchtiger Champion seine Feinde unnachgiebig verfolgt – sein Glaube verleiht jedem seiner Schläge übernatürliche Wucht. Er ist ein Krieger, dessen heiliges Versprechen seinen Geist stählt und seinen Stahl führt, um als lebendiges Bollwerk für seine Überzeugungen einzustehen.",
 
     // Paladin: Unterklassen
     "oathOfDevotionLabel": "Eid der Hingabe",
@@ -102,7 +102,7 @@ Object.assign(translations.en, {
     // Class: Paladin
     // ----------------------------------------------------------------------------------------
     "paladin": "Paladin",
-    "paladinText": "Paladins are united by their oaths to stand against the forces of destruction and corruption. Whether sworn before the altar of a god, in a sacred grove before nature spirits, or in a moment of desperation and grief with the dead as the only witnesses, a paladin’s oath is a powerful bond. It is a source of power that turns a devout warrior into a blessed champion.",
+    "paladinText": "A paladin is a combatant whose entire existence is rooted in an irrevocable oath that arms them against corruption and ruin. This powerful bond is the deep wellspring of their magic and, at the same time, the source of their relentless determination with sword and shield. Whether they grant hope as a radiant protector or relentlessly pursue their enemies as a vengeful champion – their faith lends supernatural force to every one of their strikes. They are a warrior whose sacred promise steels their mind and guides their steel, standing as a living bulwark for their convictions.",
 
     // Paladin: Subclasses
     "oathOfDevotionLabel": "Oath of Devotion",

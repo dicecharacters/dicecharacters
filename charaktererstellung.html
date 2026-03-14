@@ -737,7 +737,7 @@
 </div>
 
 
-<div id="infoBackdrop" class="info-backdrop" onclick="closeInfoBox()"></div>
+    <div id="infoBackdrop" class="info-backdrop" onclick="closeInfoBox()"></div>
 
     <div id="infoBoxStep3" class="info-box" style="display: none;">
         <span class="close-icon" onclick="closeInfoBox()">&times;</span>
@@ -752,10 +752,18 @@
     </div>
 
 
-<div id="liveAttributesContainer" style="display: none;">
+    <div id="liveAttributesContainer" style="display: none;">
     </div>
 
+    <div id="licenseOverlay" class="modal-overlay" onclick="closeLicenseModal()">
+        <div class="info-box" onclick="event.stopPropagation()">
+            <span class="close-icon" onclick="closeLicenseModal()">&times;</span>
+            <h3 id="licenseHeaderLabel" style="color: #e8d8b5; margin-bottom: 20px;"></h3>
+            <div id="licenceMarkTextLabel"></div>
+        </div>
     </div>
+
+    <div id="disclaimerLabel" class="permanent-disclaimer"></div>
 
     <!-- Fixierte Buttons -->
 <button id="saveClass" class="fixed-button" type="button" onclick="saveClass()">
@@ -798,22 +806,22 @@
     <img src="images/back.png" alt="Zurück" class="nav-icon">
 </button>
 
-<div id="swipeOnboarding" style="display: none;">
-    <div class="onboarding-divider"></div>
-    <div class="onboarding-content">
-        <div class="arrow-wrapper left">
-            <div class="onboarding-arrow bounce-right">→</div>
-            <span id="onboardingBackLabel"></span>
-        </div>
-        <div class="arrow-wrapper right">
-            <div class="onboarding-arrow bounce-left">←</div>
-            <span id="onboardingSaveLabel"></span>
-        </div>
-        <div class="onboarding-footer">
-            <span id="onboardingSwipeHint"></span>
+    <div id="swipeOnboarding" style="display: none;">
+        <div class="onboarding-divider"></div>
+        <div class="onboarding-content">
+            <div class="arrow-wrapper left">
+                <div class="onboarding-arrow bounce-right">→</div>
+                <span id="onboardingBackLabel"></span>
+            </div>
+            <div class="arrow-wrapper right">
+                <div class="onboarding-arrow bounce-left">←</div>
+                <span id="onboardingSaveLabel"></span>
+            </div>
+            <div class="onboarding-footer">
+                <span id="onboardingSwipeHint"></span>
+            </div>
         </div>
     </div>
-</div>
 
     <!-- Externe Skripte laden -->
     <script src="data/speciesData.js"></script>
@@ -892,6 +900,11 @@
         currentLang = lang;
         localStorage.setItem("currentLanguage", lang);
 
+	const overlay = document.getElementById('licenseOverlay');
+    	if (overlay && overlay.style.display === 'flex') {
+        checkLicense(); 
+    	}
+
         // Zur Erkennung der aktuellen Sprache (in CSS)
         document.body.setAttribute('data-lang', lang);
 
@@ -945,6 +958,8 @@
         // 2. setLanguage als "initial" aufrufen (isInitial = true)
         // Dadurch überspringen wir das Confirm-Fenster beim ersten Laden
         setLanguage(savedLang, true); 
+
+        checkLicense();
         
         // 3. Schritt 1 anzeigen
         goToStep(1); 

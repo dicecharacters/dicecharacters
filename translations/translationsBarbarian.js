@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Barbar
     // ----------------------------------------------------------------------------------------
     "barbarian": "Barbar",
-    "barbarianText": "Barbaren sind mächtige Krieger, die durch die Urkräfte des Multiversums angetrieben werden, die sich in ihnen als eine Art Raserei manifestieren. Diese Raserei ist mehr als bloß ein Gefühl - und geht weit über reinen Zorn hinaus. Sie verkörpert die Wildheit eines Raubtiers, die Wut eines Sturms und die Unruhe des Meeres.",
+    "barbarianText": "In der Seele des Barbaren schlägt der Puls der Erde selbst. Wenn er sich dem Kampf hingibt erwacht eine Macht die über bloßen Zorn hinausgeht und wie ein Sturm über das Schlachtfeld fegt. Sein eigener Körper ist sein Schild denn sein Instinkt und seine Zähigkeit trotzen jedem Stahl. In dieser heiligen Raserei wird er eins mit der ungezähmten Wildheit des Lebens und wandelt Schmerz in pure Stärke um. Er ist die unbändige Kraft der Natur die in Fleisch und Blut Gestalt angenommen hat.",
 
     // Barbar: Unterklassen
     "pathOfBerserkerLabel": "Pfad des Berserkers",
@@ -134,7 +134,7 @@ Object.assign(translations.en, {
     // Class: Barbarian
     // ----------------------------------------------------------------------------------------
     "barbarian": "Barbarian",
-    "barbarianText": "Barbarians are powerful warriors driven by the primal forces of the multiverse that manifest in them as a kind of rage. This rage is more than just a feeling—it embodies the ferocity of a predator, the rage of a storm, and the restlessness of the sea.",
+    "barbarianText": "Within the soul of the barbarian beats the pulse of the earth itself. When he surrenders to combat a power awakens that transcends mere anger and sweeps across the battlefield like a storm. His own body is his shield for his instinct and toughness defy any steel. In this sacred rage he becomes one with the untamed ferocity of life and transforms pain into pure strength. He is the irrepressible force of nature taken shape in flesh and blood.",
 
     // Barbarian: Subclasses
     "pathOfBerserkerLabel": "Path of the Berserker",

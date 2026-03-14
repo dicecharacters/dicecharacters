@@ -14,10 +14,12 @@
         <button onclick="setLanguage('en')" id="langEn" title="English"><img src="images/usa.png" alt="EN"></button>
     </div>
 
-    <section class="hero">
-        <div class="hero-content">
-            <h1 id="heroTitle" class="gold-text"></h1>
-            <p id="heroSubtitle" class="motto-text"></p>
+   <section class="hero">
+       <div class="hero-content">
+           <h1 class="hero-logo-container">
+               <img src="images/dclogo_gold.png" alt="DiceCharacters" class="hero-logo">
+           </h1>
+           <p id="heroSubtitle" class="motto-text"></p>
             
             <div class="universe-group">
                 <label for="universe" id="universeLabel"></label>
@@ -46,15 +48,27 @@
     <section class="contact-section">
         <div class="contact-card">
             <h2 id="contactHeader"></h2>
-            <form action="https://formspree.io/f/marc.riemensperger@gmail.com" method="POST">
+        
+            <div id="contactSuccessMessage" style="display: none; text-align: center; color: var(--gold); padding: 20px;">
+                <p id="successText"></p>
+            </div>
+
+            <form id="contactForm" action="https://formspree.io/f/xreykybv" method="POST">
+                <div class="input-group">
+                    <label id="contactEmailLabel"></label>
+                    <input type="email" name="email" id="emailInput">
+                </div>
+
                 <div class="input-group">
                     <label id="contactSubject"></label>
                     <input type="text" name="subject" id="subjectInput" required>
                 </div>
+            
                 <div class="input-group">
-                    <label id="contactMessage"></label>
-                    <textarea name="message" id="messageInput" required></textarea>
+                     <label id="contactMessage"></label>
+                     <textarea name="message" id="messageInput" required></textarea>
                 </div>
+            
                 <button type="submit" class="btn-send" id="contactSend"></button>
             </form>
         </div>
@@ -90,9 +104,15 @@
             }
         });
 
-        // Extra Fix für die IDs (Sicherheit geht vor)
-        document.getElementById('subjectInput').placeholder = elements.contactPlaceholderSubject;
-        document.getElementById('messageInput').placeholder = elements.contactPlaceholderMessage;
+	const emailField = document.getElementById('emailInput');
+	if (emailField) emailField.placeholder = elements.optionalLabel || "Optional";
+
+	document.getElementById('subjectInput').placeholder = elements.contactPlaceholderSubject;
+	document.getElementById('messageInput').placeholder = elements.contactPlaceholderMessage;
+
+	// Erfolgstext für später vorbereiten (wird angezeigt, wenn gesendet wurde)
+	const successMsg = document.getElementById('successText');
+	if (successMsg) successMsg.innerHTML = elements.contactSuccessNote || "";
 
         // Button-Highlighting
         document.getElementById('langDe').classList.toggle('active-lang', lang === 'de');
@@ -104,6 +124,53 @@
         const savedLang = localStorage.getItem("currentLanguage") || 'de';
         setLanguage(savedLang);
     });
+
+
+    // Den Formular-Versand abfangen (mit AJAX für Formspree)
+    document.getElementById("contactForm").addEventListener("submit", function(ev) {
+        ev.preventDefault(); // Verhindert das Neuladen der Seite
+        
+        const form = ev.target;
+        const data = new FormData(form);
+        const status = document.getElementById("contactSuccessMessage");
+        const formElement = document.getElementById("contactForm");
+        const submitBtn = document.getElementById("contactSend");
+
+        // Sprache laden für Fehlermeldungen
+        const lang = localStorage.getItem("currentLanguage") || 'de';
+        const msg = translations[lang];
+
+        // Button deaktivieren (Sperre gegen Mehrfachklicks)
+        const originalBtnText = submitBtn.innerText;
+        submitBtn.disabled = true;
+        submitBtn.innerText = "..."; 
+
+        fetch(form.action, {
+            method: form.method,
+            body: data,
+            headers: {
+                'Accept': 'application/json'
+            }
+        }).then(response => {
+            if (response.ok) {
+                // Erfolg: Formular weg, Nachricht da
+                status.style.display = "block"; 
+                formElement.style.display = "none";
+                form.reset();
+            } else {
+                // Fehler von Formspree (z.B. falsche ID)
+                alert(msg.contactErrorSending || "Error");
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalBtnText;
+            }
+        }).catch(error => {
+            // Netzwerkfehler (kein Internet etc.)
+            alert(msg.contactErrorConnection || "Connection Error");
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalBtnText;
+        });
+    });
+
     </script>
 </body>
 </html>

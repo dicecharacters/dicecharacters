@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Kämpfer
     // ----------------------------------------------------------------------------------------
     "fighter": "Kämpfer",
-    "fighterText": "Kämpfer beherrschen viele Schlachtfelder. Suchende Ritter, königliche Champions, Elite-Soldaten und abgehärtete Söldner—als Kämpfer teilen sie alle eine unvergleichliche Meisterschaft mit Waffen und Rüstungen. Sie sind sowohl mit dem Tod vertraut, indem sie ihn austeilen, als auch ihm trotzen.",
+    "fighterText": "Ganz gleich ob ein schwerer Hammer Knochen bricht oder ein Pfeil lautlos sein Ziel findet, diese Seele beherrscht jedes Instrument des Krieges mit traumwandlerischer Sicherheit. In seinen Händen wird das Kurzschwertpaar so tödlich wie die schwere Armbrust oder die donnernde Schusswaffe. Er passt sich jedem Schlachtfeld an und trotzt dem Ende mit einer Meisterschaft die keine Grenzen kennt. Er ist die vollkommene Antwort auf jede Bedrohung, ein Experte der jede Waffe und jede Taktik zu einem tödlichen Tanz vereint.",
 
     // Kämpfer: Unterklassen
     "battleMasterLabel": "Kampfmeister",
@@ -150,7 +150,7 @@ Object.assign(translations.en, {
     // Class: Fighter
     // ----------------------------------------------------------------------------------------
     "fighter": "Fighter",
-    "fighterText": "Fighters dominate many battlefields. Questing knights, royal champions, elite soldiers, and hardened mercenaries—all share an unparalleled mastery with weapons and armor. They are well-acquainted with death, both dealing it and defying it.",
+    "fighterText": "Whether a heavy hammer shatters bone or an arrow finds its mark silently, this soul masters every instrument of war with effortless precision. In his hands a pair of shortswords becomes as deadly as a heavy crossbow or a thundering firearm. He adapts to every battlefield and defies the end with a mastery that knows no limits. He is the perfect answer to any threat, an expert who unites every weapon and every tactic into a lethal dance.",
 
     // Fighter: Subclasses
     "battleMasterLabel": "Battle Master",

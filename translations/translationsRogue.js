@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Schurke
     // ----------------------------------------------------------------------------------------
     "rogue": "Schurke",
-    "rogueText": "Schurken verlassen sich auf List, Heimlichkeit und die Schwächen ihrer Gegner, um in jeder Situation die Oberhand zu gewinnen. Sie haben ein Händchen dafür, die Lösung für nahezu jedes Problem zu finden. Einige lernen sogar magische Tricks, um ihre anderen Fähigkeiten zu ergänzen. Viele Schurken konzentrieren sich auf Heimlichkeit und Täuschung, während andere Fähigkeiten verfeinern, die ihnen in einer Dungeonomgebung helfen, wie Klettern, das Finden und Entschärfen von Fallen und das Öffnen von Schlössern.",
+    "rogueText": "Ein Schurke triumphiert durch List und ein scharfes Auge für die Schwächen seiner Widersacher. In den Schatten ist er zu Hause, wo er Heimlichkeit und Täuschung nutzt, um Hindernisse zu umgehen, die anderen unüberwindbar erscheinen. Ob er nun lautlos Wände erklimmt, tödliche Fallen entschärft oder Schlösser mit bloßem Fingerspitzengefühl öffnet – für jedes Problem findet er eine elegante, wenn auch oft unkonventionelle Lösung. Manche ergänzen ihr Handwerk gar mit magischen Tricks, doch ihr wahrer Kern bleibt die unvergleichliche Geschicklichkeit, mit der sie das Schicksal zu ihren Gunsten wenden.",
 
     // Schurke: Unterklassen
     "arcaneTricksterLabel": "Arkaner Betrüger",
@@ -110,7 +110,7 @@ Object.assign(translations.en, {
     // Class: Rogue
     // ----------------------------------------------------------------------------------------
     "rogue": "Rogue",
-    "rogueText": "Rogues rely on skill, stealth, and their foes’ vulnerabilities to gain the upper hand in any situation. They have a knack for finding the solution to nearly any problem. Some even learn magical tricks to supplement their other abilities. Many rogues focus on stealth and deception, while others refine the skills that help them in dungeon environments, such as climbing, finding and disarming traps, and picking locks.",
+    "rogueText": "A rogue triumphs through cunning and a keen eye for their adversaries' weaknesses. They are at home in the shadows, using stealth and deception to bypass obstacles that seem insurmountable to others. Whether silently scaling walls, disarming deadly traps, or picking locks with mere finesse—they find an elegant, if often unconventional, solution to every problem. Some even augment their craft with magical tricks, yet their true core remains the incomparable agility with which they turn fate in their favor.",
 
     // Rogue: Subclasses
     "arcaneTricksterLabel": "Arcane Trickster",

@@ -591,7 +591,7 @@ function updateBackgroundDetails(backgroundName) {
     const skills = Array.isArray(backgroundData.bgSkillProf) ? backgroundData.bgSkillProf : [backgroundData.bgSkillProf];
     const skillDropdowns = `
     <label for="skill65">
-        <span class="dropdownLabel">${elements.skillProfAbbr}:</span>
+        <span class="dropdownLabel">${elements.skillsLabel}:</span>
     </label>
     <select id="skill65" name="skill65" class="dropdown" disabled>
         ${createSkillOptions([skills[0]])}
@@ -8480,7 +8480,7 @@ function resetEquipmentData() {
 //=======================================================================
 
 // Globale Zeichenbegrenzungen für Schritt 9
-const MAX_STORY_LENGTH = 1000;
+const MAX_STORY_LENGTH = 1600;
 const MAX_DEITY_NAME_LENGTH = 50;
 const MAX_COMMUNITY_NAME_LENGTH = 50;
 const MAX_COMMUNITY_DESC_LENGTH = 500;
@@ -8961,7 +8961,7 @@ function restoreTraitTable() {
 // SCHRITT 11: AUSSEHEN
 //=======================================================================
 
-const MAX_APPEARANCE_TEXT = 850; // Globale Variable
+const MAX_APPEARANCE_TEXT = 1000; // Globale Variable
 
 /**
  * Speichern-Funktion
@@ -9261,7 +9261,16 @@ function initializeSummaryView() {
 // Speichert den gesamten Charakter und leitet zur Charakterbogen-Seite weiter
 function finishCharacter() {
 
+    // Spracheinstellung
     localStorage.setItem("currentLanguage", currentLang);
+    const savedLang = localStorage.getItem("currentLanguage");
+
+    // Alles löschen
+    localStorage.clear();
+
+    if (savedLang) {
+        localStorage.setItem("currentLanguage", savedLang);
+    }
 
     // Klasse
     localStorage.setItem("class", character.class);
@@ -9329,10 +9338,6 @@ function finishCharacter() {
     // Name
     character.name = document.getElementById('characterNameInput').value;
     localStorage.setItem("characterName", character.name);
-
-    // Bilder im Bogen löschen
-    localStorage.removeItem('portraitImage');
-    localStorage.removeItem('symbolImage');
 
     // Weiterleitung
     window.location.href = "charakterbogen.html";
@@ -10031,6 +10036,44 @@ function updateDropdownsForLanguage() {
 
 })();
 
+
+
+//=======================================================================
+// Lizenzangaben
+//=======================================================================
+
+// Funktion zum Anzeigen des Lizenz-Modals
+function checkLicense() {
+    const hasAccepted = localStorage.getItem('licenseAccepted');
+    if (hasAccepted) return;
+
+    const overlay = document.getElementById('licenseOverlay');
+    const headerLabel = document.getElementById('licenseHeaderLabel');
+    const textLabel = document.getElementById('licenceMarkTextLabel');
+
+    if (overlay) {
+        const lang = localStorage.getItem("currentLanguage") || 'de';
+        
+        // Überschrift setzen
+        if (headerLabel) {
+            headerLabel.innerText = translations[lang]?.licenseTitle || "License";
+        }
+        
+        // Haupttext setzen
+        if (textLabel) {
+            textLabel.innerText = translations[lang]?.licenceMarkText || "Please accept the terms.";
+        }
+
+        overlay.style.setProperty('display', 'flex', 'important');
+    }
+}
+
+// Funktion zum Schließen
+function closeLicenseModal() {
+    document.getElementById('licenseOverlay').style.display = 'none';
+    localStorage.setItem('licenseAccepted', 'true');
+}
+
 //=======================================================================
 // MOBILE SECTION
 //=======================================================================
@@ -10169,6 +10212,26 @@ document.addEventListener('focusout', function(e) {
 
 // TABLET - Schritt 4: Attribute Drag & Drop mit Auto-Scroll
 
+
+let autoScrollFrame;
+
+function startAutoScroll(clientY) {
+    const threshold = 100; // Bereich am Rand
+    const speed = 12;      // Scroll-Geschwindigkeit
+    
+    cancelAnimationFrame(autoScrollFrame);
+
+    if (clientY > window.innerHeight - threshold) {
+        // Nach unten
+        window.scrollBy(0, speed);
+        autoScrollFrame = requestAnimationFrame(() => startAutoScroll(clientY));
+    } else if (clientY < threshold) {
+        // Nach oben
+        window.scrollBy(0, -speed);
+        autoScrollFrame = requestAnimationFrame(() => startAutoScroll(clientY));
+    }
+}
+
 let activeTouchGhost = null;
 let activeTouchPoolEl = null;
 
@@ -10182,7 +10245,6 @@ document.addEventListener('touchstart', function(e) {
         const touch = e.touches[0];
 
         if (isInput) {
-            // AUS INPUT ZIEHEN
             const val = e.target.value;
             const sourceId = e.target.id;
             e.target.value = ""; 
@@ -10194,26 +10256,23 @@ document.addEventListener('touchstart', function(e) {
             ghost.dataset.sourceInputId = sourceId;
             ghost.dataset.value = val;
             
-            // Startposition direkt setzen
             ghost.style.position = 'fixed';
             ghost.style.zIndex = "2000";
             ghost.style.pointerEvents = "none";
             ghost.style.left = "0";
             ghost.style.top = "0";
-            // Nutzung von translate3d für GPU-Beschleunigung
             ghost.style.transform = `translate3d(${touch.clientX - 25}px, ${touch.clientY - 50}px, 0) scale(1.1)`;
             
             document.body.appendChild(ghost);
             activeTouchGhost = ghost;
         } else {
-            // AUS POOL ZIEHEN
             activeTouchPoolEl = e.target;
             activeTouchPoolEl.dataset.startX = touch.clientX;
             activeTouchPoolEl.dataset.startY = touch.clientY;
             activeTouchPoolEl.dataset.initialScrollY = window.scrollY;
             activeTouchPoolEl.style.zIndex = "1000";
             activeTouchPoolEl.style.pointerEvents = "none";
-            activeTouchPoolEl.style.transition = "none"; // Sofortige Reaktion
+            activeTouchPoolEl.style.transition = "none";
         }
     }
 }, { passive: false });
@@ -10221,38 +10280,29 @@ document.addEventListener('touchstart', function(e) {
 document.addEventListener('touchmove', function(e) {
     if (!activeTouchGhost && !activeTouchPoolEl) return;
     
-    // Verhindert das Standard-Scrollen des Browsers, während wir ziehen
-    e.preventDefault(); 
+    if (e.cancelable) e.preventDefault(); 
     const touch = e.touches[0];
     const draggedEl = activeTouchGhost || activeTouchPoolEl;
 
-    // 1. POSITIONIERUNG (Hardware-beschleunigt)
+    // 1. POSITIONIERUNG
     if (activeTouchGhost) {
-        // Ghost folgt dem Finger mit dem definierten Offset
         draggedEl.style.transform = `translate3d(${touch.clientX - 25}px, ${touch.clientY - 50}px, 0) scale(1.1)`;
     } else {
-        // Pool-Element folgt der relativen Fingerbewegung
         const deltaX = touch.clientX - parseFloat(draggedEl.dataset.startX);
         const deltaY = touch.clientY - parseFloat(draggedEl.dataset.startY);
         const scrollDiff = window.scrollY - parseFloat(draggedEl.dataset.initialScrollY);
         draggedEl.style.transform = `translate3d(${deltaX}px, ${deltaY + scrollDiff}px, 0) scale(1.1)`;
     }
 
-    // 2. AUTO-SCROLL LOGIK
-    // Wir prüfen, ob der Finger nah am oberen oder unteren Bildschirmrand ist
-    const scrollThreshold = 80; // Pixel vom Rand entfernt
-    const scrollSpeed = 10;     // Wie schnell gescrollt werden soll
+    // 2. AUTO-SCROLL (Nutzt jetzt die effiziente requestAnimationFrame Funktion)
+    startAutoScroll(touch.clientY);
 
-    if (touch.clientY < scrollThreshold) {
-        // Finger ist oben -> Seite nach oben scrollen
-        window.scrollBy(0, -scrollSpeed);
-    } else if (touch.clientY > window.innerHeight - scrollThreshold) {
-        // Finger ist unten -> Seite nach unten scrollen
-        window.scrollBy(0, scrollSpeed);
-    }
 }, { passive: false });
 
 document.addEventListener('touchend', function(e) {
+    // --- WICHTIG: Auto-Scroll sofort stoppen ---
+    cancelAnimationFrame(autoScrollFrame);
+
     const draggedEl = activeTouchGhost || activeTouchPoolEl;
     if (!draggedEl) return;
 
@@ -10260,8 +10310,7 @@ document.addEventListener('touchend', function(e) {
     const activeMethod = document.querySelector('input[name="attributeMethod"]:checked').value;
     const poolId = (activeMethod === 'standard') ? 'standardArrayValues' : 'randomlyGeneratedValues';
 
-    // Zielprüfung
-    draggedEl.style.visibility = 'hidden'; // Präziser als display:none
+    draggedEl.style.visibility = 'hidden';
     const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
     const dropZone = targetElement ? targetElement.closest('.attribute-score-input') : null;
     draggedEl.style.visibility = 'visible';
@@ -10364,7 +10413,7 @@ function adjustValue(stringId, delta) {
 
 
 
-// TABLET - Schritt 10: Präzises Drag & Drop für Traits
+// TABLET - Schritt 10: Präzises Drag & Drop für Traits (iOS-Fix integriert)
 
 let currentTrait = null;
 
@@ -10382,19 +10431,25 @@ document.addEventListener('touchstart', function(e) {
         currentTrait.dataset.offsetY = touch.clientY - rect.top;
         
         currentTrait.classList.add('dragging-active');
-        // Initialposition setzen
+        
+        // Initialposition setzen - Wir nutzen fixed während des Drags für bessere iOS-Stabilität
+        currentTrait.style.position = 'fixed';
         currentTrait.style.left = rect.left + "px";
         currentTrait.style.top = rect.top + "px";
         currentTrait.style.width = rect.width + "px";
+        currentTrait.style.zIndex = "2000";
     }
 }, { passive: false });
 
 document.addEventListener('touchmove', function(e) {
     if (!currentTrait) return;
-    e.preventDefault(); 
+    
+    // WICHTIG: Verhindert, dass Safari die Seite scrollt statt das Element zu ziehen
+    if (e.cancelable) e.preventDefault(); 
     
     const touch = e.touches[0];
-    // Position direkt am Finger
+    
+    // Positionierung relativ zum Viewport (fixed), da wir offsetX/Y vom BoundingClientRect haben
     currentTrait.style.left = (touch.clientX - parseFloat(currentTrait.dataset.offsetX)) + "px";
     currentTrait.style.top = (touch.clientY - parseFloat(currentTrait.dataset.offsetY)) + "px";
 }, { passive: false });
@@ -10417,9 +10472,8 @@ document.addEventListener('touchend', function(e) {
         const style = window.getComputedStyle(currentTrait);
         
         // --- 1. FARB-LOGIK EXAKT WIE AM PC ---
-        let color = style.backgroundColor; // Standard: Hintergrundfarbe
+        let color = style.backgroundColor; 
 
-        // Prüfung auf die "böse" Klasse
         if (currentTrait.classList.contains('trait-bg-evil')) {
             color = "#000000"; 
         }
@@ -10436,11 +10490,9 @@ document.addEventListener('touchend', function(e) {
         editor.appendChild(separator);
 
         // --- 4. ELEMENT VERSTECKEN ---
-        // Wir nutzen visibility wie im PC-Code, damit das Layout nicht springt
         currentTrait.style.visibility = 'hidden'; 
 
         // --- 5. ZÄHLER AKTUALISIEREN ---
-        // Berücksichtigt das unsichtbare Zeichen \u200B
         const cleanText = editor.innerText.replace(/\u200B/g, '');
         const counterEl = document.getElementById('personalityCharCount');
         if (counterEl) {
@@ -10452,16 +10504,16 @@ document.addEventListener('touchend', function(e) {
             placeCaretAtEnd(editor);
         }
         
-        // Trigger für weitere Skripte
         editor.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
-    // Reset der Drag-Styles
+    // Reset der Drag-Styles - Zurück auf Standardwerte deiner CSS
     currentTrait.classList.remove('dragging-active');
-    currentTrait.style.position = "";
+    currentTrait.style.position = ""; // Geht zurück auf static (oder wie im CSS definiert)
     currentTrait.style.left = "";
     currentTrait.style.top = "";
     currentTrait.style.width = "";
+    currentTrait.style.zIndex = "";
     currentTrait.style.pointerEvents = 'auto';
     currentTrait = null;
 });

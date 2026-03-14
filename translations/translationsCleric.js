@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Kleriker
     // ----------------------------------------------------------------------------------------
     "cleric": "Kleriker",
-    "clericText": "Kleriker ziehen Macht aus den Reichen der Götter und nutzen sie, um Wunder zu wirken. Gesegnet von einer Gottheit, einem Pantheon oder einer anderen unsterblichen Entität, kann ein Kleriker die göttliche Magie der äußeren Ebenen - wo Götter wohnen - anzapfen und sie nutzen, um Menschen zu stärken und Feinde zu bekämpfen. Da ihre Macht ein göttliches Geschenk ist, verbinden Kleriker sich typischerweise mit Tempeln, die der Gottheit oder der unsterblichen Kraft gewidmet sind, die ihre Magie freigesetzt hat.",
+    "clericText": "Ein Kleriker wandelt als lebendiges Gefäß für Mächte die in den ewigen Ebenen jenseits der sterblichen Welt thronen. Seine Kraft entspringt der unerschütterlichen Ergebenheit gegenüber einer unsterblichen Entität oder einem ganzen Pantheon. Durch dieses heilige Band wirkt er Wunder die Wunden schließen und die Finsternis mit göttlichem Glanz vertreiben. Er ist der sterbliche Anker für den Willen der Götter und bringt ihren Segen oder ihr gerechtes Urteil direkt in das Herz der Schlacht.",
 
     // Kleriker: Unterklassen
     "lifeDomainLabel": "Domäne des Lebens",
@@ -98,7 +98,7 @@ Object.assign(translations.en, {
     // Class: Cleric
     // ----------------------------------------------------------------------------------------
     "cleric": "Cleric",
-    "clericText": "Clerics draw power from the realms of the gods and use it to perform miracles. Blessed by a deity, a pantheon, or another immortal entity, a Cleric can channel divine magic from the Outer Planes—where the gods dwell—to heal allies and combat foes. Because their power is a divine gift, Clerics are often associated with temples dedicated to the deity or force that unlocked their power.",
+    "clericText": "A cleric walks the world as a living vessel for powers that dwell in the eternal planes beyond the mortal realm. His strength springs from unshakable devotion to an immortal entity or an entire pantheon. Through this sacred bond he works miracles that close wounds and drive away the darkness with divine radiance. He is the mortal anchor for the will of the gods bringing their blessing or their righteous judgment directly into the heart of battle.",
 
     // Cleric: Subclasses
     "lifeDomainLabel": "Life Domain",

@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Magier
     // ----------------------------------------------------------------------------------------
     "wizard": "Magier",
-    "wizardText": "Magier sind durch ihr umfassendes Studium der inneren Funktionsweise der Magie definiert. Sie wirken Zauber aus explodierendem Feuer, blitzender Elektrizität, subtiler Täuschung und spektakulären Verwandlungen. Ihre Magie beschwört Monster aus anderen Existenzebenen, erblickt die Zukunft oder formt Schutzbarrieren. Ihre mächtigsten Zauber verändern eine Substanz in eine andere, rufen Meteore vom Himmel oder öffnen Portale zu anderen Welten.",
+    "wizardText": "Gelehrsamkeit und unermüdliche Forschung bilden das Fundament, auf dem ein Magier seine Verbindung zum Arkanum aufbaut. Durch das Verständnis komplexer Formeln lernt er, Feuer explodieren zu lassen, Blitze zu schleudern oder die Realität durch subtile Täuschungen und spektakuläre Verwandlungen zu verzerren. Seine Kunst reicht vom Errichten magischer Schutzwälle bis hin zum Beschwören von Wesen aus fremden Daseinssphären oder dem Blick in die nahende Zukunft. Was mit dem Studium alter Schriften beginnt, kann schließlich zu einer Macht heranreifen, die Materie umwandelt, Meteore herabbeschwört und Portale in ferne Welten öffnet.",
 
     // Magier: Unterklassen
     "abjurerLabel": "Bannmagier",
@@ -83,7 +83,7 @@ Object.assign(translations.en, {
     // Class: Wizard
     // ----------------------------------------------------------------------------------------
     "wizard": "Wizard",
-    "wizardText": "Wizards are defined by their extensive study of the inner workings of magic. They cast spells of explosive fire, crackling lightning, subtle deception, and spectacular transformation. Their magic summons monsters from other planes of existence, glimpses the future, or creates protective wards. Their most powerful spells change one substance into another, call meteors from the sky, or open portals to other worlds.",
+    "wizardText": "Scholarship and tireless research form the foundation upon which a wizard builds their connection to the arcane. Through understanding complex formulas, they learn to explode fire, hurl lightning, or distort reality through subtle deceptions and spectacular transformations. Their art ranges from erecting magical wards to summoning beings from foreign spheres of existence or glimpsing the approaching future. What begins with the study of ancient scripts can eventually mature into a power that transmutes matter, summons meteors from the sky, and opens portals to distant worlds.",
 
     // Wizard: Subclasses
     "abjurerLabel": "Abjurer",

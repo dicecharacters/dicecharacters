@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Zauberer
     // ----------------------------------------------------------------------------------------
     "sorcerer": "Zauberer",
-    "sorcererText": "Zauberer beherrschen angeborene Magie, die in ihrem Wesen verankert ist. Einige Zauberer können den Ursprung ihrer Macht nicht benennen, während andere sie auf seltsame Ereignisse in ihrer persönlichen oder familiären Geschichte zurückführen. Der Segen eines Drachen oder einer Dryade bei der Geburt eines Babys oder der Schlag eines Blitzes aus heiterem Himmel könnte das Geschenk eines Zauberers entzünden.",
+    "sorcererText": "Seltsame Wunder und schicksalhafte Momente sind der Funke, der das Erbe eines Zauberers entfacht. Ob es der uralte Segen eines Drachen bei der Geburt war, das Wispern einer Dryade oder ein Blitzschlag aus heiterem Himmel - diese angeborene Magie ist fest in seinem Wesen verankert. Er braucht keine staubigen Folianten, um die Realität zu biegen. Seine Macht entspringt seiner persönlichen Geschichte oder seinem Blut. Er ist ein lebendiger Brunnen roher Energie, der das Arkanum durch reine Willenskraft formt und die Welt mit der Kraft seines eigenen Seins erschüttern kann.",
 
     // Zauberer: Unterklassen
     "aberrantSorceryLabel": "Abbarante Zauberei",
@@ -130,7 +130,7 @@ Object.assign(translations.en, {
     // Class: Sorcerer
     // ----------------------------------------------------------------------------------------
     "sorcerer": "Sorcerer",
-    "sorcererText": "Sorcerers command innate magic that is woven into their being. Some sorcerers cannot name the origin of their power, while others trace it to strange events in their personal or familial history. The blessing of a dragon or a dryad at a baby’s birth, or the strike of lightning from a clear sky, might ignite a sorcerer’s gift.",
+    "sorcererText": "Strange wonders and fateful moments are the spark that ignites a sorcerer's heritage. Whether it was the ancient blessing of a dragon at birth, the whisper of a dryad, or a lightning bolt from a clear sky - this innate magic is firmly anchored in their very being. They need no dusty tomes to bend reality. Their power springs from their personal history or their blood. They are a living wellspring of raw energy, shaping the arcane through pure willpower and capable of shaking the world with the strength of their own existence.",
 
     // Sorcerer: Subclasses
     "aberrantSorceryLabel": "Aberrant Sorcery",

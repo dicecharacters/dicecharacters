@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Mönch
     // ----------------------------------------------------------------------------------------
     "monk": "Mönch",
-    "monkText": "Mönche nutzen rigoroses Kampftraining und mentale Disziplin, um sich mit dem Multiversum zu verbinden und ihre inneren Kraftreserven zu fokussieren. Verschiedene Mönche konzeptualisieren diese Kraft auf verschiedene Weisen - als Atem, Energie, Lebenskraft, Essenz oder Selbst, zum Beispiel. Ob sie als eindrucksvolle Kampfkunst oder als subtilere Manifestation von Verteidigung und Geschwindigkeit kanalisiert wird, diese Kraft durchdringt alles, was ein Mönch tut.",
+    "monkText": "Durch unermüdliches Training und Disziplin findet ein Mönch das Gleichgewicht zwischen seinem Geist und der Welt. Er kanalisiert seine innere Energie, sei es als Atem oder reine Lebenskraft, um die Grenzen des sterblichen Körpers weit zu überschreiten. Diese fokussierte Kraft durchdringt jede Geste und verleiht ihm eine Schnelligkeit und Präzision, die weit über rohe Stärke hinausgeht. Getragen von einem unerschütterlichen Willen wird er selbst zum Instrument dieser inneren Macht und begegnet jeder Herausforderung mit vollkommener Klarheit und Kontrolle.",
 
     // Mönch: Unterklassen
     "warriorOfMercyLabel": "Krieger der Gnade",
@@ -125,7 +125,7 @@ Object.assign(translations.en, {
     // Class: Monk
     // ----------------------------------------------------------------------------------------
     "monk": "Monk",
-    "monkText": "Monks use rigorous combat training and mental discipline to connect with the multiverse and focus their inner reserves of power. Different monks conceptualize this power in various ways—breath, energy, life force, essence, or self, for instance. Whether channeled as impressive martial arts or as subtler manifestations of defense and speed, this power permeates everything a monk does.",
+    "monkText": "Through tireless training and discipline a monk finds the balance between their mind and the world. They channel their inner energy, whether as breath or pure life force, to transcend the limits of the mortal body. This focused power permeates every gesture and grants them a speed and precision that goes far beyond raw strength. Carried by an unwavering will they become an instrument of this inner power meeting every challenge with absolute clarity and control.",
 
     // Monk: Subclasses
     "warriorOfMercyLabel": "Way of Mercy",

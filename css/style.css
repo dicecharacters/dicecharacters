@@ -22,7 +22,8 @@ body::before {
 
     /* Standardwerte für unsere CSS-Variablen */
     background-image: var(--page-background-image, none);
-    opacity: var(--page-background-opacity, 1);
+    opacity: calc(var(--page-background-opacity, 1) * 0.6);
+    filter: blur(1px);
 
     /* Wichtige Stile für das Bild, wie vorher */
     background-size: cover;
@@ -292,6 +293,10 @@ body::before {
     /* Die alte "flex-basis"-Regel wurde entfernt */
 }
 
+#skill65.dropdown, #skill66.dropdown, #backgroundFeatDropdown.dropdown {
+min-width: 95%;
+margin-top: 3px;
+}
 
 /* =======================================================================
    SCHRITT 3: SPEZIES
@@ -337,8 +342,8 @@ body::before {
     right: 0;
     
     /* Proportionale Größe basierend auf der Breite */
-    width: 40vw;
-    max-width: 700px;
+    width: 45vw;
+    max-width: 1200px;
     
     /* Z-Index Logik: 
        Hinter MainContent (5) und StepBar (10), 
@@ -373,7 +378,7 @@ body::before {
 /* STUFE 2: Laptop / Kleiner Desktop */
 @media screen and (max-width: 1440px), screen and (max-height: 850px) {
     .species-image {
-        width: 33vw; /* Etwas kleiner auf Laptops */
+        width: 40vw; /* Etwas kleiner auf Laptops */
         opacity: 0.6; /* Leicht transparenter, damit es weniger ablenkt */
         z-index: -1 !important; 
     }
@@ -725,7 +730,7 @@ input[type="number"]:disabled {
     margin: 6% auto 3% auto; 
     
     /* Wir nutzen eine feste Breite statt vw, damit das Symbol im 500px-Fenster stabil bleibt */
-    width: 120px; 
+    width: 200px; 
     height: auto;
     z-index: 1;
     
@@ -1356,8 +1361,8 @@ button[type="button"]:hover {
 
 /* Stil für Dropdowns und Radio-Inputs */
 .dropdown {
-    width: 100%; /* Setzt die Breite der Dropdowns */
-    max-width: 100%; /* Begrenzung der maximalen Breite der Dropdowns */
+    width: 80%; /* Setzt die Breite der Dropdowns */
+    max-width: 80%; /* Begrenzung der maximalen Breite der Dropdowns */
     padding: 5px; /* Fügt Innenabstände hinzu */
     font-size: 16px; /* Setzt die Schriftgröße der Dropdowns */
     border-radius: 5px; /* Macht die Ecken der Dropdowns abgerundet */
@@ -1669,46 +1674,6 @@ body.modal-open .fixed-button {
     display: none;
 }
 
-.subclass-image-vertical {
-    position: fixed;
-    top: 50%;
-    right: 340px; /* 20px Rand + 300px Box + 20px Puffer */
-    transform: translateY(-50%);
-    height: 90vh;
-    width: auto;
-    pointer-events: none;
-    z-index: -1; /* Vor dem Hintergrund, hinter den Boxen */
-}
-
-.subclass-image-vertical img {
-    height: 100%; /* Behält die volle Höhe des Containers (90vh) */
-    width: auto;
-    object-fit: contain;
-    display: block;
-    opacity: 0.7; /* Beibehaltung der Transparenz */
-
-    /* DEIN FADE-EFFEKT (Maskierung an allen 4 Seiten) */
-    --fade-border-thickness: 12%; 
-
-    /* Webkit-Präfix für ältere Browser */
-    -webkit-mask-composite: intersect;
-    -webkit-mask-image:
-      linear-gradient(to bottom, transparent 0%, white var(--fade-border-thickness)),
-      linear-gradient(to top,    transparent 0%, white var(--fade-border-thickness)),
-      linear-gradient(to right,  transparent 0%, white var(--fade-border-thickness)),
-      linear-gradient(to left,   transparent 0%, white var(--fade-border-thickness))
-    ;
-
-    /* Standard-Syntax */
-    mask-composite: intersect;
-    mask-image:
-      linear-gradient(to bottom, transparent 0%, white var(--fade-border-thickness)),
-      linear-gradient(to top,    transparent 0%, white var(--fade-border-thickness)),
-      linear-gradient(to right,  transparent 0%, white var(--fade-border-thickness)),
-      linear-gradient(to left,   transparent 0%, white var(--fade-border-thickness))
-    ;
-}
-
 /* --- FIX: In Schritt 6 bleiben die Attribute IMMER unten (Desktop) --- */
 @media screen and (min-width: 1441px) and (min-height: 851px) {
     body.active-step-6 #liveAttributesContainer {
@@ -1720,25 +1685,88 @@ body.modal-open .fixed-button {
     }
 }
 
-/* =======================================================================
-   BREAKPOINTS
-   ======================================================================= */
+/* 1. DER HAUPTCONTAINER */
+.subclass-image-vertical {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: calc(50% + 320px); 
+    width: 250px;
+    pointer-events: none;
+    z-index: -1;
+}
 
-/* STUFE 2: Nur das Bild anzeigen (Boxen & Attribute weg) */
+/* 2. DAS BILD - Jetzt mit vh-Einheiten für Proportionalität */
+.subclass-image-vertical img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+    /* Wir nutzen vh statt px, damit das Bild mit dem Fenster schrumpft */
+    width: 25vh; 
+    height: 25vh;
+    max-width: 220px; /* Begrenzung für riesige Monitore */
+    max-height: 220px;
+    
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+    z-index: 2;
+}
+
+/* 3. DIE GOLDENEN LINIEN */
+.subclass-image-vertical::before,
+.subclass-image-vertical::after {
+    content: "";
+    display: block;
+    width: 245px; 
+    border-left: 2px solid #d4a017;
+    border-right: 2px solid #d4a017;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    box-sizing: border-box;
+}
+
+/* OBERE LINIEN */
+.subclass-image-vertical::before {
+    top: 0;
+    /* 50% ist die Mitte. Wir ziehen die halbe Bildhöhe (12.5vh) 
+       und einen proportionalen Abstand (2vh) ab */
+    height: calc(78% - 12.5vh - 2vh);
+    
+    border-bottom: 2px solid #d4a017;
+    border-bottom-left-radius: 122.5px; /* Hälfte von 245px */
+    border-bottom-right-radius: 122.5px;
+}
+
+/* UNTERE LINIEN */
+.subclass-image-vertical::after {
+    bottom: 0;
+    /* Gleiche proportionale Rechnung */
+    height: calc(78% - 12.5vh - 2vh);
+    
+    border-top: 2px solid #d4a017;
+    border-top-left-radius: 122.5px;
+    border-top-right-radius: 122.5px;
+}
+
+/* --- DEINE BREAKPOINTS --- */
+
 @media screen and (max-width: 1440px), screen and (max-height: 850px) {
     #subclassDetailBox, #liveAttributesContainer {
         display: none !important;
     }
-    /* Das Bild zentriert sich im rechten Bereich */
     .subclass-image-vertical {
+        /* Zentrierung im freien Bereich rechts */
+        left: auto;
         right: 50px;
-        height: 90vh;
     }
 }
 
-/* STUFE 3: Alles weg */
 @media screen and (max-width: 1000px) {
-    #subclassDetailBox, .subclass-image-vertical, #liveAttributesContainer {
+    .subclass-image-vertical {
         display: none !important;
     }
 }
@@ -2945,6 +2973,10 @@ ul.master-spell-ul li.selected-choice {
     text-align: center;
     align-items: center;
     justify-content: center;
+    /* Ergänzung für Apple-Geräte: Verhindert den Abbruch des Drags */
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 /* Trait Farben nach Kategorie */
@@ -3047,6 +3079,7 @@ textarea::placeholder,
     /* Sorgt für flüssige Bewegungen am PC, aber wir schalten es in JS für Touch auf 'none' */
     transition: transform 0.1s ease-out; 
     will-change: transform; /* Sagt dem Browser: "Bereite die GPU vor!" */
+    -webkit-user-select: none; /* Verhindert Textmarkierung auf iOS */
 }
 
 .dragging-ghost {
@@ -3168,6 +3201,100 @@ textarea::placeholder,
     overflow: hidden; /* Verhindert Scrollbalken */
     display: block;
 }
+
+
+/* =======================================================================
+   Lizenzangaben
+   ======================================================================= */
+
+/* Der schwarze Vorhang über den ganzen Bildschirm */
+.modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 999999; /* Über allem anderen */
+    display: none; /* Wird per JS zu flex gesetzt */
+    justify-content: center;
+    align-items: center;
+    margin: 0 !important;
+}
+
+/* Die Box innerhalb des Overlays - STANDARD (PC Modus) */
+#licenseOverlay .info-box {
+    position: fixed; 
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    
+    /* PC Standard-Maße */
+    width: 600px;
+    max-width: 60vw;
+    padding: 40px;
+    
+    display: flex !important; 
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 1);
+    box-sizing: border-box;
+}
+
+/* TABLET & HANDY MODUS (Ab einer Breite von weniger als 1000px) */
+@media (max-width: 1000px) {
+    #licenseOverlay .info-box {
+        width: 300px;      /* Schmaler für mobile Geräte */
+        max-width: 85vw;
+        padding: 20px;     /* Kompakteres Padding */
+    }
+}
+
+/* Text-Styling innerhalb der Box */
+#licenceMarkTextLabel {
+    width: 100%;
+    margin-top: 15px;
+    line-height: 1.6;
+    white-space: pre-line;
+    font-size: 0.95rem;
+}
+
+/* Das Schließen-X */
+#licenseOverlay .close-icon {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 30px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* --- Permanenter Disclaimer --- */
+
+/* Permanenter Disclaimer unten rechts am Bildschirmrand */
+.permanent-disclaimer {
+    position: fixed;
+    bottom: 10px;
+    right: 20px;
+    font-size: 0.7rem;
+    color: #e8d8b5; /* Deine Standard-Schriftfarbe */
+    opacity: 0.6;
+    z-index: 9999; /* Hoch, aber unter dem Modal-Overlay */
+    text-align: right;
+    pointer-events: none; /* Man kann "durch" den Text klicken */
+    transition: opacity 0.3s ease;
+}
+
+/* Auf dem Handy etwas mehr Abstand zum Rand, damit es nicht mit Browser-UI kollidiert */
+@media (max-width: 600px) {
+    .permanent-disclaimer {
+        right: 10px;
+        bottom: 5px;
+        font-size: 0.6rem;
+    }
+}
+
 
 /* =======================================================================
    MOBILE-UPGRADE (< 600px)

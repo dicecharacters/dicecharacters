@@ -238,6 +238,42 @@ textarea { height: 200px; }
 }
 .btn-send:hover { background-color: var(--gold); color: black; }
 
+/* Email-Feld Styling (damit es nicht weiß ist) */
+input[type="email"] {
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--copper);
+    color: var(--text-light);
+    padding: 12px;
+    border-radius: 4px;
+    font-family: inherit;
+    box-sizing: border-box;
+    margin-bottom: 5px;
+}
+
+/* Hover/Focus Effekt wie bei den anderen Feldern */
+input[type="email"]:focus {
+    border-color: var(--gold);
+    outline: none;
+    background: rgba(0,0,0,0.5);
+}
+
+/* Styling für die Erfolgsnachricht */
+#contactSuccessMessage {
+    background: rgba(212, 160, 23, 0.1);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+#successText {
+    color: var(--gold);
+    font-weight: bold;
+    text-align: center;
+    margin: 0;
+    padding: 15px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     #floatingLang { top: auto; bottom: 20px; flex-direction: row; right: auto; left: 50%; transform: translateX(-50%); }
@@ -287,5 +323,35 @@ textarea { height: 200px; }
     .motto-text {
         font-size: 1.1rem;
         margin-bottom: 25px;
+    }
+}
+
+
+/* Logo Container Styling */
+.hero-logo-container {
+    margin: 0;
+    padding: 0;
+    filter: drop-shadow(0 0 15px rgba(212, 160, 23, 0.3)); /* Sanfter Gold-Glow um das Logo */
+}
+
+/* Das Logo selbst */
+.hero-logo {
+    width: 500px;         /* Standardbreite am PC */
+    max-width: 80vw;      /* Verhindert Überlaufen am Rand */
+    height: auto;         /* Proportionalität behalten */
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+/* Kleiner Effekt: Logo hebt sich beim Hover des Start-Buttons leicht ab */
+.hero:has(.btn-start:hover) .hero-logo {
+    transform: scale(1.02);
+    filter: drop-shadow(0 0 20px rgba(212, 160, 23, 0.5));
+}
+
+/* MOBILE ANPASSUNG */
+@media (max-width: 768px) {
+    .hero-logo {
+        width: 280px;     /* Schmaler auf dem Handy */
     }
 }

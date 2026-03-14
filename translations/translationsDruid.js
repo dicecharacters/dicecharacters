@@ -5,7 +5,7 @@ Object.assign(translations.de, {
     // Klasse: Druide
     // ----------------------------------------------------------------------------------------
     "druid": "Druide",
-    "druidText": "Druiden gehören zu alten Orden, die die Kräfte der Natur herbeirufen. Indem sie die Magie von Tieren, Pflanzen und den vier Elementen nutzen, heilen Druiden, verwandeln sich in Tiere und entfesseln elementare Zerstörung. Die Natur über alles verehrend, beziehen einzelne Druiden ihre Magie aus der Natur, einer Naturgottheit oder beidem und vereinen sich typischerweise mit anderen Druiden, um Riten durchzuführen, die den Wechsel der Jahreszeiten und andere natürliche Zyklen markieren.",
+    "druidText": "Der Druide ist ein Hüter der alten Ordnung und ein Meister der Elemente die das Leben formen. Er zieht seine Magie aus der tiefen Verbindung zur Natur oder dem Segen einer Naturgottheit um Wunden zu heilen und den Zorn des Sturms zu entfesseln. In heiligen Riten markiert er den ewigen Wechsel der Jahreszeiten und das Schlagen des grünen Herzens der Welt. Durch sein Band zur Wildnis nimmt er die Gestalt der Bestien an und wird selbst zum Reißzahn oder zur Schwinge im ewigen Kreislauf der Schöpfung.",
 
     // Druide: Unterklassen
     "circleOfTheLandLabel": "Zirkel des Landes",
@@ -114,7 +114,7 @@ Object.assign(translations.en, {
     // Class: Druid
     // ----------------------------------------------------------------------------------------
     "druid": "Druid",
-    "druidText": "Druids belong to ancient orders that call upon the forces of nature. Harnessing the magic of animals, plants, and the four elements, druids heal, transform into beasts, and unleash elemental destruction. Revering nature above all, individual druids draw their magic from nature, a nature deity, or both, and often gather to perform rites marking the cycles of seasons and other natural phenomena.",
+    "druidText": "The druid is a guardian of the ancient order and a master of the elements that shape all life. He draws his magic from a deep connection to nature or the blessing of a deity to heal wounds and unleash the fury of the storm. In sacred rites he marks the eternal change of seasons and the beating of the world's green heart. Through his bond with the wilderness he takes the form of beasts and becomes the fang or the wing within the eternal cycle of creation.",
 
     // Druid: Subclasses
     "circleOfTheLandLabel": "Circle of the Land",

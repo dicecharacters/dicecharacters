@@ -101,6 +101,11 @@ const translations = {
     "bonusActionLabel": "Bonusaktion",
     "reactionLabel": "Reaktion",
 
+    // Lizenz
+    "licenseTitle": "Lizenz & Nutzung",
+    "licenceMarkText": "Dieses Werk enthält Material aus dem Systemreferenzdokument 5.2.1 (SRD 5.2.1) von Wizards of the Coast LLC, verfügbar unter https://www.dndbeyond.com/srd. Das SRD 5.2.1 ist lizenziert gemäß Creative Commons Namensnennung 4.0 International Public License (verfügbar unter https://creativecommons.org/licenses/by/4.0/legalcode.de).",
+    "disclaimerLabel": "*Inoffizielles Fan-Tool für Dungeons & Dragons. Nicht verbunden mit Wizards of the Coast.",
+
     // Fortschritt
     "progressTitle": "Aktueller Fortschritt",
     "progressClassLabel": "Klasse:",
@@ -529,6 +534,11 @@ const translations = {
     "bonusActionLabel": "Bonus Action",
     "reactionLabel": "Reaction",
 
+    // Lizenz
+    "licenseTitle": "License & Usage",
+    "licenceMarkText": "This work includes material from the System Reference Document 5.2.1 (SRD 5.2.1) by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.",
+    "disclaimerLabel": "*Inefficial fan tool for Dungeons & Dragons. Not affiliated with Wizards of the Coast.",
+
     // Progress
     "progressTitle": "Current Progress",
     "progressClassLabel": "Class:",
@@ -940,6 +950,9 @@ function applyTranslations(translations, currentLang) {
     setTextContent('remainingPointsTextLabel', elements.remainingPointsTextLabel);
     // setTextContent('additionalEquipmentTitle', elements.additionalEquipmentTitle); Auskommentiert, wegen Übersetzungslogik        	
     setTextContent('purseLabel', elements.purseLabel)
+
+    // Disclaimer (unten rechts auf der Seite)
+    setTextContent('disclaimerLabel', elements.disclaimerLabel);
 
     // Setze die Völkernamen in den Labels
     setTextContent('aasimarLabel', elements.aasimarLabel);

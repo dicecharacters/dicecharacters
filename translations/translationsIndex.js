@@ -23,7 +23,12 @@ Object.assign(translations.de, {
     "contactSend": "Nachricht senden",
     "contactPlaceholderSubject": "Wünsche, Fragen oder Feedback...",
     "contactPlaceholderMessage": "Was brennt dir auf dem Herzen?",
-    "contactSuccess": "Vielen Dank! Deine Nachricht wurde vorbereitet."
+    "contactSuccess": "Vielen Dank! Deine Nachricht wurde vorbereitet.",
+    "contactErrorSending": "Hoppla! Da gab es ein Problem beim Senden.",
+    "contactErrorConnection": "Fehler: Verbindung zum Server fehlgeschlagen.",
+    "contactSuccessNote": "Vielen Dank! Deine Nachricht wurde gesendet.",
+    "contactEmailLabel": "Deine E-Mail Adresse",
+    "optionalLabel": "(Optional)"
 });
 
 Object.assign(translations.en, {
@@ -50,5 +55,10 @@ Object.assign(translations.en, {
     "contactSend": "Send Message",
     "contactPlaceholderSubject": "Wishes, questions or feedback...",
     "contactPlaceholderMessage": "What's on your mind?",
-    "contactSuccess": "Thank you! Your message is ready to send."
+    "contactSuccess": "Thank you! Your message is ready to send.",
+    "contactErrorSending": "Oops! There was a problem sending.",
+    "contactErrorConnection": "Error: Connection to the server failed.",
+    "contactSuccessNote": "Thank you! Your message has been sent.",
+    "contactEmailLabel": "Your Email Address",
+    "optionalLabel": "(Optional)"
 });
