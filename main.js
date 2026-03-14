@@ -10217,7 +10217,7 @@ let autoScrollFrame;
 
 function startAutoScroll(clientY) {
     const threshold = 100; // Bereich am Rand
-    const speed = 12;      // Scroll-Geschwindigkeit
+    const speed = 5;      // Scroll-Geschwindigkeit
     
     cancelAnimationFrame(autoScrollFrame);
 
