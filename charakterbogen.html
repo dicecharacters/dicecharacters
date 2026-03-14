@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
 
     <script defer data-domain="dicecharacters.com" src="https://plausible.io/js/script.js"></script>
+    <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
 
     <script src="translations/translationsCore.js"></script>
     <script src="translations/translationsBarbarian.js"></script>
@@ -5414,6 +5415,12 @@ function lockInput(element, shouldLock) {
 
 // 1. Die Weiche (Router), die beim Klick auf den Button aufgerufen wird
 function downloadPDF() {
+
+    // --- PLAUSIBLE EVENT START ---
+    if (typeof plausible === 'function') {
+        plausible('Download PDF');
+    }
+
     // Wenn der Bearbeitungsmodus noch aktiv ist, beenden wir ihn, 
     // damit das PDF keine grauen Felder hat.
     if (isEditMode) {
