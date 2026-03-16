@@ -154,15 +154,19 @@ function showClassText(className) {
 
 // Funktion zur Anzeige des Klassensymbols
 function showClassSymbol(className) {
-   const symbolPath = "images/" + className.toLowerCase() + "Symbol.png";
+    const symbolPath = "images/" + className.toLowerCase() + "Symbol.webp"; 
     const classSymbolElement = document.getElementById("classSymbolImage");
     const classSymbolContainer = document.getElementById("classSymbolContainer");
 
+    // Das Bild laden
     classSymbolElement.src = symbolPath;
+
+    // Falls doch mal ein WebP fehlt, hier das Fallback (auch als WebP)
     classSymbolElement.onerror = function() {
-        classSymbolElement.src = "images/defaultSymbol.png"; 
+        classSymbolElement.src = "images/defaultSymbol.webp"; 
     };
-    classSymbolContainer.style.display = "block"; // Sicherstellen, dass der Container sichtbar ist
+
+    classSymbolContainer.style.display = "block";
 }
 
 function toggleClassDetails() {
@@ -259,16 +263,25 @@ function showClassDetails(className) {
     classDetailsContainer.style.display = "block";
 }
 
-// Zeigt das Bild der gewählten Klasse an
+// Zeigt das Bild der gewählten Klasse an (Optimiert für WebP)
 function showClassImage(className) {
-    const imagePath = "images/" + className + ".png"; 
+    const imagePath = "images/" + className + ".webp"; 
+    
     const classImageElement = document.getElementById("classImage");
-    classImageContainer.style.display = "block";
-    classImageElement.style.display = "block";
-    classImageElement.src = imagePath;
-    classImageElement.onerror = function() {
-        classImageElement.src = "images/default.png"; 
-    };
+    const classImageContainer = document.getElementById("classImageContainer"); // Definition ergänzt
+
+    if (classImageElement && classImageContainer) {
+        classImageContainer.style.display = "block";
+        classImageElement.style.display = "block";
+        
+        // Wir setzen das Bild
+        classImageElement.src = imagePath;
+
+        // Fallback, falls das WebP-Bild fehlt
+        classImageElement.onerror = function() {
+            classImageElement.src = "images/default.webp"; 
+        };
+    }
 }
 
 // Hilfsfunktion, um die Klassendaten basierend auf dem Klassennamen zu erhalten
@@ -714,7 +727,7 @@ function setPageBackground(backgroundName) {
     const root = document.documentElement; 
 
     if (backgroundName) {
-        const imageUrl = `url('../images/${backgroundName.toLowerCase()}.png')`;
+        const imageUrl = `url('../images/${backgroundName.toLowerCase()}.webp')`;
         root.style.setProperty('--page-background-image', imageUrl);
     } else {
         root.style.setProperty('--page-background-image', 'none');
@@ -1034,11 +1047,18 @@ function showSpeciesTraits(speciesValue) {
 }
 
 function showSpeciesImage(speciesName) {
-    const imagePath = `images/${speciesName.toLowerCase()}.png`; // Nutze den korrekten Dateinamen
+    const imagePath = `images/${speciesName.toLowerCase()}.webp`; 
     const speciesImageBox = document.getElementById("speciesImageBox");
 
-    speciesImageBox.innerHTML = `<img src="${imagePath}" alt="${speciesName} Bild">`;
-    speciesImageBox.style.display = "block";
+    if (speciesImageBox) {
+        // Wir nutzen ein Template-Literal für das Bild mit einem Fallback-Handling
+        speciesImageBox.innerHTML = `
+            <img src="${imagePath}" 
+                 alt="${speciesName} Bild" 
+                 onerror="this.src='images/default_species.webp'; this.onerror=null;">
+        `;
+        speciesImageBox.style.display = "block";
+    }
 }
 
 function showLineageDetails(lineageLabel) {
@@ -1080,7 +1100,7 @@ function showLineageDetails(lineageLabel) {
     });
     tableHTML += `</tbody></table>`;
 
-    const imagePath = `images/${lineageLabel}.png`;
+    const imagePath = `images/${lineageLabel}.webp`;
 
     // 1. TEXT-INHALT (Ohne Bild, mit Klassen für Breakpoints)
     lineageDetailBox.innerHTML = `
@@ -3929,8 +3949,12 @@ function showSubclassDetails(subclassCategoryNumber) {
         `;
 
         // 2. Bild in den vertikalen Container schieben
-        if (subclassImgContainer) {
-            subclassImgContainer.innerHTML = `<img src="images/${selectedSubclass.translationLabel}.png" alt="${title}">`;
+	if (subclassImgContainer) {
+            subclassImgContainer.innerHTML = `
+                <img src="images/${selectedSubclass.translationLabel}.webp" 
+                     alt="${title}" 
+                     onerror="this.src='images/default_subclass.webp'; this.onerror=null;">
+            `;
             subclassImgContainer.style.display = "block";
         }
 
@@ -10424,7 +10448,7 @@ let currentTrait = null;
 
 document.addEventListener('touchstart', function(e) {
     // Greife das Element, solange es im Pool liegt und keine Überschrift ist
-    const item = e.target.closest('#traitPoolGrid button, #traitPoolGrid div:not(.trait-grid)');
+    const item = e.target.closest('.draggable-trait-item');
     
     if (item && document.getElementById('traitPoolGrid').contains(item)) {
         currentTrait = item;
