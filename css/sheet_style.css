@@ -1687,39 +1687,37 @@ padding: 0.8rem
     .auto-marker { display: none !important; }
 }
 
-/* PDF Druck - Spezieller Block NUR für Safari (Desktop & Mobile) */
+/* PDF Druck - Spezieller Block NUR für Safari */
 @media not all and (min-resolution:.001dpcm) { 
     @media print {
-        /* Hier kommen die Korrekturen rein, die NUR Safari sieht */
-
         .page {
-            /* Safari hat oft Probleme mit min-height in mm beim Druck */
-            height: 296mm !important; 
-            overflow: hidden !important;
-            position: relative !important;
-            display: block !important; /* Falls Flexbox in Safari springt */
-        }
-
-        /* Falls deine Boxen in Safari verschoben sind, 
-           erzwingen wir hier eine stabilere Block-Ausrichtung */
-        .attribute-container, .stats-grid {
+            height: 294mm !important; /* Ein goldener Mittelweg */
+            margin: 0 !important;
+            padding: 5mm !important;
+            page-break-after: always !important;
+            page-break-inside: avoid !important;
             display: block !important;
+            overflow: hidden !important;
         }
 
-        /* Korrektur für den Viewport-Bug */
+        /* Wir müssen das Grid explizit abschalten, damit Flex greift */
+        .stats-grid, .attribute-container, .skills-container {
+            display: flex !important;
+            display: -webkit-flex !important;
+            grid-template-columns: none !important; /* WICHTIG: Grid deaktivieren */
+            flex-wrap: wrap !important;
+            gap: 2mm !important;
+        }
+
+        /* Verhindert, dass Safari Boxen auf zwei Seiten zerschneidet */
+        .stat-box, .attribute-box, .skill-row {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
         html, body {
-            width: 210mm !important;
-            height: 297mm !important;
-        }
-    }
-}
-
-/* Alternativer moderner Weg für Safari 14+ */
-@supports (-webkit-hyphens:none) {
-    @media print {
-        /* Zusätzliche Safari-spezifische Fixes */
-        * {
-            -webkit-print-color-adjust: exact !important;
+            height: auto !important;
+            margin: 0 !important;
         }
     }
 }
