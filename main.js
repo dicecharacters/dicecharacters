@@ -1477,6 +1477,7 @@ function createDraggableValue(value, containerId) {
 // --- Logik für die einzelnen Methoden ---
 
 function setupStandardArray() {
+    removeMobileSteppers();
     const container = document.getElementById('standardArrayValues');
     container.innerHTML = '';
     
@@ -1545,6 +1546,7 @@ function generateRandomScores() {
 }
 
 function setupRandomGeneration() {
+    removeMobileSteppers();
     const container = document.getElementById('randomlyGeneratedValues');
     // Button behalten, Rest leeren
     const button = container.querySelector('button');
@@ -1563,17 +1565,29 @@ function setupRandomGeneration() {
 
 function setupPointBuy() {
     attributeList.forEach(attr => {
-        // GEÄNDERT: stringId ableiten, um das korrekte Element zu finden
         const stringId = attr.translationLabel.replace('Label', '');
         const scoreInput = document.getElementById(`${stringId}Score`);
+        
         scoreInput.readOnly = false;
         scoreInput.min = 8;
         scoreInput.max = 15;
         scoreInput.value = 8;
-        scoreInput.addEventListener('input', updatePointBuy);
 
-    scoreInput.classList.add('highlight-target');
+        // --- FIX FÜR DRAG & DROP ---
+        scoreInput.setAttribute('draggable', 'false');
+        scoreInput.classList.remove('highlight-target');
+        
+        // Wir überschreiben die Drag-Events direkt, damit sie nicht mehr feuern
+        scoreInput.onmousedown = (e) => e.stopPropagation(); 
+        scoreInput.ontouchstart = (e) => e.stopPropagation(); 
+        scoreInput.ondragstart = (e) => e.preventDefault();
+
+        scoreInput.addEventListener('input', updatePointBuy);
     });
+
+
+    setupMobileAttributeUI();
+
     updatePointBuy();
 }
 
@@ -10381,7 +10395,7 @@ document.addEventListener('touchend', function(e) {
 // MOBILE - Schritt 4: Attribrute Pointcost
 
 function setupMobileAttributeUI() {
-    if (window.innerWidth > 600) return;
+    if (window.innerWidth > 1000) return;
 
     attributeList.forEach(attr => {
         const stringId = attr.translationLabel.replace('Label', '');
@@ -10440,7 +10454,15 @@ function adjustValue(stringId, delta) {
     }
 }
 
-
+function removeMobileSteppers() {
+    document.querySelectorAll('.mobile-stepper-ui').forEach(stepper => {
+        stepper.remove();
+    });
+    // Auch die aktive Klasse vom Input entfernen, falls noch da
+    document.querySelectorAll('.active-stepper').forEach(el => {
+        el.classList.remove('active-stepper');
+    });
+}
 
 // TABLET - Schritt 10: Präzises Drag & Drop für Traits (iOS-Fix integriert)
 
