@@ -1690,46 +1690,59 @@ padding: 0.8rem
 /* PDF Druck - Spezieller Block NUR für Safari */
 @media not all and (min-resolution:.001dpcm) { 
     @media print {
+        /* Wir setzen die Ränder des Papiers auf 0, um die Browser-Fußzeile zu killen */
         @page {
             margin: 0 !important;
         }
 
+        html, body {
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
         .page {
-            /* Wir gehen auf 285mm runter, um Platz für die iOS-Ränder zu lassen */
-            height: 285mm !important; 
+            /* WICHTIG: Wir reduzieren die Höhe auf 282mm. 
+               Das gleicht den Versatz auf dem iPhone aus. */
+            height: 282mm !important; 
+            min-height: 282mm !important;
             width: 210mm !important;
             margin: 0 !important;
-            padding: 3mm 5mm !important; /* Weniger Padding oben/unten */
+            padding: 5mm 8mm !important; /* Etwas mehr Seitenabstand, weniger Höhe */
+            
             display: block !important;
             position: relative !important;
             overflow: hidden !important;
+            box-sizing: border-box !important;
+            page-break-after: always !important;
         }
 
-        /* INHALT KOMPAKTER MACHEN */
-        /* Wir reduzieren die Abstände zwischen den Boxen nur für Safari */
-        .stats-grid, .attribute-container, .skills-container {
-            gap: 1mm !important; 
+        /* INHALT KOMPAKTER: Wir sparen vertikalen Platz */
+        .stats-grid, .attribute-container {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 1.5mm !important;
+            margin-bottom: 2mm !important;
         }
 
         .stat-box, .attribute-box {
-            margin-bottom: 1mm !important;
-            padding: 2px !important;
+            margin-bottom: 0 !important;
         }
 
-        /* Die zweite Linie verhindern (oft ein Border-Überbleibsel) */
-        .footer-container, footer {
-            border-top: none !important;
-            margin-top: 0 !important;
-            padding-top: 0 !important;
-        }
-
-        /* Deine eigene Fußzeile sicher positionieren */
-        .page-footer { /* Ersetze dies durch deine exakte Klasse der Fußzeile */
+        /* FUSSZEILEN-FIX: Deine eigene Fußzeile festpinnen */
+        .page-footer {
             position: absolute !important;
-            bottom: 3mm !important;
-            left: 5mm !important;
-            width: calc(100% - 10mm) !important;
-            height: auto !important;
+            bottom: 5mm !important;
+            left: 8mm !important;
+            right: 8mm !important;
+            width: auto !important;
+            border-top: 1px solid #d4a017 !important;
+            padding-top: 2mm !important;
+        }
+
+        /* Falls eine "zweite Linie" erscheint, kommt sie meist von hier: */
+        footer, .auto-marker {
+            display: none !important;
         }
     }
 }
