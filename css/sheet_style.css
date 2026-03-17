@@ -1690,34 +1690,45 @@ padding: 0.8rem
 /* PDF Druck - Spezieller Block NUR für Safari */
 @media not all and (min-resolution:.001dpcm) { 
     @media print {
-        .page {
-            height: 294mm !important; /* Ein goldener Mittelweg */
+        /* 1. Das Papier-Format hart auf 0-Ränder setzen */
+        @page {
             margin: 0 !important;
-            padding: 5mm !important;
-            page-break-after: always !important;
-            page-break-inside: avoid !important;
-            display: block !important;
-            overflow: hidden !important;
-        }
-
-        /* Wir müssen das Grid explizit abschalten, damit Flex greift */
-        .stats-grid, .attribute-container, .skills-container {
-            display: flex !important;
-            display: -webkit-flex !important;
-            grid-template-columns: none !important; /* WICHTIG: Grid deaktivieren */
-            flex-wrap: wrap !important;
-            gap: 2mm !important;
-        }
-
-        /* Verhindert, dass Safari Boxen auf zwei Seiten zerschneidet */
-        .stat-box, .attribute-box, .skill-row {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
+            size: A4 portrait;
         }
 
         html, body {
-            height: auto !important;
             margin: 0 !important;
+            padding: 0 !important;
+            height: 100% !important;
+            /* Verhindert, dass Safari über das Blatt hinausrechnet */
+            overflow: hidden !important; 
+        }
+
+        .page {
+            /* Wir nutzen die exakte A4-Höhe */
+            height: 297mm !important; 
+            width: 210mm !important;
+            margin: 0 !important;
+            padding: 5mm !important;
+            
+            /* Wichtig für deine eigene Fußzeile */
+            position: relative !important;
+            display: block !important;
+            box-sizing: border-box !important;
+            
+            /* Erzwingt den Umbruch und verhindert Geister-Seiten */
+            page-break-after: always !important;
+            -webkit-region-break-inside: avoid !important;
+        }
+
+        /* 2. Deine eigene Fußzeile fixieren */
+        /* Falls deine Fußzeile eine Klasse wie .footer-info hat: */
+        .footer-info, .page-number-container {
+            position: absolute !important;
+            bottom: 5mm !important; /* Fixer Abstand zum Blattrand */
+            left: 5mm !important;
+            width: calc(100% - 10mm) !important;
+            z-index: 999 !important;
         }
     }
 }
