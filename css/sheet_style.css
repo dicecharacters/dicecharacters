@@ -1690,45 +1690,46 @@ padding: 0.8rem
 /* PDF Druck - Spezieller Block NUR für Safari */
 @media not all and (min-resolution:.001dpcm) { 
     @media print {
-        /* 1. Das Papier-Format hart auf 0-Ränder setzen */
         @page {
             margin: 0 !important;
-            size: A4 portrait;
-        }
-
-        html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            height: 100% !important;
-            /* Verhindert, dass Safari über das Blatt hinausrechnet */
-            overflow: hidden !important; 
         }
 
         .page {
-            /* Wir nutzen die exakte A4-Höhe */
-            height: 297mm !important; 
+            /* Wir gehen auf 285mm runter, um Platz für die iOS-Ränder zu lassen */
+            height: 285mm !important; 
             width: 210mm !important;
             margin: 0 !important;
-            padding: 5mm !important;
-            
-            /* Wichtig für deine eigene Fußzeile */
-            position: relative !important;
+            padding: 3mm 5mm !important; /* Weniger Padding oben/unten */
             display: block !important;
-            box-sizing: border-box !important;
-            
-            /* Erzwingt den Umbruch und verhindert Geister-Seiten */
-            page-break-after: always !important;
-            -webkit-region-break-inside: avoid !important;
+            position: relative !important;
+            overflow: hidden !important;
         }
 
-        /* 2. Deine eigene Fußzeile fixieren */
-        /* Falls deine Fußzeile eine Klasse wie .footer-info hat: */
-        .footer-info, .page-number-container {
+        /* INHALT KOMPAKTER MACHEN */
+        /* Wir reduzieren die Abstände zwischen den Boxen nur für Safari */
+        .stats-grid, .attribute-container, .skills-container {
+            gap: 1mm !important; 
+        }
+
+        .stat-box, .attribute-box {
+            margin-bottom: 1mm !important;
+            padding: 2px !important;
+        }
+
+        /* Die zweite Linie verhindern (oft ein Border-Überbleibsel) */
+        .footer-container, footer {
+            border-top: none !important;
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+
+        /* Deine eigene Fußzeile sicher positionieren */
+        .page-footer { /* Ersetze dies durch deine exakte Klasse der Fußzeile */
             position: absolute !important;
-            bottom: 5mm !important; /* Fixer Abstand zum Blattrand */
+            bottom: 3mm !important;
             left: 5mm !important;
             width: calc(100% - 10mm) !important;
-            z-index: 999 !important;
+            height: auto !important;
         }
     }
 }
