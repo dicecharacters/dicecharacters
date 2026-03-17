@@ -1690,51 +1690,64 @@ padding: 0.8rem
 /* PDF Druck - Spezieller Block NUR für Safari */
 @media not all and (min-resolution:.001dpcm) { 
     @media print {
+        /* 1. Das Papier-Format: Wir sagen Safari, es gibt NULL Ränder am Papier */
         @page {
-            margin: 0 !important; /* Wir entfernen den Standard-Rand komplett */
+            size: A4 portrait;
+            margin: 0 !important;
+        }
+
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            /* WICHTIG: Verhindert, dass Safari über das Blatt hinausrechnet */
+            height: 297mm !important;
+            overflow: hidden !important;
         }
 
         .page {
-            /* Wir reduzieren die Höhe massiv auf 280mm, um Puffer zu haben */
-            height: 280mm !important; 
-            min-height: 280mm !important;
-            max-height: 280mm !important;
+            /* Wir nutzen die exakte A4-Höhe von 297mm */
+            height: 297mm !important; 
             width: 210mm !important;
             margin: 0 !important;
-            padding: 4mm 8mm !important;
+            padding: 8mm 8mm 12mm 8mm !important; /* Unten mehr Platz für deine Fußzeile */
+            
             display: block !important;
             position: relative !important;
-            overflow: hidden !important; /* Schneidet Geister-Linien hart ab */
             box-sizing: border-box !important;
-            border: none !important; /* Entfernt die zweite Fußzeilenlinie */
+            border: none !important; /* Verhindert die "zweite Linie" */
+            
+            /* Umbrüche erzwingen */
             page-break-after: always !important;
+            page-break-before: avoid !important;
+            page-break-inside: avoid !important;
         }
 
-        /* PROBLEM 1 LÖSEN: Inhalt auf Seite 1 kompakter machen */
+        /* 2. INHALT KOMPAKTER MACHEN (Schritt 1 & 4 Fix) */
+        /* Wir reduzieren die Abstände, damit Seite 1 nicht mehr gestaucht wird */
         .character-info-grid, .stats-grid, .attribute-container {
-            gap: 1mm !important;
-            margin-bottom: 1mm !important;
+            gap: 1.5mm !important;
+            margin-bottom: 2mm !important;
         }
 
-        /* Wir verkleinern die Schrift in Safari minimal, um Platz zu gewinnen */
-        body {
-            font-size: 0.95rem !important;
+        .attribute-box, .stat-box {
+            padding: 3px !important;
         }
 
-        /* PROBLEM 2 LÖSEN: Die Fußzeile fest am unteren Rand der .page verankern */
+        /* 3. DEINE FUSSZEILE POSITIONIEREN */
         .page-footer {
             position: absolute !important;
-            bottom: 4mm !important;
+            bottom: 6mm !important; /* Festgeklebt am unteren Rand */
             left: 8mm !important;
             right: 8mm !important;
-            height: 12mm !important;
+            width: auto !important;
+            height: 10mm !important;
             border-top: 1px solid #d4a017 !important;
             background: white !important;
-            z-index: 100 !important;
+            z-index: 1000 !important;
         }
 
-        /* Alle anderen möglichen Linien-Verursacher verstecken */
-        footer, .auto-marker, hr {
+        /* 4. ALLES ANDERE AUSBLENDEN (keine Geister-Linien) */
+        footer, .auto-marker, hr:last-child {
             display: none !important;
         }
     }
