@@ -1687,70 +1687,68 @@ padding: 0.8rem
     .auto-marker { display: none !important; }
 }
 
-/* ==========================================================================
-   SAFARI/IOS "BRUTE FORCE" FIX - PLATZIEREN AM ENDE DER DATEI
-   ========================================================================== */
+/* PDF Druck - Spezieller Block NUR für Safari */
 @media not all and (min-resolution:.001dpcm) { 
     @media print {
-        /* 1. Papier-Setup: Wir erzwingen Platz für die iOS-Fußzeile */
+        /* 1. Das Papier-Format: Wir sagen Safari, es gibt NULL Ränder am Papier */
         @page {
-            size: A4 portrait !important;
+            size: A4 portrait;
             margin: 0 !important;
         }
 
-        /* Wir kürzen die Seite auf 280mm, damit die iOS-URL im leeren Raum steht */
-        .page, .fixed-page, .pdf-export-mode .page {
-            height: 280mm !important; 
-            max-height: 280mm !important;
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            /* WICHTIG: Verhindert, dass Safari über das Blatt hinausrechnet */
+            height: 297mm !important;
+            overflow: hidden !important;
+        }
+
+        .page {
+            /* Wir nutzen die exakte A4-Höhe von 297mm */
+            height: 297mm !important; 
             width: 210mm !important;
             margin: 0 !important;
-            /* Extra viel Platz unten, damit kein Text in die URL rutscht */
-            padding-bottom: 25mm !important; 
-            overflow: hidden !important;
+            padding: 8mm 8mm 12mm 8mm !important; /* Unten mehr Platz für deine Fußzeile */
+            
             display: block !important;
             position: relative !important;
+            box-sizing: border-box !important;
+            border: none !important; /* Verhindert die "zweite Linie" */
+            
+            /* Umbrüche erzwingen */
+            page-break-after: always !important;
+            page-break-before: avoid !important;
+            page-break-inside: avoid !important;
         }
 
-        /* 2. ALLES AUSBLENDEN, WAS MIT DER FUSSZEILE ZU TUN HAT */
-        /* Wir blenden den gesamten Footer-Container aus */
-        .sheet-footer, 
-        .pdf-export-mode .sheet-footer,
-        .footer-right,
-        #pageNumber,
-        #pageNumberLabel {
+        /* 2. INHALT KOMPAKTER MACHEN (Schritt 1 & 4 Fix) */
+        /* Wir reduzieren die Abstände, damit Seite 1 nicht mehr gestaucht wird */
+        .character-info-grid, .stats-grid, .attribute-container {
+            gap: 1.5mm !important;
+            margin-bottom: 2mm !important;
+        }
+
+        .attribute-box, .stat-box {
+            padding: 3px !important;
+        }
+
+        /* 3. DEINE FUSSZEILE POSITIONIEREN */
+        .page-footer {
+            position: absolute !important;
+            bottom: 6mm !important; /* Festgeklebt am unteren Rand */
+            left: 8mm !important;
+            right: 8mm !important;
+            width: auto !important;
+            height: 10mm !important;
+            border-top: 1px solid #d4a017 !important;
+            background: white !important;
+            z-index: 1000 !important;
+        }
+
+        /* 4. ALLES ANDERE AUSBLENDEN (keine Geister-Linien) */
+        footer, .auto-marker, hr:last-child {
             display: none !important;
-            opacity: 0 !important;
-            visibility: hidden !important;
-            height: 0 !important;
-        }
-
-        /* 3. SPIELERNAME AUF SEITE 1 AUSBLENDEN */
-        /* Dein HTML nutzt .footer-left für den Spielernamen */
-        .footer-left,
-        .footer-left label,
-        .footer-left input,
-        #playerName,
-        #playerNameLabel {
-            display: none !important;
-            opacity: 0 !important;
-        }
-
-        /* 4. DRACUHEN-DIVIDER & LINIEN */
-        /* Falls die Linien unten stören, machen wir sie unsichtbar */
-        .sheet-footer {
-            border-top: none !important;
-        }
-
-        /* 5. GRID-KORREKTUR */
-        /* Wir sagen dem Grid, dass die Footer-Zeile (Reihe 5) 0 Pixel hoch ist */
-        .character-sheet, .pdf-export-mode .character-sheet {
-            grid-template-rows: auto auto auto minmax(0, 1fr) 0px !important;
-            height: 100% !important;
-        }
-        
-        /* Sicherheits-Puffer für den Hauptinhalt */
-        .sheet-main-content {
-            padding-bottom: 5mm !important;
         }
     }
 }
