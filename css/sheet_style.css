@@ -1688,80 +1688,69 @@ padding: 0.8rem
 }
 
 /* ==========================================================================
-   PDF DRUCK - SPEZIELLER SAFARI/IOS KOMPATIBILITÄTS-MODUS
+   SAFARI/IOS "BRUTE FORCE" FIX - PLATZIEREN AM ENDE DER DATEI
    ========================================================================== */
 @media not all and (min-resolution:.001dpcm) { 
     @media print {
-        /* 1. Das Papier-Format: Platz für die iOS-System-URL schaffen */
+        /* 1. Papier-Setup: Wir erzwingen Platz für die iOS-Fußzeile */
         @page {
-            size: A4 portrait;
+            size: A4 portrait !important;
             margin: 0 !important;
         }
 
-        html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            height: 297mm !important;
-            overflow: hidden !important;
-            background: #fff !important;
-        }
-
-        /* Wir verkürzen die Nutzhöhe der Seite künstlich auf 282mm, 
-           damit die iOS-Fußzeile im leeren Raum darunter steht. */
-        .page, .fixed-page {
-            height: 282mm !important; 
+        /* Wir kürzen die Seite auf 280mm, damit die iOS-URL im leeren Raum steht */
+        .page, .fixed-page, .pdf-export-mode .page {
+            height: 280mm !important; 
+            max-height: 280mm !important;
             width: 210mm !important;
             margin: 0 !important;
-            /* Unten viel Platz (22mm), damit kein Inhalt in die URL rutscht */
-            padding: 8mm 8mm 22mm 8mm !important; 
-            
+            /* Extra viel Platz unten, damit kein Text in die URL rutscht */
+            padding-bottom: 25mm !important; 
+            overflow: hidden !important;
             display: block !important;
             position: relative !important;
-            box-sizing: border-box !important;
-            border: none !important; 
-            box-shadow: none !important;
-            
-            page-break-after: always !important;
         }
 
-        /* 2. SPEZIFISCHE ELEMENTE AUSBLENDEN */
-        
-        /* A) Die komplette eigene Fußzeile (Divider + Seitenzahl) */
-        .sheet-footer, .page-footer {
+        /* 2. ALLES AUSBLENDEN, WAS MIT DER FUSSZEILE ZU TUN HAT */
+        /* Wir blenden den gesamten Footer-Container aus */
+        .sheet-footer, 
+        .pdf-export-mode .sheet-footer,
+        .footer-right,
+        #pageNumber,
+        #pageNumberLabel {
             display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            height: 0 !important;
         }
 
-        /* B) Auf Seite 1: Spielername & Eingabe ausblenden */
-        /* Wir blenden die Gruppe im Header aus, die das Spieler-Feld enthält */
-        .header .field-group:has(label[for*="player"]),
-        .header .field-group:has(input[id*="player"]),
-        .header .field-group:nth-child(4) { /* Meistens das 4. Feld im Header-Grid */
+        /* 3. SPIELERNAME AUF SEITE 1 AUSBLENDEN */
+        /* Dein HTML nutzt .footer-left für den Spielernamen */
+        .footer-left,
+        .footer-left label,
+        .footer-left input,
+        #playerName,
+        #playerNameLabel {
             display: none !important;
+            opacity: 0 !important;
         }
 
-        /* 3. LAYOUT ANPASSEN (Damit keine Lücken entstehen) */
-        
-        /* Das Grid auf Seite 1 anpassen, damit der Platz unten genutzt wird */
-        .character-sheet {
-            grid-template-rows: auto auto auto 1fr 0px !important; /* Footer-Reihe auf 0 */
+        /* 4. DRACUHEN-DIVIDER & LINIEN */
+        /* Falls die Linien unten stören, machen wir sie unsichtbar */
+        .sheet-footer {
+            border-top: none !important;
+        }
+
+        /* 5. GRID-KORREKTUR */
+        /* Wir sagen dem Grid, dass die Footer-Zeile (Reihe 5) 0 Pixel hoch ist */
+        .character-sheet, .pdf-export-mode .character-sheet {
+            grid-template-rows: auto auto auto minmax(0, 1fr) 0px !important;
             height: 100% !important;
-            gap: 1rem !important;
         }
-
-        /* Die Divider-Linie mit dem Drachen etwas kompakter */
-        #dragonDivider {
-            height: 2.2rem !important;
-        }
-
-        /* 4. INHALT ETWAS PRÄZISER STEUERN */
+        
+        /* Sicherheits-Puffer für den Hauptinhalt */
         .sheet-main-content {
-            padding-bottom: 0 !important;
-            margin-bottom: 0 !important;
-        }
-
-        /* Verhindert Geisterlinien am Ende */
-        footer, .auto-marker, hr:last-child {
-            display: none !important;
+            padding-bottom: 5mm !important;
         }
     }
 }
