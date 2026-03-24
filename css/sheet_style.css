@@ -1690,45 +1690,65 @@ padding: 0.8rem
 /* PDF Druck - Spezieller Block NUR für Safari */
 @media not all and (min-resolution:.001dpcm) { 
     @media print {
-        /* 1. Das Papier-Format hart auf 0-Ränder setzen */
+        /* 1. Das Papier-Format: Wir sagen Safari, es gibt NULL Ränder am Papier */
         @page {
-            margin: 0 !important;
             size: A4 portrait;
+            margin: 0 !important;
         }
 
         html, body {
             margin: 0 !important;
             padding: 0 !important;
-            height: 100% !important;
-            /* Verhindert, dass Safari über das Blatt hinausrechnet */
-            overflow: hidden !important; 
+            /* WICHTIG: Verhindert, dass Safari über das Blatt hinausrechnet */
+            height: 297mm !important;
+            overflow: hidden !important;
         }
 
         .page {
-            /* Wir nutzen die exakte A4-Höhe */
+            /* Wir nutzen die exakte A4-Höhe von 297mm */
             height: 297mm !important; 
             width: 210mm !important;
             margin: 0 !important;
-            padding: 5mm !important;
+            padding: 8mm 8mm 12mm 8mm !important; /* Unten mehr Platz für deine Fußzeile */
             
-            /* Wichtig für deine eigene Fußzeile */
-            position: relative !important;
             display: block !important;
+            position: relative !important;
             box-sizing: border-box !important;
+            border: none !important; /* Verhindert die "zweite Linie" */
             
-            /* Erzwingt den Umbruch und verhindert Geister-Seiten */
+            /* Umbrüche erzwingen */
             page-break-after: always !important;
-            -webkit-region-break-inside: avoid !important;
+            page-break-before: avoid !important;
+            page-break-inside: avoid !important;
         }
 
-        /* 2. Deine eigene Fußzeile fixieren */
-        /* Falls deine Fußzeile eine Klasse wie .footer-info hat: */
-        .footer-info, .page-number-container {
+        /* 2. INHALT KOMPAKTER MACHEN (Schritt 1 & 4 Fix) */
+        /* Wir reduzieren die Abstände, damit Seite 1 nicht mehr gestaucht wird */
+        .character-info-grid, .stats-grid, .attribute-container {
+            gap: 1.5mm !important;
+            margin-bottom: 2mm !important;
+        }
+
+        .attribute-box, .stat-box {
+            padding: 3px !important;
+        }
+
+        /* 3. DEINE FUSSZEILE POSITIONIEREN */
+        .page-footer {
             position: absolute !important;
-            bottom: 5mm !important; /* Fixer Abstand zum Blattrand */
-            left: 5mm !important;
-            width: calc(100% - 10mm) !important;
-            z-index: 999 !important;
+            bottom: 6mm !important; /* Festgeklebt am unteren Rand */
+            left: 8mm !important;
+            right: 8mm !important;
+            width: auto !important;
+            height: 10mm !important;
+            border-top: 1px solid #d4a017 !important;
+            background: white !important;
+            z-index: 1000 !important;
+        }
+
+        /* 4. ALLES ANDERE AUSBLENDEN (keine Geister-Linien) */
+        footer, .auto-marker, hr:last-child {
+            display: none !important;
         }
     }
 }
