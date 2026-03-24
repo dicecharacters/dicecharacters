@@ -1687,10 +1687,10 @@ padding: 0.8rem
     .auto-marker { display: none !important; }
 }
 
-/* PDF Druck - Spezieller Block NUR für Safari */
+/* PDF Druck - Spezieller Block NUR für Safari (iOS-Kompatibilitätsmodus) */
 @media not all and (min-resolution:.001dpcm) { 
     @media print {
-        /* 1. Das Papier-Format: Wir sagen Safari, es gibt NULL Ränder am Papier */
+        /* 1. Das Papier-Format: Wir lassen Safari einen kleinen Rand für seine URL */
         @page {
             size: A4 portrait;
             margin: 0 !important;
@@ -1699,31 +1699,32 @@ padding: 0.8rem
         html, body {
             margin: 0 !important;
             padding: 0 !important;
-            /* WICHTIG: Verhindert, dass Safari über das Blatt hinausrechnet */
             height: 297mm !important;
             overflow: hidden !important;
+            background: #fff !important;
         }
 
         .page {
-            /* Wir nutzen die exakte A4-Höhe von 297mm */
-            height: 297mm !important; 
+            /* Wir verkürzen die Nutzhöhe auf 280mm. 
+               Die restlichen 17mm bleiben für die iOS-Fußzeile reserviert. */
+            height: 280mm !important; 
             width: 210mm !important;
             margin: 0 !important;
-            padding: 8mm 8mm 12mm 8mm !important; /* Unten mehr Platz für deine Fußzeile */
+            /* Unten lassen wir deutlich mehr Padding (20mm), 
+               damit kein Inhalt in die iOS-URL rutscht. */
+            padding: 8mm 8mm 20mm 8mm !important; 
             
             display: block !important;
             position: relative !important;
             box-sizing: border-box !important;
-            border: none !important; /* Verhindert die "zweite Linie" */
+            border: none !important; 
             
-            /* Umbrüche erzwingen */
             page-break-after: always !important;
             page-break-before: avoid !important;
             page-break-inside: avoid !important;
         }
 
-        /* 2. INHALT KOMPAKTER MACHEN (Schritt 1 & 4 Fix) */
-        /* Wir reduzieren die Abstände, damit Seite 1 nicht mehr gestaucht wird */
+        /* 2. INHALT KOMPAKTER MACHEN (Wie gehabt) */
         .character-info-grid, .stats-grid, .attribute-container {
             gap: 1.5mm !important;
             margin-bottom: 2mm !important;
@@ -1733,20 +1734,14 @@ padding: 0.8rem
             padding: 3px !important;
         }
 
-        /* 3. DEINE FUSSZEILE POSITIONIEREN */
+        /* 3. EIGENE FUSSZEILE AUSBLENDEN */
+        /* Wir blenden deine goldene Trennlinie aus, da Safari dort 
+           sowieso seine URL drüberklatscht. So sieht es sauberer aus. */
         .page-footer {
-            position: absolute !important;
-            bottom: 6mm !important; /* Festgeklebt am unteren Rand */
-            left: 8mm !important;
-            right: 8mm !important;
-            width: auto !important;
-            height: 10mm !important;
-            border-top: 1px solid #d4a017 !important;
-            background: white !important;
-            z-index: 1000 !important;
+            display: none !important;
         }
 
-        /* 4. ALLES ANDERE AUSBLENDEN (keine Geister-Linien) */
+        /* 4. ALLES ANDERE AUSBLENDEN */
         footer, .auto-marker, hr:last-child {
             display: none !important;
         }
