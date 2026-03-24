@@ -1687,74 +1687,61 @@ padding: 0.8rem
     .auto-marker { display: none !important; }
 }
 
-/* PDF Druck - Spezieller Block NUR für Safari/iOS */
+/* PDF Druck - Spezieller Block NUR für Safari */
 @media not all and (min-resolution:.001dpcm) { 
     @media print {
-        /* 1. Das Papier-Format: Wir entziehen Safari den Platz für Kopf-/Fußzeilen */
+        /* Wir setzen die Ränder des Papiers auf 0, um die Browser-Fußzeile zu killen */
         @page {
-            size: A4 portrait;
-            margin: 0 !important; /* Absolut keine Ränder für das System */
+            margin: 0 !important;
         }
 
         html, body {
+            height: auto !important;
             margin: 0 !important;
             padding: 0 !important;
-            /* 296mm statt 297mm: Der entscheidende Puffer gegen automatische Seitenzahlen */
-            height: 296mm !important; 
-            width: 210mm !important;
-            /* Verhindert, dass Safari 'mitdenkt' */
-            overflow: visible !important; 
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
         }
 
         .page {
-            /* Wir nutzen 296mm Höhe, um Safari zu signalisieren: "Ich brauche keine Hilfe" */
-            height: 296mm !important; 
+            /* WICHTIG: Wir reduzieren die Höhe auf 282mm. 
+               Das gleicht den Versatz auf dem iPhone aus. */
+            height: 282mm !important; 
+            min-height: 282mm !important;
             width: 210mm !important;
             margin: 0 !important;
-            /* Innenabstände für den Inhalt (unten etwas mehr Puffer für deine eigene Fußzeile) */
-            padding: 8mm 8mm 12mm 8mm !important; 
+            padding: 5mm 8mm !important; /* Etwas mehr Seitenabstand, weniger Höhe */
             
             display: block !important;
             position: relative !important;
+            overflow: hidden !important;
             box-sizing: border-box !important;
-            border: none !important;
-            background: white !important;
-            
-            /* Umbrüche erzwingen und Geisterseiten vermeiden */
             page-break-after: always !important;
-            page-break-before: avoid !important;
-            page-break-inside: avoid !important;
         }
 
-        /* 2. INHALT KOMPAKTER MACHEN */
-        .character-info-grid, .stats-grid, .attribute-container {
-            gap: 1.2mm !important; /* Minimal reduziert */
-            margin-bottom: 1.5mm !important;
+        /* INHALT KOMPAKTER: Wir sparen vertikalen Platz */
+        .stats-grid, .attribute-container {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 1.5mm !important;
+            margin-bottom: 2mm !important;
         }
 
-        .attribute-box, .stat-box {
-            padding: 2px !important; /* Noch einen Tick schlanker */
+        .stat-box, .attribute-box {
+            margin-bottom: 0 !important;
         }
 
-        /* 3. DEINE EIGENE FUSSZEILE (Die soll bleiben!) */
+        /* FUSSZEILEN-FIX: Deine eigene Fußzeile festpinnen */
         .page-footer {
             position: absolute !important;
-            /* Wir schieben sie 2mm höher als im Desktop-Chrome, 
-               falls Safari unten doch noch minimal abschneidet */
-            bottom: 8mm !important; 
+            bottom: 5mm !important;
             left: 8mm !important;
             right: 8mm !important;
             width: auto !important;
-            height: 10mm !important;
             border-top: 1px solid #d4a017 !important;
-            background: white !important;
-            z-index: 1000 !important;
+            padding-top: 2mm !important;
         }
 
-        /* 4. ALLES ANDERE AUSBLENDEN */
-        footer, .auto-marker, hr:last-child, .no-print {
+        /* Falls eine "zweite Linie" erscheint, kommt sie meist von hier: */
+        footer, .auto-marker {
             display: none !important;
         }
     }
