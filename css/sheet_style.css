@@ -1687,10 +1687,12 @@ padding: 0.8rem
     .auto-marker { display: none !important; }
 }
 
-/* PDF Druck - Spezieller Block NUR für Safari (iOS-Kompatibilitätsmodus) */
+/* ==========================================================================
+   PDF DRUCK - SPEZIELLER SAFARI/IOS KOMPATIBILITÄTS-MODUS
+   ========================================================================== */
 @media not all and (min-resolution:.001dpcm) { 
     @media print {
-        /* 1. Das Papier-Format: Wir lassen Safari einen kleinen Rand für seine URL */
+        /* 1. Das Papier-Format: Platz für die iOS-System-URL schaffen */
         @page {
             size: A4 portrait;
             margin: 0 !important;
@@ -1704,44 +1706,60 @@ padding: 0.8rem
             background: #fff !important;
         }
 
-        .page {
-            /* Wir verkürzen die Nutzhöhe auf 280mm. 
-               Die restlichen 17mm bleiben für die iOS-Fußzeile reserviert. */
-            height: 280mm !important; 
+        /* Wir verkürzen die Nutzhöhe der Seite künstlich auf 282mm, 
+           damit die iOS-Fußzeile im leeren Raum darunter steht. */
+        .page, .fixed-page {
+            height: 282mm !important; 
             width: 210mm !important;
             margin: 0 !important;
-            /* Unten lassen wir deutlich mehr Padding (20mm), 
-               damit kein Inhalt in die iOS-URL rutscht. */
-            padding: 8mm 8mm 20mm 8mm !important; 
+            /* Unten viel Platz (22mm), damit kein Inhalt in die URL rutscht */
+            padding: 8mm 8mm 22mm 8mm !important; 
             
             display: block !important;
             position: relative !important;
             box-sizing: border-box !important;
             border: none !important; 
+            box-shadow: none !important;
             
             page-break-after: always !important;
-            page-break-before: avoid !important;
-            page-break-inside: avoid !important;
         }
 
-        /* 2. INHALT KOMPAKTER MACHEN (Wie gehabt) */
-        .character-info-grid, .stats-grid, .attribute-container {
-            gap: 1.5mm !important;
-            margin-bottom: 2mm !important;
-        }
-
-        .attribute-box, .stat-box {
-            padding: 3px !important;
-        }
-
-        /* 3. EIGENE FUSSZEILE AUSBLENDEN */
-        /* Wir blenden deine goldene Trennlinie aus, da Safari dort 
-           sowieso seine URL drüberklatscht. So sieht es sauberer aus. */
-        .page-footer {
+        /* 2. SPEZIFISCHE ELEMENTE AUSBLENDEN */
+        
+        /* A) Die komplette eigene Fußzeile (Divider + Seitenzahl) */
+        .sheet-footer, .page-footer {
             display: none !important;
         }
 
-        /* 4. ALLES ANDERE AUSBLENDEN */
+        /* B) Auf Seite 1: Spielername & Eingabe ausblenden */
+        /* Wir blenden die Gruppe im Header aus, die das Spieler-Feld enthält */
+        .header .field-group:has(label[for*="player"]),
+        .header .field-group:has(input[id*="player"]),
+        .header .field-group:nth-child(4) { /* Meistens das 4. Feld im Header-Grid */
+            display: none !important;
+        }
+
+        /* 3. LAYOUT ANPASSEN (Damit keine Lücken entstehen) */
+        
+        /* Das Grid auf Seite 1 anpassen, damit der Platz unten genutzt wird */
+        .character-sheet {
+            grid-template-rows: auto auto auto 1fr 0px !important; /* Footer-Reihe auf 0 */
+            height: 100% !important;
+            gap: 1rem !important;
+        }
+
+        /* Die Divider-Linie mit dem Drachen etwas kompakter */
+        #dragonDivider {
+            height: 2.2rem !important;
+        }
+
+        /* 4. INHALT ETWAS PRÄZISER STEUERN */
+        .sheet-main-content {
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        /* Verhindert Geisterlinien am Ende */
         footer, .auto-marker, hr:last-child {
             display: none !important;
         }
