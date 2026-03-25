@@ -988,7 +988,7 @@ const spellList = [
   },
   {
     "ID": 48,
-    "translationLabel": "createorDestroyWaterLabel",
+    "translationLabel": "createOrDestroyWaterLabel",
     "spellLevel": "1stLevelLabel",
     "spellSchool": "transmutationLabel",
     "components": ["compVLabel", "compSLabel", "compMLabel"],
@@ -1135,7 +1135,7 @@ const spellList = [
   },
   {
     "ID": 55,
-    "translationLabel": "divinefavorLabel",
+    "translationLabel": "divineFavorLabel",
     "spellLevel": "1stLevelLabel",
     "spellSchool": "transmutationLabel",
     "components": ["compVLabel", "compSLabel"],
@@ -6573,7 +6573,7 @@ const spellList = [
 },
 {
   "ID": 311,
-  "translationLabel": "tasha'sBubblingCauldronLabel",
+  "translationLabel": "tashasBubblingCauldronLabel",
   "spellLevel": "6thLevelLabel",
   "spellSchool": "conjurationLabel",
   "components": ["compVLabel", "compSLabel", "compMLabel"],
@@ -6590,7 +6590,7 @@ const spellList = [
   "spellDamage_effect": 0,
   "classLabel": ["warlock", "wizard"],
   "subclassLabel": 0,
-  "spellDLabel": "tasha'sBubblingCauldronD"
+  "spellDLabel": "tashasBubblingCauldronD"
 },
 {
   "ID": 312,
@@ -6846,7 +6846,7 @@ const spellList = [
 },
 {
   "ID": 324,
-  "translationLabel": "forceageLabel",
+  "translationLabel": "forcecageLabel",
   "spellLevel": "7thLevelLabel",
   "spellSchool": "evocationLabel",
   "components": ["compVLabel", "compSLabel", "compMLabel"],
@@ -6863,7 +6863,7 @@ const spellList = [
   "spellDamage_effect": "controlLabel",
   "classLabel": ["bard", "warlock", "wizard"],
   "subclassLabel": 0,
-  "spellDLabel": "forceageD"
+  "spellDLabel": "forcecageD"
 },
 {
   "ID": 325,

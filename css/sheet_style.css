@@ -292,7 +292,7 @@ body {
 /* --- TRENNLINIE & INFO-BLÖCKE --- */
 .sheet-divider { grid-area: divider; display: flex; align-items: center; gap: 0.5rem; }
 .sheet-divider .line { flex-grow: 1; height: 0.2rem; background-color: #010101; }
-.sheet-divider #dragonDivider { height: 3rem; width: auto; flex-shrink: 0; }
+.sheet-divider #dragonDivider { height: 5rem; width: auto; flex-shrink: 0; }
 
 .block { flex: 1; height: 5rem; border: 0.1rem solid black; border-radius: 0.5rem; padding: 0.5rem; display: flex; flex-direction: column; justify-content: flex-end; text-align: center; }
 .block-header { font-weight: bold; font-size: 1.2rem; margin-bottom: 0.5rem; }
