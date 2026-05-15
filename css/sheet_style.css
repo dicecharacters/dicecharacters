@@ -30,115 +30,192 @@ body {
     box-sizing: border-box;
 }
 
-/* --- GEMEINSAMES BUTTON DESIGN --- */
-.control-group {
+
+/* --- BUTTON DESIGN  --- */
+
+.fab-container {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    
+    bottom: 25px;
+    right: 25px;
+    z-index: 5000;
     display: flex;
-    flex-direction: column; /* Untereinander stapeln */
-    gap: 10px;              /* Fester Abstand zwischen den Buttons (skaliert mit) */
+    align-items: flex-end;
+    gap: 12px;
+    transform-origin: bottom right;
+    transition: all 0.3s ease;
+    /* Grund-Transparenz wie im alten Code für kleine Screens vorgesehen */
+    opacity: 0.6; 
+}
+
+/* Hover über die gesamte Gruppe: Voll sichtbar machen */
+.fab-container:hover {
+    opacity: 1 !important;
+    transform: scale(1) !important; /* Verhindert Zittern beim Skalieren */
+}
+
+/* Master-Zahnrad */
+.fab-trigger {
+    width: 55px;
+    height: 55px;
+    background-color: #333;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+}
+
+.fab-icon {
+    color: white;
+    font-size: 26px;
+    /* Flexbox hier erzwingt die Mitte innerhalb des Spans */
+    display: flex; 
+    align-items: center;
+    justify-content: center;
     
-    z-index: 2000;
-    transform-origin: bottom right; /* Zieht sich in die Ecke zurück beim Schrumpfen */
+    /* Korrektur für Emojis: Schiebt das Icon einen Ticken nach oben */
+    margin-top: -4px; 
+    margin-left: -2px;
+    
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none; /* Verhindert, dass das Icon Maus-Events abfängt */
+}
+
+/* Ausklapp-Logik */
+.fab-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.fab-container:hover .fab-menu {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.fab-container:hover .fab-icon {
+    transform: scale(1.2); /* Icon wird 20% größer */
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.5)); /* Icon glüht leicht */
+}
+
+/* Button-Styling (Einheitlich 220px wie im alten Design) */
+.fab-btn {
+    width: 220px;
+    height: 48px;
+    border: none;
+    border-radius: 12px;
+    color: white !important;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     transition: all 0.2s ease;
 }
 
-/* Hover über die gesamte Gruppe: Alles wieder sichtbar & groß machen */
-.control-group:hover {
-    opacity: 1 !important;
-    transform: scale(1) !important;
+.fab-btn:hover {
+    filter: brightness(115%);
+    transform: translateX(-5px); /* Kleiner Slide-Effekt beim Hover */
 }
 
-/* --- BUTTON DESIGN (Aussehen) --- */
-.control-btn {
-    /* Keine Positionierung mehr hier, das macht der Container! */
-    width: 220px;
-    height: 50px;
-    padding: 0 20px;
-    
-    font-family: inherit;
-    font-weight: bold;
-    font-size: 16px;
-    color: white;
-    
-    border: none;
-    border-radius: 12px;
+/* Farben */
+.btn-appendix { background-color: #6d597a !important; } 	/* violett */
+.btn-edit { background-color: #1d3557 !important; }		/* dunkles blau */
+.btn-edit.active { background-color: #457b9d !important; }	/* helles blau */
+.btn-export { background-color: #6a994e !important; }		/* grün */
+.btn-import { background-color: #bc6c25 !important; }		/* gelb */
+.btn-pdf { background-color: #333533 !important; }		/* schwarz */
+.btn-clear { background-color: #ae2012 !important; } 		/* rot */
+
+/* Anhang-Toggle Reihe */
+.fab-item-row {
+    background-color: #444;
+    justify-content: space-between;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+.fab-label { cursor: pointer; font-size: 13px; }
+.fab-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid white;
+    border-radius: 50%; /* Macht die Checkbox rund */
+    outline: none;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+    background-color: transparent;
+    position: relative;
 }
 
-.control-btn:hover {
-    filter: brightness(110%);
-    box-shadow: 0 6px 8px rgba(0,0,0,0.4);
+/* Der Wrapper als Label braucht Pointer-Cursor */
+#appendixToggleWrapper {
+    cursor: pointer;
+    user-select: none; /* Verhindert, dass Text markiert wird beim Klicken */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
 }
 
-.control-btn:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+/* Hover-Effekt für den gesamten Balken */
+#appendixToggleWrapper:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-/* --- FARBEN --- */
-
-/* Bearbeiten (Oben) */
-.edit-btn {
-    background-color: #007bff; 
-}
-.edit-btn.active {
-    background-color: #dc3545; 
+/* Zustand wenn ausgewählt (Häkchen-Ersatz) */
+.fab-checkbox:checked {
+    background-color: white; /* Füllt den Kreis weiß */
 }
 
-/* Download (Unten) */
-.download-btn {
-    background-color: #000000; 
+/* Optional: Ein kleiner Punkt in der Mitte, wenn ausgewählt */
+.fab-checkbox:checked::after {
+    content: "✓"; /* Oder ein Punkt "●" */
+    color: #6d597a; /* Die violette Hintergrundfarbe des Buttons */
+    font-size: 1.2rem;
+    font-weight: bold;
 }
 
-
-/* --- ZOOM & TRANSPARENZ LOGIK --- */
-/* Skaliert den gesamten Container inkl. Abstand.
-   Ab 1000px und abwärts wird es transparent. */
-
-@media (max-width: 1600px) {
-    .control-group { transform: scale(0.9); }
-}
-@media (max-width: 1400px) {
-    .control-group { transform: scale(0.8); }
-}
-@media (max-width: 1200px) {
-    .control-group { transform: scale(0.7); }
-}
-@media (max-width: 1000px) {
-    .control-group { 
-        transform: scale(0.6); 
-        opacity: 0.5; /* Halb transparent */
-    }
-}
-@media (max-width: 800px) {
-    .control-group { 
-        transform: scale(0.5); 
-        opacity: 0.3; /* Stark transparent */
-    }
+/* Hover-Effekt für die Checkbox selbst */
+.fab-checkbox:hover {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
 }
 
+/* --- DEINE BEWÄHRTE ZOOM & TRANSPARENZ LOGIK --- */
+@media (max-width: 1600px) { .fab-container { transform: scale(0.9); } }
+@media (max-width: 1400px) { .fab-container { transform: scale(0.8); } }
+@media (max-width: 1200px) { .fab-container { transform: scale(0.7); } }
+@media (max-width: 1000px) { 
+    .fab-container { transform: scale(0.6); opacity: 0.5; } 
+}
+@media (max-width: 800px) { 
+    .fab-container { transform: scale(0.5); opacity: 0.3; } 
+}
 
+/* --- DRUCK-EINSTELLUNGEN (Sicherheits-Zusatz) --- */
 @media print {
-    html { -webkit-text-size-adjust: 100%; }
-    body { background: none; }
-    .page { 
-        margin: 0; 
-        box-shadow: none; 
-        height: 297mm;      /* NEU: Feste Höhe für den Druck */
-        overflow: hidden;   /* NEU: Überlauf im Druck abschneiden */
+    .fab-container, .fab-trigger, .fab-menu, .fab-btn {
+        display: none !important;
     }
-    .control-group { display: none !important; }
-    .control-btn { display: none !important; }
 }
+
+/* --- A4 Druck Formatierung --- */
 
 /* Stellt das A4-Format für den PDF-Export wieder her */
 .pdf-export-mode .page {
@@ -377,6 +454,16 @@ body {
 }
 .footer-left { display: flex; align-items: baseline; gap: 0.5rem; }
 .footer-left input { border: none; border-bottom: 0.1rem solid #333; background: transparent; font-size: 1rem; }
+
+.footer-link {
+    color: #666;
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.footer-link:hover {
+    text-decoration: underline;
+}
 
 input[type="checkbox"].rounded-checkbox {
     -webkit-appearance: none; -moz-appearance: none; appearance: none;
@@ -1283,14 +1370,14 @@ padding: 0.8rem
     width: 100%;
     height: 100%;
     border-collapse: collapse;
-    font-size: 0.95rem; /* Etwas kleiner, damit viel drauf passt */
+    font-size: 1rem; /* Etwas kleiner, damit viel drauf passt */
     table-layout: fixed;
 }
 
 .spell-table th {
     border-bottom: 2px solid #000;
     padding: 2px 4px;
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     text-align: center;
     vertical-align: bottom;
     font-weight: bold;
@@ -1312,10 +1399,11 @@ padding: 0.8rem
     background-color: #f0f0f0;
     font-weight: bold;
     text-transform: uppercase;
-    font-size: 0.9rem;
+    font-size: 1rem;
     border-top: 2px solid #000;
     border-bottom: 1px solid #000 !important;
     height: 2.0rem !important;
+    line-height: 2.0rem !important; /* Muss identisch mit height sein */
 }
 
 /* Container für die Slot-Checkboxen */
@@ -1372,7 +1460,7 @@ padding: 0.8rem
 /* Kompakter im PDF, damit alles drauf passt */
 .pdf-export-mode .spell-table td {
     height: 1.9rem !important; 
-    font-size: 0.85rem !important;
+    font-size: 1rem !important;
 }
 .pdf-export-mode .spell-level-header {
     height: 1.6rem !important;
@@ -1519,9 +1607,11 @@ padding: 0.8rem
 
 /* Die Höhen-Klassen für den Tetris-Algorithmus (1/3, 2/3, 3/3) 
    Der calc() Befehl zieht den Gap (1rem) ab, damit es perfekt passt */
-.box-h1 { flex: 0 0 calc(33.333% - 0.66rem); } 
-.box-h2 { flex: 0 0 calc(66.666% - 0.33rem); }
-.box-h3 { flex: 0 0 100%; }
+.box-h1 { flex: 0 0 calc(25% - 0.75rem); }    /* 1/4 */
+.box-h2 { flex: 0 0 calc(33.33% - 0.66rem); }  /* 1/3 */
+.box-h3 { flex: 0 0 calc(50% - 0.5rem); }     /* 2/4 (1/2) */
+.box-h4 { flex: 0 0 calc(66.66% - 0.33rem); }  /* 2/3 */
+.box-h5 { flex: 0 0 100%; }			/* 4/4 (Voll) */
 
 /* Box Inhalte */
 .sd-header {
@@ -1547,17 +1637,64 @@ padding: 0.8rem
 }
 .sd-meta-item { margin-bottom: 0.1rem; }
 
+// -- Tabellen-Darstellung
+
 .sd-text {
-    font-size: 0.95rem;
+    font-size: 1.0rem;
     line-height: 1.2;
     text-align: justify;
     flex: 1;
     overflow: hidden; /* Überlauf abschneiden! */
+
+/* NEU: Zwingt alle Inhalte (Text & Tabellen) nach oben */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+
 }
 
+/* 1. Schriftgröße an die Box anpassen */
+.sd-text table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.6rem;
+    /* Nutzt automatisch die Größe von .sd-text (auch bei text-small/tiny) */
+    font-size: inherit; 
+
+    height: 1px; /* Ein alter CSS-Trick: height 1px + min-height 0 lässt Tabellen nur so groß werden wie nötig */
+    min-height: auto;
+}
+
+/* 2. Kopfzeile der Tabelle: Schriftgröße angepasst & zentriert */
+.sd-text th {
+    font-weight: normal; 
+    font-size: inherit; /* Stellt sicher, dass auch th mitskaliert */
+    text-align: center; /* Zentrierte Voreinstellung beibehalten */
+    border-bottom: 1px solid #000;
+    padding: 0.2rem;
+}
+
+/* 3. Überschrift der Tabelle (Caption): Fett & Zentriert */
+.sd-text table caption, 
+.sd-text .table-title {
+    font-weight: bold;
+    text-align: center; /* Zentriert wie gewünscht */
+    display: table-caption;
+    margin-bottom: 0.3rem;
+    font-size: inherit;
+}
+
+/* 4. Tabellenzellen: Standardmäßig zentriert für Werte */
+.sd-text td {
+    padding: 0.2rem;
+    text-align: center; /* Standardausrichtung für Tabelleninhalte im Anhang */
+}
+
+// -----
+
 /* Dynamische Schriftgrößen bei viel Text */
-.text-small .sd-meta, .text-small .sd-text { font-size: 0.85rem; }
-.text-tiny .sd-meta, .text-tiny .sd-text { font-size: 0.75rem; }
+.text-small .sd-meta, .text-small .sd-text { font-size: 0.95rem; }
+.text-tiny .sd-meta, .text-tiny .sd-text { font-size: 0.9rem; }
 
 .spell-summon-link {
     color: #004085;
@@ -1589,11 +1726,6 @@ padding: 0.8rem
     @page {
         size: A4 portrait;
         margin: 0mm !important; 
-    }
-
-    /* 3. Menüleiste ausblenden */
-    .control-group {
-        display: none !important;
     }
 
     /* 4. PERFEKTE A4 SEITEN (Wie im PDF Export) */
@@ -1685,6 +1817,17 @@ padding: 0.8rem
     .spell-level-header { height: 1.6rem !important; }
     .appendix-layout { height: 100% !important; margin-bottom: 0 !important; }
     .auto-marker { display: none !important; }
+
+    /* Der Tabellen-Fix für den Druck: Wir zwingen die 1px Logik auch hier rein */
+    .sd-text table {
+        height: 1px !important; 
+        min-height: auto !important;
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin-top: 0 !important;
+        font-size: inherit !important; /* Wichtig für die Skalierung */
+        line-height: 1.0 !important;
+    }
 }
 
 /* ==========================================================

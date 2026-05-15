@@ -161,7 +161,90 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
 }
+
 .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 25px var(--gold); }
+
+/* Container für die Buttons */
+.cta-buttons {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Der kreisrunde Button */
+.btn-direct-sheet {
+    position: relative; /* Für Tooltip */
+    background: linear-gradient(145deg, var(--copper), #5a3d22);
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-direct-sheet:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 25px var(--gold);
+}
+
+.direct-icon-symbol {
+    font-size: 28px; /* Größe des Symbols */
+    line-height: 1;
+    display: block;
+    transform: translate(0px, 1px);
+    /* Optional: Ein leichter Schatten macht es plastischer */
+    filter: drop-shadow(0 0 5px rgba(212, 160, 23, 0.5));
+}
+
+/* Tooltip (Hover-Text) */
+.tooltip-text {
+    visibility: hidden;
+    width: 220px;
+    background-color: var(--glass);
+    color: var(--gold);
+    text-align: center;
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    padding: 10px;
+    position: absolute;
+    z-index: 10;
+    bottom: 125%; /* Über dem Button */
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-family: 'Garamond', serif;
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.btn-direct-sheet:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Versteckt den Direkt-Button auf mobilen Geräten */
+@media (max-width: 767px) {
+    #directToSheetBtn {
+        display: none !important;
+    }
+    
+    /* Zentriert den verbleibenden Start-Button auf Mobile */
+    .cta-buttons {
+        justify-content: center;
+    }
+}
+
+/* Styling für das 📜 Symbol */
+.direct-icon-symbol {
+    font-size: 28px;
+    display: block;
+    line-height: 1;
+}
 
 .scroll-indicator {
     font-size: 1.5rem;
@@ -186,7 +269,7 @@ body {
     box-shadow: 0 10px 40px rgba(0,0,0,0.6);
 }
 
-/* NEU: Titel zentriert */
+/* Titel zentriert */
 h2 { 
     color: var(--gold); 
     margin-top: 0; 
@@ -202,7 +285,7 @@ p { line-height: 1.6; font-size: 1.1rem; margin-bottom: 25px; text-align: justif
     margin: 30px 0;
 }
 
-/* NEU: Fußzeile schlicht (nicht fett, nicht kursiv) */
+/* Fußzeile schlicht (nicht fett, nicht kursiv) */
 .highlight-text {
     color: var(--gold);
     font-weight: normal;
@@ -292,15 +375,123 @@ textarea { height: 200px; resize: vertical; }
     padding: 15px;
 }
 
+/* --- News & Updates Sektion --- */
+.news-section { 
+    padding: 80px 20px; /* Identisch mit .info-section */
+    display: flex; 
+    justify-content: center; 
+}
+
+.news-card {
+    /* Exakt die gleichen Werte wie .info-card und .contact-card */
+    background: var(--glass);
+    border: 1px solid var(--gold);
+    border-radius: 12px;
+    padding: 50px;
+    max-width: 550px; /* Hier an .info-card angepasst (vorher 800px) */
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+}
+
+/* Der Container für die Scroll-Logik */
+.news-container {
+    max-height: 300px; 
+    overflow-y: scroll; 
+    padding-right: 15px;
+    margin-top: 20px;
+}
+
+/* --- Scrollbar Styling (Dauerhaft Gold) --- */
+.news-container::-webkit-scrollbar {
+    width: 8px;
+}
+.news-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+.news-container::-webkit-scrollbar-thumb {
+    background: var(--copper);
+    border-radius: 10px;
+    border: 2px solid #1b1b1f;
+}
+
+/* Firefox Support */
+.news-container {
+    scrollbar-width: thin;
+    scrollbar-color: var(--copper) rgba(255, 255, 255, 0.05);
+}
+
+/* --- News Einträge --- */
+.news-entry {
+    border-bottom: 1px solid rgba(212, 160, 23, 0.2);
+    padding: 15px 0;
+}
+.news-entry:last-child { border-bottom: none; }
+
+.news-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.news-date {
+    color: var(--gold);
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+.news-version {
+    background: var(--copper);
+    color: var(--text-light);
+    padding: 2px 10px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+}
+
+.news-content p {
+    margin: 0;
+    line-height: 1.5;
+    color: var(--text-light);
+    font-size: 1.1rem;
+    text-align: left; /* Bei News ist Blocksatz oft schwer lesbar */
+}
+
+/* Styling für Listen innerhalb der News */
+.news-list {
+    margin: 10px 0 0 0;
+    padding-left: 20px; /* Sorgt für das bündige Einrücken */
+    list-style-type: disc; /* Klassische Punkte */
+}
+
+.news-list li {
+    margin-bottom: 5px;
+    color: var(--text-light);
+    text-align: left; /* Wichtig für die Bündigkeit */
+}
+
+/* Optional: Farbe der Aufzählungspunkte anpassen */
+.news-list li::marker {
+    color: var(--text-light);
+}
+
+
+/* =======================================================================
+   MOBILE ANPASSUNGEN (index.html)
+   ======================================================================= */
+
+/* --- Mobile Anpassung für News --- */
+@media (max-width: 768px) {
+    .news-card {
+        padding: 30px 20px !important; /* Identisch mit mobilem info-card Padding */
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     #floatingLang { top: auto; bottom: 20px; flex-direction: row; right: auto; left: 50%; transform: translateX(-50%); }
     .hero-content h1 { font-size: 2.8rem; }
 }
-
-/* =======================================================================
-   MOBILE ANPASSUNGEN (index.html)
-   ======================================================================= */
 
 @media (max-width: 768px) {
     /* 1. Zweites Info-Textfeld ausblenden (für besseren Lesefluss) */

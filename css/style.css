@@ -1133,7 +1133,7 @@ input[type="number"]:disabled {
     text-align: center;
     flex-shrink: 0; /* KORREKTUR: Verhindert Schrumpfen */
 }
-.live-attr-header-row .col-attr { flex-basis: 125px; text-align: left; }
+.live-attr-header-row .col-attr { flex-basis: 85px; text-align: left; }
 .live-attr-header-row .col-mod   { flex-basis: 30px; }
 .live-attr-header-row .col-total { flex-basis: 45px; }
 .live-attr-header-row .col-base  { flex-basis: 45px; }
