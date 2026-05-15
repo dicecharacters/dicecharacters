@@ -430,8 +430,13 @@ const translations = {
     "storyAndAlignmentLabel": "Geschichte & Gesinnung",
     "changePicText": "Bild ändern",
     "zoomWarningText": "Hinweis: Dein System oder Browser verwendet eine Bildschirmskalierung (Zoom).\n\nDadurch könnte das PDF eventuell leicht verschoben aussehen. Für das perfekte Ergebnis wird ein Browser-Zoom von 100% empfohlen (Strg+0).\n\nMöchtest du das PDF trotzdem jetzt herunterladen?",
+    "warningLossDataText": "Vorsicht! Alle ungespeicherten Daten im Charakterbogen gehen verloren und können NICHT wiederhergestellt werden. Bist du sicher, dass du fortfahren möchtest?",
+    "generateSpellDesc": "Zauberanhang",
     "editButtonLabel": "Bearbeiten",
-    "downloadPdfLabel": "Als PDF herunterladen"
+    "exportBtnLabel": "Speichern (.json)",
+    "importBtnLabel": "Hochladen (.json)",
+    "downloadPdfLabel": "Drucken (.pdf)",
+    "clearBtnLabel": "Leeren"
 },
 
     en: {
@@ -864,8 +869,13 @@ const translations = {
     "changePicText": "Change image",
     "autoValueText": "This value is calculated automatically",
     "zoomWarningText": "Note: Your system or browser is using screen scaling (Zoom).\n\nThis might cause the PDF to look slightly misaligned. For the best result, a browser zoom of 100% is recommended (Ctrl+0).\n\nDo you want to download the PDF anyway?",
+    "warningLossDataText": "Caution! All unsaved data in the character sheet will be lost and CANNOT be recovered. Are you sure you want to continue?",
+    "generateSpellDesc": "Spell App.",
     "editButtonLabel": "Edit",
-    "downloadPdfLabel": "Download as PDF"
+    "exportBtnLabel": "Save (.json)",
+    "importBtnLabel": "Upload (.json)",
+    "downloadPdfLabel": "Print (.pdf)",
+    "clearBtnLabel": "Clear"
   }
 };
 

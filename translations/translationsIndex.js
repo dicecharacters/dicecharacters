@@ -9,6 +9,7 @@ Object.assign(translations.de, {
     "universeLabel": "Wähle dein Universum",
     "dndVersion": "D&D 2024 / 5.5e",
     "startAction": "Abenteuer starten",
+    "directToSheetText": "Gehe direkt zum leeren Charakterbogen",
 
     // Info Section
     "aboutHeader": "Ein Projekt von einem Fan für Fans",
@@ -41,6 +42,7 @@ Object.assign(translations.en, {
     "universeLabel": "Choose your universe",
     "dndVersion": "D&D 2024 / 5.5e",
     "startAction": "Start Adventure",
+    "directToSheetText": "Go directly to the blank character sheet",
 
     // Info Section
     "aboutHeader": "A Project by a Fan for Fans",
