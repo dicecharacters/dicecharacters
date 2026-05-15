@@ -2550,7 +2550,10 @@ function restoreExpertiseSelections() {
 
 function createSkillOptions(skillCategoryNumbers) {
     const elements = translations[currentLang];
-    return skillList
+
+    const sortedSkills = sortTranslatedArray(skillList);
+
+    return sortedSkills
         .filter(skill => skillCategoryNumbers.includes(skill.skillCategoryNumber))
         .map(skill => {
             const skillName = elements[skill.translationLabel] || skill.translationLabel;
@@ -2587,21 +2590,23 @@ function populateAbilityImprovementOptions(classData, currentLevel) {
     section.style.display = hasContentToShow ? 'block' : 'none';
 }
 
-function createFeatOptions(currentLevel, allowedCategories = [], selectedFeatLabel = null) { // Neuer optionaler Parameter
+function createFeatOptions(currentLevel, allowedCategories = [], selectedFeatLabel = null) {
     const elements = translations[currentLang];
 
-    return featList.map(feat => {
+    // 1. Liste sortieren (deine neue Logik - perfekt!)
+    const sortedFeats = sortTranslatedArray(featList);
+
+    // 2. Die Optionen generieren
+    const optionsHtml = sortedFeats.map(feat => {
         const isCategoryAllowed = allowedCategories.length === 0 || allowedCategories.includes(feat.featCategoryNumber);
-        if (!isCategoryAllowed && selectedFeatLabel !== feat.translationLabel) { // Wenn ein bestimmtes Talent ausgewählt werden soll, ignoriere die Kategorieprüfung dafür
+        
+        if (!isCategoryAllowed && selectedFeatLabel !== feat.translationLabel) {
              if (selectedFeatLabel && feat.translationLabel === selectedFeatLabel) {
-                // Wenn es das ausgewählte Talent ist, dann ist die Kategorie erstmal egal,
-                // da wir dieses spezifische Talent anzeigen wollen.
-                // Die allowedCategories werden relevant, wenn kein specificFeatLabel übergeben wird.
+                // Erlaubt
              } else {
                  return '';
              }
         }
-
 
         const featName = elements[feat.translationLabel] || feat.translationLabel;
         const isLevelSufficient = currentLevel >= feat.prerequisite_Level;
@@ -2609,7 +2614,7 @@ function createFeatOptions(currentLevel, allowedCategories = [], selectedFeatLab
         let hasRequiredFeature = true;
         if (feat.prerequisite_Feature && feat.prerequisite_Feature !== 0) {
             const requiredFeatures = Array.isArray(feat.prerequisite_Feature) ? feat.prerequisite_Feature : [feat.prerequisite_Feature];
-            const classData = getClassData(character.class.toLowerCase(), "class") || []; // character muss hier verfügbar sein
+            const classData = getClassData(character.class.toLowerCase(), "class") || [];
             const selectedSubclassNumber = parseInt(document.querySelector('input[name="subclass"]:checked')?.value, 10);
 
             hasRequiredFeature = requiredFeatures.some(requiredFeature => {
@@ -2627,14 +2632,17 @@ function createFeatOptions(currentLevel, allowedCategories = [], selectedFeatLab
             });
         }
 
-        setupFeatSelection();
-
-        const isSelected = selectedFeatLabel === feat.translationLabel; // Prüfen, ob dieses Talent vorausgewählt werden soll
+        const isSelected = selectedFeatLabel === feat.translationLabel;
         const isDisabled = !(isLevelSufficient && hasRequiredFeature);
 
         return `<option value="${feat.ID}"${isSelected ? ' selected' : ''}${isDisabled ? ' disabled' : ''}>${featName}</option>`;
-
     }).join('');
+
+    // 3. WICHTIG: Die Validierung EINMAL am Ende triggern, nicht im Loop
+    setTimeout(setupFeatSelection, 0);
+
+    // 4. Den HTML-String zurückgeben
+    return optionsHtml;
 }
 
 function setupFeatSelection() {
@@ -3501,7 +3509,11 @@ function updateMonkDropdown() {
 function createWeaponOptions(allowedCategories, allowedProperties) {
     const elements = translations[currentLang];
     
-    return weaponList
+    // 1. Die Waffenliste alphabetisch nach übersetzten Namen sortieren
+    const sortedWeapons = sortTranslatedArray(weaponList);
+    
+    // 2. Mit der sortierten Liste weiterarbeiten (filter und map)
+    return sortedWeapons
         .filter(weapon => {
             // 1. GRUND-PRÜFUNG: Ist die Kategorie erlaubt?
             const categoryMatch = allowedCategories.includes(weapon.weaponCategoryNumber);
@@ -3510,38 +3522,27 @@ function createWeaponOptions(allowedCategories, allowedProperties) {
             if (!categoryMatch) return false;
 
             // 2. SONDERREGEL EINFACHE WAFFEN (Kategorie 1 & 2)
-            // Wenn die Kategorie passt (wurde oben geprüft) und es eine einfache Waffe ist,
-            // ist sie erlaubt - egal welche Properties sie hat.
             if (weapon.weaponCategoryNumber === 1 || weapon.weaponCategoryNumber === 2) {
                 return true;
             }
 
             // 3. FEIN-PRÜFUNG NUR FÜR KRIEGSWAFFEN (Kategorie 3 & 4)
-            
-            // Fall A: Keine Einschränkungen definiert (allowedProperties ist 0, null oder leer)
-            // Das ist z.B. beim Fighter der Fall -> Alle Kriegswaffen erlaubt.
             if (!allowedProperties || allowedProperties === 0 || (Array.isArray(allowedProperties) && allowedProperties.length === 0)) {
                 return true;
             }
 
-            // Fall B: Einschränkungen vorhanden (z.B. Rogue -> [Finesse, Light])
-            // Wir müssen prüfen, ob die Waffe eine der erlaubten Eigenschaften hat.
             const weaponProps = Array.isArray(weapon.weaponPropertyCategoryNumber) 
                 ? weapon.weaponPropertyCategoryNumber 
                 : (weapon.weaponPropertyCategoryNumber ? [weapon.weaponPropertyCategoryNumber] : []);
             
-            // Da allowedProperties meist ein Array ist, sicherstellen:
             const validProps = Array.isArray(allowedProperties) ? allowedProperties : [allowedProperties];
 
-            // Hat die Waffe eine passende Eigenschaft?
             const propertyMatch = weaponProps.some(p => validProps.includes(p));
-
             return propertyMatch;
         })
         .map(weapon => {
             const weaponName = elements[weapon.translationLabel] || weapon.translationLabel;
             
-            // Meisterschafts-Namen holen
             let masteryName = "Unknown";
             if (typeof weaponMastery !== 'undefined') {
                 const mastery = weaponMastery.find(m => m.weaponMasteryCategoryNumber === weapon.weaponMasteryCategoryNumber);
@@ -3599,15 +3600,17 @@ function getCurrentWeaponProficiencies() {
 
 function createInstrumentOptions() {
     const elements = translations[currentLang];
-    return instrumentList.map(instrument => {
+    const sortedInstruments = sortTranslatedArray(instrumentList);
+    return sortedInstruments.map(instrument => {
         const instrumentName = elements[instrument.translationLabel] || instrument.translationLabel;
         return `<option value="${instrument.instrumentCategoryNumber}">${instrumentName}</option>`;
     }).join('');
 }
 
 function createGameOptions() {
-    const elements = translations[currentLang];
-    return gameList.map(game => {
+    const elements = translations[currentLang];   
+    const sortedGames = sortTranslatedArray(gameList);
+    return sortedGames.map(game => {
         const gameName = elements[game.translationLabel] || game.translationLabel;
         return `<option value="${game.gameCategoryNumber}">${gameName}</option>`;
     }).join('');
@@ -3615,7 +3618,8 @@ function createGameOptions() {
 
 function createLangOptions(allowedCategories) {
     const elements = translations[currentLang];
-    return languageList
+    const sortedLangs = sortTranslatedArray(languageList);
+    return sortedLangs
      .filter(language => allowedCategories.includes(language.languageCategoryNumber))
      .map(language => {
         const languageName = elements[language.translationLabel] || language.name;
@@ -3625,7 +3629,8 @@ function createLangOptions(allowedCategories) {
 
 function createManeuverOptions(maneuverCategoryNumbers) {
     const elements = translations[currentLang];
-    return maneuverCategoryList
+    const sortedManeuvers = sortTranslatedArray(maneuverCategoryList);
+    return sortedManeuvers
         .filter(maneuver => maneuverCategoryNumbers.includes(maneuver.maneuverCategoryNumber))
         .map(maneuver => {
             const maneuverName = elements[maneuver.translationLabel] || maneuver.translationLabel;
@@ -3636,7 +3641,8 @@ function createManeuverOptions(maneuverCategoryNumbers) {
 
 function createToolOptions(categoryNumbers) {
     const elements = translations[currentLang];
-    return toolList
+    const sortedTools = sortTranslatedArray(toolList);
+    return sortedTools
         .filter(tool => categoryNumbers.includes(tool.toolCategoryNumber))
         .map(tool => {
             const toolName = elements[tool.translationLabel] || tool.translationLabel;
@@ -3748,13 +3754,12 @@ function createFeywildGiftsOptions() {
 
 function createMetamagicOptions() {
     const elements = translations[currentLang];
-    const sorceryPointsAbbr = elements.sorceryPointsAbbr || 'ZP'; // ZP = Zaubereipunkte
-
-    return metamagicOptionsList.map(option => {
+    const sorceryPointsAbbr = elements.sorceryPointsAbbr || 'ZP';
+    const sortedMetamagic = sortTranslatedArray(metamagicOptionsList);
+    return sortedMetamagic.map(option => {
         const optionName = elements[option.translationLabel] || option.translationLabel;
         const cost = option.sorceryPointCost;
         const displayText = `${optionName} (${cost} ${sorceryPointsAbbr})`;
-
         return `<option value="${option.ID}">${displayText}</option>`;
     }).join('');
 }
@@ -3827,21 +3832,23 @@ document.querySelectorAll('select.dropdown[name^=spellList]').forEach(dropdown =
 function createEldritchInvocationOptions(characterLevel, alreadySelectedInvocations = []) {
     const elements = translations[currentLang];
 
-    // Schritt 1: Finde die 'translationLabel' ALLER bereits gewählten Invocations.
-    // Das macht die Voraussetzungs-Prüfung universell und nicht nur auf "Pacts" beschränkt.
-    const selectedInvocationLabels = alreadySelectedInvocations.map(selectedId => {
-        const foundInvocation = eldritchInvocationOptionsList.find(inv => inv.eldritchInvocationOption == selectedId);
-        return foundInvocation ? foundInvocation.translationLabel : null;
-    }).filter(Boolean); // Entfernt eventuelle 'null'-Werte
+    // 1. Die Liste alphabetisch nach übersetzten Namen sortieren
+    const sortedInvocations = sortTranslatedArray(eldritchInvocationOptionsList);
 
-    return eldritchInvocationOptionsList.map(invocation => {
+    // Schritt 1: Finde die 'translationLabel' ALLER bereits gewählten Invocations.
+    const selectedInvocationLabels = alreadySelectedInvocations.map(selectedId => {
+        const foundInvocation = sortedInvocations.find(inv => inv.eldritchInvocationOption == selectedId);
+        return foundInvocation ? foundInvocation.translationLabel : null;
+    }).filter(Boolean);
+
+    // 2. Mit der sortierten Liste weiterarbeiten
+    return sortedInvocations.map(invocation => {
         // --- Regel 1: Level-Voraussetzung ---
         const levelMet = invocation.level <= characterLevel;
 
         // --- Regel 2: Universelle Voraussetzungs-Prüfung ---
         let prerequisiteMet = true;
         if (invocation.prerequisite_Invocation && invocation.prerequisite_Invocation !== 0) {
-            // Prüft, ob die benötigte 'translationLabel' in der Liste der bereits gewählten Labels ist.
             if (!selectedInvocationLabels.includes(invocation.prerequisite_Invocation)) {
                 prerequisiteMet = false;
             }
@@ -3851,16 +3858,15 @@ function createEldritchInvocationOptions(characterLevel, alreadySelectedInvocati
         const isAlreadySelected = alreadySelectedInvocations.includes(String(invocation.eldritchInvocationOption));
         const isSelectable = invocation.repeatable === 1 || !isAlreadySelected;
 
-        // Gesamtergebnis: Nur wenn alle Bedingungen erfüllt sind, ist die Option wählbar.
+        // Gesamtergebnis
         const isAvailable = levelMet && prerequisiteMet && isSelectable;
 
         // --- Erstellung des Anzeigetextes ---
         const optionName = elements[invocation.translationLabel] || invocation.translationLabel;
         let displayText = `${optionName} (${elements.levelAbbr || 'St'} ${invocation.level})`;
 
-        // Bonus: Wenn eine Voraussetzung nicht erfüllt ist, zeige sie direkt im Text an.
         if (!prerequisiteMet && invocation.prerequisite_Invocation) {
-            const prereqObject = eldritchInvocationOptionsList.find(p => p.translationLabel === invocation.prerequisite_Invocation);
+            const prereqObject = sortedInvocations.find(p => p.translationLabel === invocation.prerequisite_Invocation);
             const prereqName = prereqObject ? (elements[prereqObject.translationLabel] || prereqObject.translationLabel) : '';
             if (prereqName) {
                  displayText += ` (${elements.requiredLabel || 'Benötigt'}: ${prereqName})`;
@@ -7686,12 +7692,13 @@ function updateItemDropdown() {
             break;
     }
 
-    const options = itemList.map(item => {
+    const sortedItemList = sortTranslatedArray(itemList);
+
+    const options = sortedItemList.map(item => {
         const name = elements[item.translationLabel] || item.translationLabel;
         const cost = getCostObject(item);
         const costDisplay = cost ? ` (${cost.value} ${elements[cost.unit] || cost.unit.replace('Label', '')})` : '';
 
-        // Das verhindert Konflikte bei doppelten IDs in kombinierten Listen.
         return `<option value="${item.translationLabel}">${name}${costDisplay}</option>`;
     }).join('');
 
@@ -9706,11 +9713,6 @@ function goToStep(step) {
 
     currentStep = step; // für mobile version
 
-    // Das hier sendet den aktuellen Schritt an Plausible
-    if (typeof plausible === 'function') {
-        plausible('Step Reach', { props: { number: step } });
-    }
-
     // Sprachumschalter-Element definieren
     const languageSwitcher = document.getElementById("languageSwitcher");
 
@@ -10019,13 +10021,26 @@ function resetDynamicSubclassContent() {
 }
 
 //=======================================================================
-// Übersetzung
+// Hilfsfunktionen
 //=======================================================================
 
+// Übersetzung
 function updateDropdownsForLanguage() {
     if (selectedClassName) {
         populateClassFormOptions(selectedClassName);
     }
+}
+
+// Alphabetische Dropdown-Optionen
+function sortTranslatedArray(array) {
+    if (!array || !Array.isArray(array)) return [];
+    const elements = translations[currentLang];
+
+    return [...array].sort((a, b) => {
+        const nameA = elements[a.translationLabel] || a.translationLabel || "";
+        const nameB = elements[b.translationLabel] || b.translationLabel || "";
+        return nameA.localeCompare(nameB, currentLang);
+    });
 }
 
 //=======================================================================

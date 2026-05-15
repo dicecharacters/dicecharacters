@@ -7,8 +7,7 @@
     <link rel="stylesheet" href="css/sheet_style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
 
-    <script defer data-domain="dicecharacters.com" src="https://plausible.io/js/script.js"></script>
-    <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="69f61406-c360-48a7-9559-13da14ddd7cb"></script>
 
     <script src="translations/translationsCore.js"></script>
     <script src="translations/translationsBarbarian.js"></script>
@@ -59,19 +58,39 @@
     <script src="featureHandlers.js"></script>
 </head>
 <body>
-<div class="control-group">
-    <div id="appendixToggleWrapper" style="display: none; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 5px; background: rgba(0,0,0,0.7); padding: 8px 12px; border-radius: 12px;">
-        <label for="generateSpellDesc" id="generateSpellDescLabel" style="color: white; font-size: 1.2rem; cursor: pointer;"></label>
-        <input type="checkbox" id="generateSpellDesc" class="rounded-checkbox" style="width: 1.5rem; height: 1.5rem; cursor: pointer;" onchange="toggleAppendix()">
+<div class="fab-container no-print">
+    <div class="fab-menu">
+        
+	<label id="appendixToggleWrapper" class="fab-btn btn-appendix fab-item-row" style="display: none;" for="generateSpellDesc">
+    	    <span id="generateSpellDescLabel"></span>
+            <input type="checkbox" id="generateSpellDesc" class="fab-checkbox" onchange="toggleAppendix()">
+	</label>
+
+        <button id="editModeBtn" class="fab-btn btn-edit" onclick="toggleEditMode()">
+            <span id="editModeBtnText"></span>
+        </button>
+
+        <button id="exportJsonBtn" class="fab-btn btn-export" onclick="exportCharacterJSON()">
+            <span id="exportBtnText"></span>
+        </button>
+
+        <input type="file" id="importJsonInput" style="display: none;" accept=".json" onchange="importCharacterJSON(event)">
+        <button id="importJsonBtn" class="fab-btn btn-import" onclick="confirmImport()">
+            <span id="importBtnText"></span>
+        </button>
+
+        <button id="downloadBtn" class="fab-btn btn-pdf" onclick="downloadPDF()">
+            <span id="downloadBtnText"></span>
+        </button>
+
+        <button id="clearDataBtn" class="fab-btn btn-clear" onclick="confirmClearData()">
+            <span id="clearBtnText"></span>
+        </button>      
     </div>
 
-    <button id="editModeBtn" class="control-btn edit-btn" onclick="toggleEditMode()">
-        Bearbeiten
-    </button>
-    
-    <button id="downloadBtn" class="control-btn download-btn" onclick="downloadPDF()">
-        Als PDF herunterladen
-    </button>
+    <div class="fab-trigger">
+        <span class="fab-icon">🛠</span>
+    </div>
 </div>
 <div id="sheetRoot">
     <div class="page">
@@ -668,6 +687,7 @@
 
         <footer class="sheet-footer">
             <div class="footer-left">
+		<a href="https://www.dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
                 </div>
             <div class="footer-right">
 		<span id="pageNumberLabel"></span>
@@ -722,6 +742,7 @@
 
         <footer class="sheet-footer">
             <div class="footer-left">
+		<a href="https://www.dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
             </div>
             <div class="footer-right">
 		<span id="pageNumberLabel"></span>
@@ -862,6 +883,7 @@
 
         <footer class="sheet-footer">
             <div class="footer-left">
+		<a href="https://www.dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
             </div>
             <div class="footer-right">
                 <span id="pageNumberLabel"></span>
@@ -906,6 +928,7 @@
 
         <footer class="sheet-footer">
             <div class="footer-left">
+		<a href="https://www.dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
             </div>
             <div class="footer-right">
 		<span id="pageNumberLabel"></span>
@@ -1031,6 +1054,7 @@
 
         <footer class="sheet-footer">
             <div class="footer-left">
+		<a href="https://www.dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
             </div>
             <div class="footer-right">
 		<span id="pageNumberLabel"></span>
@@ -1087,34 +1111,57 @@ window.onload = function() {
     applyTranslations();
 
     // 3. Daten aus Local Storage holen (Areal 2)
+    // Die loadCharacterDataFromStorage liefert nun auch charData.isManualMode
     const charData = loadCharacterDataFromStorage();
 
     /* ==========================================================
-       NEU: PRÜFUNG OB ZAUBER (Seite 5) ERFORDERLICH
+       INITIALISIERUNG MODUS (MANUELL VS. ERSTELLER)
        ========================================================== */
-    // 1. ZAUBER-SEITE PRÜFEN (Seite 5)
-    const hasCantrips = (charData.spells.cantrips && charData.spells.cantrips.length > 0);
-    const hasPrepared = (charData.spells.prepared && charData.spells.prepared.length > 0);
-    const hasSpellbook = (charData.spells.spellbook && charData.spells.spellbook.length > 0);
-    const hasFavored = (charData.spells.favored && charData.spells.favored.length > 0);
-
-    if (!hasCantrips && !hasPrepared && !hasSpellbook && !hasFavored) {
-        const page5 = document.getElementById('page5-wrapper');
-        if (page5) page5.remove(); 
-        totalPages--; 
-        console.log("Seite 5 (Zauber) ausgeblendet.");
-    }
-
-    // 2. ZAUBERBUCH-SEITE PRÜFEN (Seite 6)
-    const isWizard = charData.basic.class && charData.basic.class.toLowerCase() === 'wizard';
-    if (!isWizard) {
+    if (charData.isManualMode) {
+        console.log("Manueller Modus aktiv: Initialisiere leeren Bogen.");
+        
+        // Im manuellen Modus lassen wir standardmäßig alle Seiten zu (5 Seiten)
+        totalPages = 5;
         const page6 = document.getElementById('page6-wrapper');
-        if (page6) page6.remove(); 
-        totalPages--;
-        console.log("Seite 6 (Zauberbuch) ausgeblendet (Charakter ist kein Magier).");
+        if (page6) page6.remove();
+
+        // Zauberanhang-Checkbox standardmäßig aktivieren
+        const appendixCheckbox = document.getElementById('generateSpellDesc');
+        if (appendixCheckbox) {
+            appendixCheckbox.checked = true;
+            // Kleiner Timeout stellt sicher, dass das DOM bereit ist für toggleAppendix
+            setTimeout(() => {
+                if (typeof toggleAppendix === 'function') toggleAppendix();
+            }, 100);
+        }
+    } else {
+        /* ==========================================================
+           PRÜFUNG OB ZAUBER (Seite 5) ERFORDERLICH (Bestehende Logik)
+           ========================================================== */
+        // 1. ZAUBER-SEITE PRÜFEN (Seite 5)
+        const hasCantrips = (charData.spells.cantrips && charData.spells.cantrips.length > 0);
+        const hasPrepared = (charData.spells.prepared && charData.spells.prepared.length > 0);
+        const hasSpellbook = (charData.spells.spellbook && charData.spells.spellbook.length > 0);
+        const hasFavored = (charData.spells.favored && charData.spells.favored.length > 0);
+
+        if (!hasCantrips && !hasPrepared && !hasSpellbook && !hasFavored) {
+            const page5 = document.getElementById('page5-wrapper');
+            if (page5) page5.remove(); 
+            totalPages--; 
+            console.log("Seite 5 (Zauber) ausgeblendet.");
+        }
+
+        // 2. ZAUBERBUCH-SEITE PRÜFEN (Seite 6)
+        const isWizard = charData.basic.class && charData.basic.class.toLowerCase() === 'wizard';
+        if (!isWizard) {
+            const page6 = document.getElementById('page6-wrapper');
+            if (page6) page6.remove(); 
+            totalPages--;
+            console.log("Seite 6 (Zauberbuch) ausgeblendet (Charakter ist kein Magier).");
+        }
     }
 
-    // Fußzeilen sofort aktualisieren!
+    // Fußzeilen nach Seiten-Anpassung aktualisieren!
     document.querySelectorAll('.total-pages-display').forEach(el => {
         el.textContent = totalPages;
     });
@@ -1139,7 +1186,7 @@ window.onload = function() {
     applySpeciesFeatureLogic(charData);
     processSpeciesTraits(charData);
 
-    // 3f. KLassenmerkmale
+    // 3f. Klassenmerkmale
     applyClassFeatureLogic(charData);
     processClassFeatures(charData);
 
@@ -1162,13 +1209,15 @@ window.onload = function() {
     setupImageUploads();
     loadSavedImages();
     initAppendixToggle();
-    applyFieldLocks();
+    applyFieldLocks(); // Sperrt Felder basierend auf Modus und Edit-Status
 
-    // 5. Übersetzungen
+    // 5. Überprüfung von Import-Daten
+    setTimeout(() => {
+        applyImportOverrides();
+    }, 100); // Kleiner Timeout sorgt dafür, dass alle async-Prozesse fertig sind
 
     console.log('Initialisierung abgeschlossen.');
 };
-
 
 /* ==========================================================================
    AREAL 2: DATEN AUS LOCAL STORAGE EMPFANGEN
@@ -1176,33 +1225,43 @@ window.onload = function() {
 function loadCharacterDataFromStorage() {
     const ls = localStorage;
     
-    // Wir sammeln hier alle Raw-Daten ein.
+    // Prüfen, ob überhaupt Basis-Daten da sind
+    const hasData = ls.getItem("characterName") !== null || ls.getItem("class") !== null;
+
+    // Hilfsfunktion für sicheres JSON-Parsen
+    const safeParse = (key, fallback) => {
+        const val = ls.getItem(key);
+        if (!val) return fallback;
+        try { return JSON.parse(val); } catch(e) { return fallback; }
+    };
+
     return {
+        isManualMode: !hasData, // Wenn keine Daten da sind -> Manueller Modus
         basic: {
             name: ls.getItem("characterName") || "",
             playerName: ls.getItem("playerName") || "",
-            class: ls.getItem("class"),           
-            background: ls.getItem("background"), 
-            species: ls.getItem("species"),       
-            lineage: ls.getItem("lineage"),
-            ancestry: ls.getItem("ancestry"),     
+            class: ls.getItem("class") || "",           
+            background: ls.getItem("background") || "", 
+            species: ls.getItem("species") || "",       
+            lineage: ls.getItem("lineage") || "",
+            ancestry: ls.getItem("ancestry") || "",     
             level: parseInt(ls.getItem("level")) || 1,
             xp: ls.getItem("xp") || ""
         },
         scores: {
-            strength: ls.getItem("strengthScore"),
-            dexterity: ls.getItem("dexterityScore"),
-            constitution: ls.getItem("constitutionScore"),
-            intelligence: ls.getItem("intelligenceScore"),
-            wisdom: ls.getItem("wisdomScore"), // Dein Original-Fallback
-            charisma: ls.getItem("charismaScore")
+            strength: ls.getItem("strengthScore") || "10",
+            dexterity: ls.getItem("dexterityScore") || "10",
+            constitution: ls.getItem("constitutionScore") || "10",
+            intelligence: ls.getItem("intelligenceScore") || "10",
+            wisdom: ls.getItem("wisdomScore") || "10",
+            charisma: ls.getItem("charismaScore") || "10"
         },
         proficiencies: {
             // Hintergrund (Einzelwerte oder Arrays)
-            bg_tools: JSON.parse(ls.getItem("tool_background")) || [], 
-            bg_instruments: JSON.parse(ls.getItem("instrument_background")) || [],
-            bg_games: JSON.parse(ls.getItem("game_background")) || [],
-            bg_feat: ls.getItem("feat_background"), 
+            bg_tools: safeParse("tool_background", []), 
+            bg_instruments: safeParse("instrument_background", []),
+            bg_games: safeParse("game_background", []),
+            bg_feat: ls.getItem("feat_background"),
 
             // Klasse (Leere Arrays, werden in processTools aus classForm geholt, falls nötig)
             class_tools: [],       
@@ -1210,30 +1269,26 @@ function loadCharacterDataFromStorage() {
             class_games: [],
 
             // Sprachen
-            languages: JSON.parse(ls.getItem("languages")) || []       
+            languages: safeParse("languages", [])       
         },
-	feats: {
-            background: parseInt(ls.getItem("feat_background")) || null,
+	// Equipment
+        classForm: safeParse('classForm', {}),
+        equipment: safeParse('equipment', { weapons: [], armor: [], vehicles: [], tools: [], gear: [] }),
+        purse: safeParse('purse', { PP:0, GP:0, EP:0, SP:0, CP:0 }),
+	// Talente
+        feats: {
+	    background: parseInt(ls.getItem("feat_background")) || null,
             species: parseInt(ls.getItem("feat_species")) || null
             // Hinweis: Klassen-Talente in classForm.feats
         },
         spells: {
-            cantrips: JSON.parse(ls.getItem("cantrips")) || [],
-            spellbook: JSON.parse(ls.getItem("spellbookSpells")) || [],
-            prepared: JSON.parse(ls.getItem("preparedSpells")) || [],
-            favored: JSON.parse(ls.getItem("favoredSpells")) || [],
+            cantrips: safeParse("cantrips", []),
+            spellbook: safeParse("spellbookSpells", []),
+            prepared: safeParse("preparedSpells", []),
+            favored: safeParse("favoredSpells", []),
 
             spellcastingAbility_species: ls.getItem("spellcastingAbility_species") || null,
-            spellcastingAbility_talent: JSON.parse(ls.getItem("spellcastingAbility_talent")) || null
-        },
-        details: {
-            story: ls.getItem("story") || "",
-            deityId: ls.getItem("deityId") || "",
-            deityName: ls.getItem("deityName") || "",
-            communityName: ls.getItem("communityName") || "",
-            communityDesc: ls.getItem("communityDesc") || "",
-            alignment: ls.getItem("alignment") || "",
-            personalityTraits: ls.getItem("personalityTraits") || ""
+            spellcastingAbility_talent: safeParse("spellcastingAbility_talent", null)
         },
         appearance: {
             gender: ls.getItem("gender") || "",
@@ -1244,12 +1299,17 @@ function loadCharacterDataFromStorage() {
             size: ls.getItem("size") || "",
             description: ls.getItem("appearanceDescription") || ""
         },
-        classForm: JSON.parse(ls.getItem('classForm')) || {},
-        equipment: JSON.parse(ls.getItem('equipment')) || {},
-        purse: JSON.parse(ls.getItem('purse')) || {}
+        details: {
+            story: ls.getItem("story") || "",
+            deityId: ls.getItem("deityId") || "",
+            deityName: ls.getItem("deityName") || "",
+            communityName: ls.getItem("communityName") || "",
+            communityDesc: ls.getItem("communityDesc") || "",
+            alignment: ls.getItem("alignment") || "",
+            personalityTraits: ls.getItem("personalityTraits") || ""
+        }
     };
 }
-
 
 /* ==========================================================================
    AREAL 3: DATEN VERARBEITEN UND EINTRAGEN
@@ -2043,8 +2103,7 @@ function processTools(data) {
    -------------------------------------------------------------------------- */
 
 function processInventory(data) {
-    
-    // --- 1. GELDBÖRSE ---
+    // --- 1. GELDBÖRSE --- (unverändert)
     if (data.purse) {
         ['pp', 'gp', 'ep', 'sp', 'cp'].forEach(coin => {
             const field = document.getElementById(coin);
@@ -2064,7 +2123,6 @@ function processInventory(data) {
         { id: 5, source: data.equipment.gear,     rows: 20, col3: 'type' }      
     ];
 
-    // Schalter, um sicherzustellen, dass nur EINE Rüstung angelegt wird
     let armorAlreadyEquipped = false;
 
     boxConfig.forEach(box => {
@@ -2078,7 +2136,6 @@ function processInventory(data) {
         items = expandInventoryPacks(items); 
         items = mergeDuplicateItems(items);
 
-        // --- A. AUTO-EQUIP VORBEREITUNG ---
         const strScore = parseInt(data.scores.strength) || 10;
         const dexScore = parseInt(data.scores.dexterity) || 10;
         const strMod = Math.floor((strScore - 10) / 2);
@@ -2111,7 +2168,6 @@ function processInventory(data) {
             });
         }
 
-        // --- B. ZEILEN ZEICHNEN ---
         for (let i = 0; i < box.rows; i++) {
             if (!rows[i]) break; 
             const row = rows[i];
@@ -2140,6 +2196,10 @@ function processInventory(data) {
                 if (box.col3 === 'checkbox') {
                     inputs[2].setAttribute('data-index', i);
                     
+                    // --- NEU: EINDEUTIGE ID FÜR DIE KOPPLUNG AN DIE ANGRIFFSTABELLE ---
+                    const sourceId = `inv-${box.id}-row-${i}`;
+                    inputs[2].setAttribute('data-source-id', sourceId);
+                    
                     if (box.id === 1) { // WAFFEN
                         inputs[2].setAttribute('onchange', 'updatePhysicalAttacks()');
                         let shouldCheck = false;
@@ -2154,30 +2214,23 @@ function processInventory(data) {
                     } 
                     else if (box.id === 2) { // RÜSTUNG
                         let shouldCheckArmor = false;
-
-                        // 1. Wenn es ein Schild ist, darf er immer zusätzlich angelegt werden
                         if (item.label === 'shieldLabel') {
                             shouldCheckArmor = (item.equipped === true);
                         } 
-                        // 2. Normale Rüstung: Nur wenn noch keine andere angelegt wurde
                         else if (!armorAlreadyEquipped) {
-                            // Entweder bereits im Speicher markiert...
                             if (item.equipped === true) {
                                 shouldCheckArmor = true;
                                 armorAlreadyEquipped = true;
                             } 
-                            // ...oder es ist die beste Rüstung (Auto-Equip)
                             else if (canAutoEquipArmor) {
                                 const aData = armorList.find(a => a.translationLabel === item.label);
                                 if (aData && (parseInt(aData.armorClass) || 0) === maxArmorAC) {
                                     shouldCheckArmor = true;
                                     item.equipped = true; 
-                                    armorAlreadyEquipped = true; // Sperre für weitere Rüstungen setzen
+                                    armorAlreadyEquipped = true;
                                 }
                             }
                         } else {
-                            // Falls durch fehlerhafte Daten mehrere auf true standen, 
-                            // setzen wir alle weiteren auf false
                             item.equipped = false;
                         }
 
@@ -2191,12 +2244,6 @@ function processInventory(data) {
                         }
                     }
                 }
-                else if (box.col3 === 'capacity') inputs[2].value = getCapacityString(item.label);
-                else if (box.col3 === 'type') {
-                    const typeKey = item.typeLabel;
-                    const translatedType = (translations[currentLanguage] && translations[currentLanguage][typeKey]) ? translations[currentLanguage][typeKey] : typeKey;
-                    inputs[2].value = (!typeKey || typeKey === 'singleItemLabel') ? "-" : translatedType;
-                }
             } else {
                 // Leerzeilen zurücksetzen...
                 if(inputs[0]) inputs[0].value = "";
@@ -2205,6 +2252,7 @@ function processInventory(data) {
                     if (inputs[2].type === "checkbox") {
                         inputs[2].checked = false;
                         inputs[2].removeAttribute('onchange');
+                        inputs[2].removeAttribute('data-source-id'); // ID entfernen
                     } else {
                         inputs[2].value = "";
                     }
@@ -2372,64 +2420,78 @@ function getCapacityString(itemLabel) {
  * Liest alle gecheckten Waffen aus und füllt die obere Tabelle.
  */
 function updatePhysicalAttacks() {
-    const headerEl = document.getElementById('th_amount_1');
-    if (!headerEl) return; 
-
-    // 1. DATEN LADEN & AUFBEREITEN (Synchron zur Anzeige!)
-    const charData = loadCharacterDataFromStorage(); 
-    let processedWeapons = charData.equipment.weapons || [];
+    const attackHeader = document.getElementById('th_weapon_attack');
+    if (!attackHeader) return;
+    const attackRows = attackHeader.closest('table').querySelector('tbody').querySelectorAll('tr');
     
-    // WICHTIG: Dieselben Filter anwenden wie bei der Anzeige
-    processedWeapons = expandInventoryPacks(processedWeapons);
+    const inventoryHeader = document.getElementById('th_amount_1');
+    if (!inventoryHeader) return;
+    const inventoryRows = inventoryHeader.closest('table').querySelector('tbody').querySelectorAll('tr');
+
+    // 1. SCHRITT: Welche Datenbank-Waffen sind aktuell im Inventar markiert?
+    const charData = loadCharacterDataFromStorage();
+    let processedWeapons = expandInventoryPacks(charData.equipment.weapons || []);
     processedWeapons = mergeDuplicateItems(processedWeapons);
 
-    // 2. CHECKBOXEN AUSLESEN
-    const weaponRows = headerEl.closest('table').querySelector('tbody').querySelectorAll('tr');
-    const equippedWeapons = [];
-
-    weaponRows.forEach(row => {
-        const checkbox = row.querySelector('input[type="checkbox"]');
-        
-        if (checkbox && checkbox.checked) {
-            // Wir lesen den Index aus, den wir in processInventory gesetzt haben
-            const indexStr = checkbox.getAttribute('data-index');
-            
-            if (indexStr !== null) {
-                const index = parseInt(indexStr, 10);
-                
-                // Wir holen das Item aus der BEREINIGTEN Liste
-                if (processedWeapons[index]) {
-                    equippedWeapons.push(processedWeapons[index]);
+    const activeDbWeapons = [];
+    inventoryRows.forEach(iRow => {
+        const cb = iRow.querySelector('input[type="checkbox"]');
+        if (cb && cb.checked) {
+            const index = parseInt(cb.getAttribute('data-index'), 10);
+            const item = processedWeapons[index];
+            if (item) {
+                // Prüfen, ob die Waffe in der Datenbank existiert
+                const wData = typeof weaponList !== 'undefined' ? weaponList.find(w => w.translationLabel === item.label) : null;
+                if (wData) {
+                    activeDbWeapons.push({ item, wData });
                 }
             }
         }
     });
 
-    // 3. ANGRIFFSTABELLE LEEREN
-    const attackHeader = document.getElementById('th_weapon_attack');
-    if (!attackHeader) return;
-    const attackRows = attackHeader.closest('table').querySelector('tbody').querySelectorAll('tr');
+    // 2. SCHRITT: Abgleich der Angriffstabelle
+    // Wir löschen NUR Zeilen, die eine Datenbank-Verknüpfung hatten, aber nicht mehr aktiv sind.
+    // Manuelle Zeilen (ohne data-db-linked) bleiben absolut unberührt.
+    attackRows.forEach(aRow => {
+        const isLinked = aRow.hasAttribute('data-db-linked');
+        const currentName = aRow.querySelectorAll('input')[0].value;
 
-    attackRows.forEach(row => {
-        row.querySelectorAll('input').forEach(input => input.value = "");
-        row.querySelectorAll('select').forEach(sel => sel.remove());
-        row.querySelectorAll('input').forEach(input => input.style.display = 'block');
+        if (isLinked) {
+            // Prüfen, ob diese Datenbank-Waffe noch in unserer aktiven Liste ist
+            const stillActive = activeDbWeapons.some(dbW => {
+                const tName = (translations[currentLanguage] && translations[currentLanguage][dbW.item.label]) || dbW.item.label;
+                return tName === currentName;
+            });
+
+            if (!stillActive) {
+                // Nur wenn es eine DB-Waffe war und sie nicht mehr aktiv ist: Löschen
+                aRow.querySelectorAll('input').forEach(inp => inp.value = "");
+                aRow.removeAttribute('data-db-linked');
+                const oldSelect = aRow.querySelector('select');
+                if (oldSelect) oldSelect.remove();
+                aRow.querySelectorAll('input').forEach(inp => inp.style.display = 'block');
+            }
+        }
     });
 
-    // 4. ZEILEN BEFÜLLEN
-    // Stats laden
-    const pbInput = document.getElementById('proficiencyBonus');
-    const pb = pbInput ? (parseInt(pbInput.value.replace('+','')) || 2) : 2;
-    const strInput = document.getElementById('strengthModifier');
-    const strMod = strInput ? (parseInt(strInput.value) || 0) : 0;
-    const dexInput = document.getElementById('dexterityModifier');
-    const dexMod = dexInput ? (parseInt(dexInput.value) || 0) : 0;
+    // 3. SCHRITT: Neue Datenbank-Waffen hinzufügen
+    const pb = parseInt(document.getElementById('proficiencyBonus')?.value.replace('+', '')) || 2;
+    const strMod = parseInt(document.getElementById('strengthModifier')?.value) || 0;
+    const dexMod = parseInt(document.getElementById('dexterityModifier')?.value) || 0;
 
-    equippedWeapons.forEach((item, index) => {
-        // Wir haben nur 8 Zeilen für Angriffe
-        if (index < attackRows.length) {
-            const row = attackRows[index];
-            renderAttackRow(row, item, charData, strMod, dexMod, pb);
+    activeDbWeapons.forEach(dbW => {
+        const translatedName = (translations[currentLanguage] && translations[currentLanguage][dbW.item.label]) || dbW.item.label;
+        
+        // Ist diese DB-Waffe schon in der Tabelle?
+        const alreadyInTable = Array.from(attackRows).some(r => r.querySelectorAll('input')[0].value === translatedName);
+
+        if (!alreadyInTable) {
+            // Suche erste freie Zeile
+            const freeRow = Array.from(attackRows).find(r => r.querySelectorAll('input')[0].value === "");
+            if (freeRow) {
+                freeRow.setAttribute('data-db-linked', 'true');
+                renderAttackRow(freeRow, dbW.item, charData, strMod, dexMod, pb);
+            }
         }
     });
 }
@@ -4387,9 +4449,9 @@ const spellRowsConfig = {
 
 function processSpellsPage(data) {
     console.log("Verarbeite Zauber (Seite 5)...");
-    
-    // 1. Labels setzen
     const t = translations[currentLanguage];
+    
+    // Labels setzen
     setTextContent('page5Title', t['spellsLabel']);
     setTextContent('th_spell_name', t['nameLabel'] || "Name");
     setTextContent('th_spell_ability', t['abilityLabel'] || "Attr.");
@@ -4400,24 +4462,41 @@ function processSpellsPage(data) {
 
     const tableBody = document.getElementById('spellTableBody');
     if (!tableBody) return;
-    tableBody.innerHTML = ""; // Reset
 
-    // 2. Daten vorbereiten (Alle Zauber sammeln)
-    // Wir mappen prepared UND cantrips in eine Liste mit Zusatzinfos
+    // --- SCHRITT A: MANUELLE INHALTE GRAD-SPEZIFISCH SPEICHERN ---
+    const manualOverridesByLevel = {}; 
+    let currentScanningLevel = null;
+
+    // Wir gehen durch alle existierenden Zeilen, bevor wir sie löschen
+    const existingRows = tableBody.querySelectorAll('tr');
+    existingRows.forEach(row => {
+        if (row.classList.contains('spell-level-header')) {
+            // Wir zählen die Header mit, um den aktuellen Grad (0-9) zu bestimmen
+            if (currentScanningLevel === null) currentScanningLevel = 0;
+            else currentScanningLevel++;
+            manualOverridesByLevel[currentScanningLevel] = [];
+        } else if (currentScanningLevel !== null && !row.hasAttribute('data-db-spell')) {
+            // Nur Zeilen sichern, die NICHT automatisch (DB) befüllt wurden
+            const inputs = row.querySelectorAll('input');
+            const rowValues = Array.from(inputs).map(inp => inp.value);
+            // Nur speichern, wenn die Zeile manuellen Text enthält
+            if (rowValues.some(v => v.trim() !== "")) {
+                manualOverridesByLevel[currentScanningLevel].push(rowValues);
+            }
+        }
+    });
+
+    // --- SCHRITT B: TABELLE LEEREN ---
+    tableBody.innerHTML = ""; 
+
+    // --- SCHRITT C: ZAUBER-DATEN SAMMELN ---
     let allSpells = [];
-    
-    // Helper: Zauber hinzufügen
     const addSpellToList = (list, type) => {
         if (!list) return;
         list.forEach(entry => {
-            // entry hat: { spellId: 1, source: {...} }
             const spellObj = spellList.find(s => s.ID === entry.spellId);
             if (spellObj) {
-                allSpells.push({
-                    spell: spellObj,
-                    source: entry.source,
-                    type: type // 'cantrip' oder 'prepared'
-                });
+                allSpells.push({ spell: spellObj, source: entry.source, type: type });
             }
         });
     };
@@ -4425,78 +4504,68 @@ function processSpellsPage(data) {
     addSpellToList(data.spells.cantrips, 'cantrip');
     addSpellToList(data.spells.prepared, 'prepared');
 
-    // 3. Durch alle Grade iterieren (0 bis 9)
+    // --- SCHRITT D: GRADE RENDERN (mit grad-spezifischen Overrides) ---
     for (let level = 0; level <= 9; level++) {
-        renderSpellLevelBlock(level, allSpells, data, tableBody);
+        // Wir übergeben nur die Overrides, die zu diesem spezifischen Level gehören
+        const levelSpecificOverrides = manualOverridesByLevel[level] || [];
+        renderSpellLevelBlock(level, allSpells, data, tableBody, levelSpecificOverrides);
     }
+    
+    applyFieldLocks();
 }
 
-function renderSpellLevelBlock(level, allSpells, data, tableBody) {
+function renderSpellLevelBlock(level, allSpells, data, tableBody, manualOverrides) {
     const t = translations[currentLanguage];
     
-    // A. Trennzeile erstellen
+    // Header-Zeile (mit Slots)
     const trHeader = document.createElement('tr');
     trHeader.className = "spell-level-header";
-    
     const labelKey = level === 0 ? "cantripLabel" : getLevelKey(level);
     const levelName = t[labelKey] || labelKey;
-
     let headerContent = `<td colspan="6" style="padding-left: 10px;">${levelName}`;
-
-    // Slots hinzufügen (außer bei Cantrips)
     if (level > 0) {
         const slots = calculateSpellSlots(level, data);
         const slotLabel = t['spellSlotsLabel'] || "Zauberplätze";
-        
-        // HTML für Checkboxen bauen
         let checkboxes = "";
-        for(let i=0; i<slots; i++) {
-            checkboxes += `<input type="checkbox" class="slot-checkbox">`;
-        }
-        
-        // Nur anzeigen, wenn Slots > 0
-        if (slots > 0) {
-            headerContent += `<div class="spell-slots-container" style="float:right;">
-                                <span>${slotLabel} (${slots}):</span> 
-                                ${checkboxes}
-                              </div>`;
-        } else {
-             // Optional: Anzeige "Keine Slots" oder leer lassen
-             headerContent += `<div class="spell-slots-container" style="float:right;">
-                                <span style="font-weight:normal; font-size:0.8em;">-</span> 
-                              </div>`;
-        }
+        for(let i=0; i<slots; i++) checkboxes += `<input type="checkbox" class="slot-checkbox">`;
+        if (slots > 0) headerContent += `<div class="spell-slots-container" style="float:right;"><span>${slotLabel} (${slots}):</span> ${checkboxes}</div>`;
     }
-    
     headerContent += `</td>`;
     trHeader.innerHTML = headerContent;
     tableBody.appendChild(trHeader);
 
-    // B. Zauber für diesen Grad filtern
-    // Hinweis: In spellList ist spellLevel ein String Key (z.B. "cantripLabel", "1stLevelLabel")
+    // Zauber filtern
     const targetLabelKey = level === 0 ? "cantripLabel" : getLevelKey(level);
-    
     const spellsForLevel = allSpells.filter(s => s.spell.spellLevel === targetLabelKey);
-
-    // C. Zeilen rendern (feste Anzahl)
     const rowCount = spellRowsConfig[level] || 0;
 
     for (let i = 0; i < rowCount; i++) {
         const tr = document.createElement('tr');
         
-        // Wenn ein Zauber vorhanden ist, füllen wir ihn ein. Sonst leer.
         if (i < spellsForLevel.length) {
-            const entry = spellsForLevel[i];
-            fillSpellRow(tr, entry, data, level);
-        } else {
-            // Leere Zeile
+            tr.setAttribute('data-db-spell', 'true');
+            fillSpellRow(tr, spellsForLevel[i], data, level);
+        } 
+        else if (manualOverrides && manualOverrides.length > 0) {
+            // Nimmt den nächsten manuellen Eintrag für GENAU DIESEN GRAD
+            const v = manualOverrides.shift(); 
             tr.innerHTML = `
-                <td></td>
-                <td><input type="text" class="spell-input" readonly></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
+                <td><input type="text" class="spell-input" value="${v[0] || ''}"></td>
+                <td><input type="text" class="spell-input center-text" value="${v[1] || ''}"></td>
+                <td><input type="text" class="spell-input center-text" value="${v[2] || ''}"></td>
+                <td><input type="text" class="spell-input center-text" value="${v[3] || ''}"></td>
+                <td><input type="text" class="spell-input" value="${v[4] || ''}"></td>
+                <td><input type="text" class="spell-input center-text" value="${v[5] || ''}"></td>
+            `;
+        }
+        else {
+            tr.innerHTML = `
+                <td><input type="text" class="spell-input"></td>
+                <td><input type="text" class="spell-input center-text"></td>
+                <td><input type="text" class="spell-input center-text"></td>
+                <td><input type="text" class="spell-input center-text"></td>
+                <td><input type="text" class="spell-input"></td>
+                <td><input type="text" class="spell-input center-text"></td>
             `;
         }
         tableBody.appendChild(tr);
@@ -4546,14 +4615,13 @@ function fillSpellRow(tr, entry, data, level) {
     }
 
     // HTML einfügen
-    // KORREKTUR: Im ersten TD steht jetzt level (also 0) statt der Abfrage nach "C"
     tr.innerHTML = `
-        <td><input type="text" class="spell-input" value="${name}" readonly></td>
-        <td class="center-text">${abilityName}</td>
-        <td class="center-text">${stats.dc}</td>
-        <td class="center-text">${stats.attack}</td>
-        <td><input type="text" class="spell-input" value="${benefitText}" readonly></td>
-        <td class="center-text">${appPage}</td>
+        <td><input type="text" class="spell-input" value="${name}"></td>
+        <td><input type="text" class="spell-input center-text" value="${abilityName}"></td>
+        <td><input type="text" class="spell-input center-text" value="${stats.dc}"></td>
+        <td><input type="text" class="spell-input center-text" value="${stats.attack}"></td>
+        <td><input type="text" class="spell-input" value="${benefitText}"></td>
+        <td><input type="text" class="spell-input center-text" value="${appPage}"></td>
     `;
 }
 
@@ -4562,8 +4630,17 @@ function determineSpellAbility(source, data) {
     if (!source) return "intelligenceLabel"; // Fallback
 
     // Fall 1: Volk
-    if (source.type === 'Volk' || source.type === 'Species') {
-        return data.spells.spellcastingAbility_species || "intelligenceLabel";
+    if (source.type === 'Volk' || source.type === 'Species' || source.type === 'lineage') {
+        const abilityId = data.spells.spellcastingAbility_species;
+        
+        if (abilityId) {
+            // Suchen des Attributs in der Liste anhand der ID (5 -> wisdomLabel)
+            const attrEntry = attributeList.find(a => a.ID == abilityId);
+            if (attrEntry) {
+                return attrEntry.translationLabel;
+            }
+        }
+        return "intelligenceLabel"; // Fallback
     }
 
     // Fall 2: Klasse
@@ -4891,14 +4968,13 @@ function buildAppendix() {
         return getLvl(a.spellLevel) - getLvl(b.spellLevel);
     });
 
-    // 3. TETRIS ALGORITHMUS SETUP
+    // 3. TETRIS ALGORITHMUS SETUP (12-Punkte-System für präzise Mathe)
     let currentAppendixPageNum = 1;
-    let currentHtmlPage = null;
     let colLeft = null;
     let colRight = null;
     
-    let activeCol = 1; // 1 = Links, 2 = Rechts
-    let capacityLeft = 3; // Boxen-Einheiten (1/3) pro Spalte
+    let activeCol = 1;      // 1 = Links, 2 = Rechts
+    let capacityLeft = 12;  // Eine Spalte hat 12 Einheiten
 
     const createNewPage = () => {
         appendixTotalPages++;
@@ -4924,6 +5000,7 @@ function buildAppendix() {
                 </main>
 		<footer class="sheet-footer">
                     <div class="footer-left">
+			<a href="https://www.dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
                     </div>
                     <div class="footer-right">
                         <span>${t['appendixPageLabel'] || 'Anhang Seite'}</span>
@@ -4933,11 +5010,11 @@ function buildAppendix() {
             </div>
         `;
         root.appendChild(pageDiv);
-        currentHtmlPage = pageDiv;
         colLeft = pageDiv.querySelector('.left-col');
         colRight = pageDiv.querySelector('.right-col');
+        
         activeCol = 1;
-        capacityLeft = 3;
+        capacityLeft = 12; 
         currentAppendixPageNum++;
     };
 
@@ -4950,84 +5027,60 @@ function buildAppendix() {
         const name = t[spell.translationLabel] || spell.translationLabel;
         const level = t[spell.spellLevel] || spell.spellLevel;
         const school = t[spell.spellSchool] || spell.spellSchool;
-        
-        let classes = "-";
-        if (Array.isArray(spell.classLabel)) {
-            classes = spell.classLabel.map(c => t[c] || c).join(", ");
-        } else if (spell.classLabel) {
-            classes = t[spell.classLabel] || spell.classLabel;
-        }
-
         const time = t[spell.castingTime] ? `${spell.castingTimeValue} ${t[spell.castingTime]}` : spell.castingTime;
         
-        // Reichweite (Umrechnung ft zu m)
         let range = spell.spellRange;
         if (typeof range === 'number' || !isNaN(range)) {
-            if (currentLanguage === 'de') {
-                range = (parseInt(range, 10) / 5 * 1.5) + " m";
-            } else {
-                range = range + " ft.";
-            }
-        } else {
-            range = t[range] || range;
-        }
+            range = (currentLanguage === 'de') ? (parseInt(range, 10) / 5 * 1.5) + " m" : range + " ft.";
+        } else { range = t[range] || range; }
 
         const duration = spell.durationTimeValue === 0 ? (t[spell.duration] || spell.duration) : `${spell.durationTimeValue} ${t[spell.duration] || spell.duration}`;
         
-        // --- B. Material extrahieren ---
+        // --- B. Beschreibung & Material ---
         let rawDesc = t[spell.spellDLabel] || "";
-        let materialText = "";
-        
-        // Regex sucht nach "Material: ..." bis zum HTML-Zeilenumbruch oder Ende
         const matRegex = /(?:<b[^>]*>)?Material:(?:<\/b>)?\s*(.*?)(?:<br\s*\/?>|<\/p>|<ul>|$)/i;
         const match = rawDesc.match(matRegex);
-        if (match) {
-            materialText = match[1].trim();
-            rawDesc = rawDesc.replace(matRegex, ""); // Entfernt den Material-Satz aus der Beschreibung!
-        }
+        let materialText = match ? match[1].trim() : "";
+        if (match) rawDesc = rawDesc.replace(matRegex, "");
 
-        // Komponenten
         let comps = Array.isArray(spell.components) ? spell.components.map(c => t[c] || c.replace('comp','').replace('Label','')).join(", ") : spell.components;
-        if (materialText && comps.includes("M")) {
-            comps = comps.replace("M", `M (${materialText})`);
-        }
+        if (materialText && comps.includes("M")) comps = comps.replace("M", `M (${materialText})`);
 
-        // Summon Tooltip einfügen
-        const hoverText = t['lookManuelCreatureText'] || "";
-        rawDesc = rawDesc.replace(/<span class="spell-summon-link">(.*?)<\/span>/g, `<span class="spell-summon-link" title="${hoverText}">$1</span>`);
+        // --- C. Größen-Kalkulation (12er Punkte-Logik) ---
+        let charCount = rawDesc.length;
+        if (rawDesc.includes("<table")) charCount += 300;
 
-        // --- C. Größen-Kalkulation (1, 2 oder 3 Einheiten) ---
-        const charCount = rawDesc.length;
-        let boxSize = 1; // 1/3 Höhe
+        let boxSizeClass = 1; 
+        let pointsNeeded = 3; // Standard 1/4 = 3 Punkte
         let textClass = "";
 
-        if (charCount < 400) {
-            boxSize = 1; textClass = "";
-        } else if (charCount >= 400 && charCount < 700) {
-            boxSize = 1; textClass = "text-small";
-        } else if (charCount >= 700 && charCount < 1200) {
-            boxSize = 2; textClass = "text-small";
-        } else if (charCount >= 1200 && charCount < 1800) {
-            boxSize = 2; textClass = "text-tiny";
-        } else {
-            boxSize = 3; textClass = "text-tiny"; // Ganze Spalte!
+        if (charCount < 300) { 
+            boxSizeClass = 1; pointsNeeded = 3;  // 1/4 (3 Pkt)
+        } else if (charCount < 500) { 
+            boxSizeClass = 2; pointsNeeded = 4;  // 1/3 (4 Pkt)
+        } else if (charCount < 800) { 
+            boxSizeClass = 2; pointsNeeded = 4; textClass = "text-small"; // 1/3 (4 Pkt)
+        } else if (charCount < 1100) { 
+            boxSizeClass = 3; pointsNeeded = 6; textClass = "text-small"; // 2/4 (6 Pkt)
+        } else if (charCount < 1500) { 
+            boxSizeClass = 4; pointsNeeded = 8; textClass = "text-tiny";  // 2/3 (8 Pkt)
+        } else { 
+            boxSizeClass = 5; pointsNeeded = 12; textClass = "text-tiny"; // 4/4 (12 Pkt)
         }
 
-        // --- D. Tetris: Passt die Box noch in die aktuelle Spalte? ---
-        if (boxSize > capacityLeft) {
-            // Spaltenwechsel
+        // --- D. STRIKTE SEQUENZIELLE LOGIK ---
+        if (pointsNeeded > capacityLeft) {
             activeCol++;
-            capacityLeft = 3;
+            capacityLeft = 12; 
+
             if (activeCol > 2) {
-                // Seitenwechsel
                 createNewPage();
             }
         }
 
-        // --- E. HTML Block bauen ---
+        // HTML Block bauen
         const boxDiv = document.createElement('div');
-        boxDiv.className = `spell-desc-box box-h${boxSize} ${textClass}`;
-        
+        boxDiv.className = `spell-desc-box box-h${boxSizeClass} ${textClass}`;
         boxDiv.innerHTML = `
             <div class="sd-header">
                 <span class="sd-title">${name}</span>
@@ -5042,24 +5095,17 @@ function buildAppendix() {
             <div class="sd-text">${rawDesc}</div>
         `;
 
-        // In die richtige Spalte pushen
         if (activeCol === 1) colLeft.appendChild(boxDiv);
         else colRight.appendChild(boxDiv);
 
-        capacityLeft -= boxSize;
+        capacityLeft -= pointsNeeded;
 
-	// --- Merke dir die aktuelle Anhang-Seite für diesen Zauber ---
-	window.spellAppendixPages[spell.ID] = appendixTotalPages;
-    }); // Ende der spellsToRender.forEach Schleife
-
-    // 5. Appendix Gesamtzahlen updaten
-    document.querySelectorAll('.app-total-pages').forEach(el => {
-        el.textContent = appendixTotalPages;
+        window.spellAppendixPages[spell.ID] = appendixTotalPages;
     });
 
+    document.querySelectorAll('.app-total-pages').forEach(el => el.textContent = appendixTotalPages);
     processSpellsPage(charData);
 }
-
 /* ==========================================================================
    AREAL 4: DATENUNABHÄNGIGE FUNKTIONEN & EVENTS
    ========================================================================== */
@@ -5282,7 +5328,7 @@ function toggleEditMode() {
  */
 function applyFieldLocks() {
 
-    // --- NEU: BILD-BOXEN STEUERN ---
+    // --- BILD-BOXEN STEUERN ---
     const imgContainers = [
         document.getElementById('portraitContainer'),
         document.getElementById('communitySymbolBox')
@@ -5303,6 +5349,14 @@ function applyFieldLocks() {
 
     allInputs.forEach(input => {
         const id = input.id;
+	const charData = loadCharacterDataFromStorage();
+
+	// --- SPEZIALREGEL FÜR MANUELLEN MODUS ---
+        const manualFields = ["class", "background", "subclass", "species"];
+        if (charData.isManualMode && manualFields.includes(id)) {
+            lockInput(input, !isEditMode); // Im manuellen Modus wie ein normales Feld behandeln
+            return;
+        }
 
         // --- SONDERFALL: Content-Editable Divs auf Seite 3 ---
         // Wir prüfen nur, ob das Attribut existiert, egal welchen Wert es gerade hat
@@ -5362,6 +5416,13 @@ function applyFieldLocks() {
             return;
         }
 
+	// --- Zauber-Tabelle Seite 5 ---
+	if (input.classList.contains('spell-input')) {
+    	// Diese Felder sollen nur im Edit-Mode bearbeitbar sein
+    	    lockInput(input, !isEditMode);
+            return;
+	}
+
         // --- Zauberbuch Checkboxen ---
         if (input.classList.contains('spellbook-checkbox')) {
             // Wenn das Attribut "data-locked" existiert -> hart sperren!
@@ -5417,11 +5478,6 @@ function lockInput(element, shouldLock) {
 
 // 1. Die Weiche (Router), die beim Klick auf den Button aufgerufen wird
 function downloadPDF() {
-
-    // --- PLAUSIBLE EVENT START ---
-    if (typeof plausible === 'function') {
-        plausible('Download PDF');
-    }
 
     // Wenn der Bearbeitungsmodus noch aktiv ist, beenden wir ihn, 
     // damit das PDF keine grauen Felder hat.
@@ -5897,7 +5953,12 @@ function applyTranslations() {
     });   
 
     // --- BUTTONS ---
-    setTextContent('downloadBtn', elements.downloadPdfLabel || 'Als PDF herunterladen');
+    setTextContent('generateSpellDescLabel', elements.generateSpellDesc);
+    setTextContent('editModeBtnText', elements.editButtonLabel);
+    setTextContent('exportBtnText', elements.exportBtnLabel);
+    setTextContent('importBtnText', elements.importBtnLabel);
+    setTextContent('downloadBtnText', elements.downloadPdfLabel);
+    setTextContent('clearBtnText', elements.clearBtnLabel);
     
     const editBtn = document.getElementById('editModeBtn');
     if (editBtn) {
@@ -5908,6 +5969,316 @@ function applyTranslations() {
             editBtn.textContent = elements.editButtonLabel || 'Bearbeiten';
         }
     }
+}
+
+// Funktion zum Öffnen/Schließen des FAB-Menüs
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.querySelector('.fab-container');
+    const trigger = document.querySelector('.fab-trigger');
+
+    if (trigger && container) {
+        trigger.addEventListener('click', function(e) {
+            e.stopPropagation(); // Verhindert, dass der Klick sofort wieder schließt
+            container.classList.toggle('open');
+        });
+
+        // Schließt das Menü, wenn man irgendwo anders auf die Seite klickt
+        document.addEventListener('click', function(e) {
+            if (!container.contains(e.target)) {
+                container.classList.remove('open');
+            }
+        });
+    }
+});
+
+function confirmImport() {
+    // Den Warntext aus den vorhandenen Translations laden
+    const warningText = translations[currentLanguage]?.warningLossDataText || 
+                        "Vorsicht! Alle ungespeicherten Daten gehen verloren. Fortfahren?";
+
+    // Erst fragen, dann bei "OK" das Datei-Auswahlfenster öffnen
+    if (confirm(warningText)) {
+        document.getElementById('importJsonInput').click();
+    }
+}
+
+function confirmClearData() {
+    // Text aus den Translations holen
+    const warningText = translations[currentLanguage]?.warningLossDataText || 
+                        "Vorsicht! Alle Daten werden gelöscht. Fortfahren?";
+
+    // Bestätigungs-Dialog des Browsers
+    if (confirm(warningText)) {
+        // Liste der Keys, die zum Charakter gehören
+        const keysToRemove = [
+            "characterName", "playerName", "class", "background", "species", "lineage", "ancestry", 
+            "level", "xp", "strengthScore", "dexterityScore", "constitutionScore",
+            "intelligenceScore", "wisdomScore", "charismaScore", "classForm", 
+            "equipment", "purse", "gender", "age", "eyeColor", "hairColor", "skinTone", 
+            "size", "appearanceDescription", "story", "deityId", "deityName", 
+            "communityName", "communityDesc", "alignment", "personalityTraits", 
+            "cantrips", "spellbookSpells", "preparedSpells", "favoredSpells", "languages",
+            "portraitImage", "symbolImage"
+        ];
+
+        // Nur Charakter-relevante Daten löschen (Sprache & Bilder bleiben evtl. zur Bequemlichkeit)
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+
+        // Bogen neu laden -> löst den eben gebauten Manual-Mode aus
+        window.location.reload();
+    }
+}
+
+/* ==========================================================================
+   AREAL 6: DOWNLOAD & UPLOAD
+   ========================================================================== */
+
+/**
+ * Hilfsfunktion für das Datumsformat (z.B. 10MAY2026)
+ */
+function getFormattedDateJSON() {
+    const d = new Date();
+    const day = String(d.getDate()).padStart(2, '0');
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    return `${day}${month}${year}`;
+}
+
+/**
+ * Exportiert den Charakter als JSON mit Deep-Scan der UI-Werte
+ */
+function exportCharacterJSON() {
+    console.log("Starte Deep-Scan für Export...");
+
+    // 1. Basis-Daten aus dem Storage (DNA)
+    const storageKeys = [
+        "characterName", "playerName", "class", "background", "species", "lineage", "ancestry", "level", "xp",
+        "strengthScore", "dexterityScore", "constitutionScore", "intelligenceScore", "wisdomScore", "charismaScore",
+        "classForm", "equipment", "purse", "languages", "cantrips", "spellbookSpells", "preparedSpells", "favoredSpells",
+        "portraitImage", "symbolImage", "currentLanguage"
+    ];
+    
+    const baseStorage = {};
+    storageKeys.forEach(key => {
+        baseStorage[key] = localStorage.getItem(key);
+    });
+
+    const uiOverrides = {
+        inputs: {},
+        checkboxes: {},
+        tableData: [],
+        attackTable: [] // Spezial-Array für die Angriffe (S. 2)
+    };
+
+    // A. Alle Standard-Felder (Inputs & Textareas)
+    document.querySelectorAll('input[type="text"], textarea').forEach(el => {
+        if (el.id) uiOverrides.inputs[el.id] = el.value;
+    });
+
+    // B. Alle Checkboxen (Skills, Training etc.)
+    document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+        if (el.id) uiOverrides.checkboxes[el.id] = el.checked;
+    });
+
+    // C. Spezial-Scan: Physische Angriffe (S. 2)
+    const attackTable = document.querySelector('.attack-table');
+    if (attackTable) {
+        const rows = attackTable.querySelectorAll('tbody tr');
+        rows.forEach((row) => {
+            const rowData = [];
+            const inputs = row.querySelectorAll('input');
+            inputs.forEach(inp => rowData.push(inp.value));
+            
+            // Finesse-Dropdown (STR/DEX) mitspeichern
+            const sel = row.querySelector('select.finesse-selector');
+            uiOverrides.attackTable.push({
+                values: rowData,
+                finesse: sel ? sel.value : null
+            });
+        });
+    }
+
+    // D. Deep-Scan aller anderen Tabellen (Inventar, Zauber)
+    const allTables = document.querySelectorAll('table');
+    allTables.forEach((table, tableIndex) => {
+        // Die Haupt-Angriffstabelle ignorieren wir hier (wird oben in B behandelt)
+        if (table.classList.contains('attack-table') && table.closest('.inventory-box') === null) return;
+
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach((row, rowIndex) => {
+            const cells = row.querySelectorAll('td');
+            cells.forEach((cell, cellIndex) => {
+                const input = cell.querySelector('input');
+                if (input) {
+                    uiOverrides.tableData.push({
+                        t: tableIndex,
+                        r: rowIndex,
+                        c: cellIndex,
+                        v: input.value,
+                        chk: input.type === 'checkbox' ? input.checked : null
+                    });
+                }
+            });
+        });
+    });
+
+    // E. Content / Todesrettungswürfe / Merkmale
+    const deathSaveBox = document.querySelector('.death-saves-box');
+    if (deathSaveBox) {
+        uiOverrides.deathSaves = Array.from(deathSaveBox.querySelectorAll('input[type="checkbox"]')).map(c => c.checked);
+    }
+    
+    uiOverrides.containers = {
+        classFeatures: document.getElementById('classFeaturesContent')?.innerHTML,
+        subclassFeatures: document.getElementById('subclassFeaturesContent')?.innerHTML,
+        feats: document.getElementById('featsContent')?.innerHTML,
+        speciesTraits: document.getElementById('speciesTraitsContent')?.innerHTML,
+        communityDesc: document.getElementById('communityDesc')?.innerHTML
+    };
+
+    // 2. Paket schnüren
+    const finalExport = {
+        meta: { app: "DiceCharacters", date: new Date().toISOString(), version: "1.5" },
+        base: baseStorage,
+        overrides: uiOverrides
+    };
+
+    // 3. Dateiname generieren (Name_Character_Data_DDMMMYYYY)
+    const rawName = document.getElementById('characterName')?.value || "Unnamed";
+    let safeName = rawName.trim().replace(/[\\/:\*\?"<>|;,]/g, '_');
+    if (safeName === "") safeName = "Unnamed";
+    
+    const dateStr = getFormattedDateJSON();
+    const finalFilename = `${safeName}_Character_Data_${dateStr}.json`;
+
+    // 4. Download auslösen
+    const blob = new Blob([JSON.stringify(finalExport, null, 2)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = finalFilename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+/**
+ * Verarbeitet den Upload einer JSON-Datei
+ */
+function importCharacterJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+
+            if (importedData.meta && importedData.meta.app === "DiceCharacters") {
+                // Lokalen Speicher komplett leeren für sauberen Import
+                localStorage.clear();
+
+                // Basis-Daten in den LocalStorage schreiben
+                Object.keys(importedData.base).forEach(key => {
+                    if (importedData.base[key] !== null) {
+                        localStorage.setItem(key, importedData.base[key]);
+                    }
+                });
+
+                // Overrides für das Overlay nach dem Reload zwischenspeichern
+                localStorage.setItem('import_overrides', JSON.stringify(importedData.overrides));
+
+                // Seite neu laden
+                window.location.reload();
+            } else {
+                alert("Ungültiges Dateiformat!");
+            }
+        } catch (err) {
+            console.error("Fehler beim Import:", err);
+            alert("Die Datei konnte nicht gelesen werden.");
+        }
+    };
+    reader.readAsText(file);
+}
+
+/**
+ * Wendet die manuellen Anpassungen über die generierten Daten an
+ */
+function applyImportOverrides() {
+    const overridesRaw = localStorage.getItem('import_overrides');
+    if (!overridesRaw) return;
+    const overrides = JSON.parse(overridesRaw);
+
+    // 1. Basis-Werte & Checkboxen
+    if (overrides.inputs) {
+        Object.keys(overrides.inputs).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = overrides.inputs[id];
+        });
+    }
+    if (overrides.checkboxes) {
+        Object.keys(overrides.checkboxes).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.checked = overrides.checkboxes[id];
+        });
+    }
+
+    // 2. Tabellen (Inventar & Zauber)
+    if (overrides.tableData) {
+        const allTables = document.querySelectorAll('table');
+        overrides.tableData.forEach(item => {
+            const table = allTables[item.t];
+            if (table) {
+                const row = table.querySelectorAll('tbody tr')[item.r];
+                if (row) {
+                    const cell = row.querySelectorAll('td')[item.c];
+                    const input = cell?.querySelector('input');
+                    if (input) {
+                        input.value = item.v;
+                        if (item.chk !== null) input.checked = item.chk;
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. Physische Angriffe (Muss ganz am Ende stehen!)
+    if (overrides.attackTable) {
+        const attackTable = document.querySelector('.attack-table');
+        if (attackTable) {
+            const rows = attackTable.querySelectorAll('tbody tr');
+            overrides.attackTable.forEach((savedRow, rIdx) => {
+                const row = rows[rIdx];
+                if (row) {
+                    const inputs = row.querySelectorAll('input');
+                    savedRow.values.forEach((val, iIdx) => {
+                        if (inputs[iIdx]) inputs[iIdx].value = val;
+                    });
+                    const sel = row.querySelector('select.finesse-selector');
+                    if (sel && savedRow.finesse) sel.value = savedRow.finesse;
+                }
+            });
+        }
+    }
+
+    // 4. Todesrettungswürfe
+    if (overrides.deathSaves) {
+        const checks = document.querySelectorAll('.death-saves-box input[type="checkbox"]');
+        overrides.deathSaves.forEach((val, i) => { if (checks[i]) checks[i].checked = val; });
+    }
+
+    // 5. Merkmale
+    if (overrides.containers) {
+        Object.keys(overrides.containers).forEach(key => {
+            const el = document.getElementById(key + "Content") || document.getElementById(key);
+            if (el) el.innerHTML = overrides.containers[key];
+        });
+    }
+
+    localStorage.removeItem('import_overrides');
+    console.log("Deep Import Final mit korrektem Attack-Restore abgeschlossen.");
 }
 
     </script>

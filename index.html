@@ -7,21 +7,26 @@
     <meta name="description" id="metaDesc" content="">
     <link rel="stylesheet" href="css/landing.css">
 
-    <script defer data-domain="dicecharacters.com" src="https://plausible.io/js/script.js"></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="69f61406-c360-48a7-9559-13da14ddd7cb"></script>
+
 </head>
 <body>
 
     <div id="floatingLang">
-        <button onclick="setLanguage('de')" id="langDe" title="Deutsch"><img src="images/germany.png" alt="DE"></button>
-        <button onclick="setLanguage('en')" id="langEn" title="English"><img src="images/usa.png" alt="EN"></button>
+        <button onclick="setLanguage('de')" id="langDe" title="Deutsch">
+            <img src="images/germany.png" alt="DE">
+        </button>
+        <button onclick="setLanguage('en')" id="langEn" title="English">
+            <img src="images/usa.png" alt="EN">
+        </button>
     </div>
 
-   <section class="hero">
-       <div class="hero-content">
-           <h1 class="hero-logo-container">
-               <img src="images/dclogo_gold.png" alt="DiceCharacters" class="hero-logo">
-           </h1>
-           <p id="heroSubtitle" class="motto-text"></p>
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-logo-container">
+                <img src="images/dclogo_gold.png" alt="DiceCharacters" class="hero-logo">
+            </h1>
+            <p id="heroSubtitle" class="motto-text"></p>
             
             <div class="universe-group">
                 <label for="universe" id="universeLabel"></label>
@@ -31,7 +36,14 @@
             </div>
             
             <div class="cta-area">
-                <button onclick="window.location.href='charaktererstellung.html'" class="btn-start" id="startAction"></button>
+                <div class="cta-buttons">
+                    <button onclick="window.location.href='charaktererstellung.html'" class="btn-start" id="startAction"></button>
+                    
+                    <button onclick="clearAndGoToSheet()" class="btn-direct-sheet" id="directToSheetBtn">
+                        <span class="direct-icon-symbol">📜</span>
+                        <span class="tooltip-text" id="directToSheetTextLabel"></span>
+                    </button>
+                </div>
                 <div class="scroll-indicator"><span>&#x25BC;</span></div>
             </div>
         </div>
@@ -44,6 +56,13 @@
             <p id="aboutText1"></p>
             <p id="aboutText2"></p>
             <p class="highlight-text" id="aboutFooter"></p>
+        </div>
+    </section>
+
+    <section class="news-section">
+        <div class="news-card">
+            <h2 id="newsTitle">News & Updates</h2>
+            <div id="newsContainer" class="news-container"></div>
         </div>
     </section>
 
@@ -76,9 +95,11 @@
         </div>
     </section>
 
+    <script src="data/newsData.js"></script>
     <script src="translations/translationsCore.js"></script>
     <script src="translations/translationsIndex.js"></script>
     <script>
+
     let currentLang = 'de';
 
     function setLanguage(lang) {
@@ -119,6 +140,12 @@
         // Button-Highlighting
         document.getElementById('langDe').classList.toggle('active-lang', lang === 'de');
         document.getElementById('langEn').classList.toggle('active-lang', lang === 'en');
+
+        // Übersetzung Hover-Schrift (Direkt zum Bogen - Button)
+	const directLabel = document.getElementById('directToSheetTextLabel');
+	if (directLabel) directLabel.innerText = elements.directToSheetText;
+
+        renderNews();
     }
 
     // BEIM LADEN: Erst schauen, ob schon was im Speicher ist, sonst 'de'
@@ -172,6 +199,43 @@
             submitBtn.innerText = originalBtnText;
         });
     });
+
+    function renderNews() {
+        const container = document.getElementById('newsContainer');
+        if (!container) return;
+
+        container.innerHTML = ""; // Container leeren
+
+        newsUpdates.forEach(update => {
+            const entry = document.createElement('div');
+            entry.className = 'news-entry';
+        
+            entry.innerHTML = `
+                <div class="news-header">
+                    <span class="news-date">${update.date}</span>
+                    <span class="news-version">${update.version}</span>
+                </div>
+                <div class="news-content">
+                    <p>${update.content}</p>
+                </div>
+            `;
+            container.appendChild(entry);
+        });
+    }
+
+    function clearAndGoToSheet() {
+    // Sprache merken
+    const lang = localStorage.getItem("currentLanguage") || 'de';
+    
+    // Alles löschen
+    localStorage.clear();
+    
+    // Sprache wiederherstellen
+    localStorage.setItem("currentLanguage", lang);
+    
+    // Weiterleitung zum Bogen (Dateiname anpassen, falls deiner anders heißt)
+    window.location.href = 'charakterbogen.html';
+    }
 
     </script>
 </body>
