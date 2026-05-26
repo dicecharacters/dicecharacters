@@ -2334,7 +2334,7 @@ function displayClassSectionsBasedOnLevel(level) {
             if (dynamicClassSection4) dynamicClassSection4.style.display = "none";
             break;
         case "bard":
-            if (dynamicClassSection1) dynamicClassSection1.style.display = level >= 1 ? "block" : "none";
+            if (dynamicClassSection1) dynamicClassSection1.style.display = level >= 2 ? "block" : "none";
             if (dynamicClassSection2) dynamicClassSection2.style.display = level >= 1 ? "block" : "none";
             if (dynamicClassSection3) dynamicClassSection3.style.display = "none";
             if (dynamicClassSection4) dynamicClassSection4.style.display = "none";
@@ -2799,11 +2799,11 @@ function populateClassFormOptions(className) {
             subclasses: subclassListBard,
             dynamicContent1: `
                 <h3>Expertise</h3>
-                <label for="expertise1">${elements.chooseExpertiseLabel} (${elements.levelLabel2} 1):</label>
+                <label for="expertise1">${elements.chooseExpertiseLabel} (${elements.levelLabel2} 2):</label>
                 <select id="expertise1" name="expertise1" class="dropdown">
                     <!-- Optionen werden dynamisch basierend auf den gewählten skills hinzugefügt -->
                 </select>
-                <label for="expertise2">${elements.chooseExpertiseLabel} (${elements.levelLabel2} 1):</label>
+                <label for="expertise2">${elements.chooseExpertiseLabel} (${elements.levelLabel2} 2):</label>
                 <select id="expertise2" name="expertise2" class="dropdown">
                     <!-- Optionen werden dynamisch basierend auf den gewählten skills hinzugefügt -->
                 </select>
@@ -3531,12 +3531,25 @@ function createWeaponOptions(allowedCategories, allowedProperties) {
                 return true;
             }
 
+            // Bringt allowedProperties und weaponPropertyCategoryNumber in ein einheitliches Array-Format
             const weaponProps = Array.isArray(weapon.weaponPropertyCategoryNumber) 
                 ? weapon.weaponPropertyCategoryNumber 
-                : (weapon.weaponPropertyCategoryNumber ? [weapon.weaponPropertyCategoryNumber] : []);
+                : (weapon.weaponPropertyCategoryNumber || weapon.weaponPropertyCategoryNumber === 0 ? [weapon.weaponPropertyCategoryNumber] : []);
             
             const validProps = Array.isArray(allowedProperties) ? allowedProperties : [allowedProperties];
 
+            // --- FÜR KRIEGSWAFFEN ---
+            // Wenn eine Waffe keine Eigenschaften besitzt (0) ODER das Array nur [0] enthält,
+            // und die Klasse vollen Zugriff auf die Haupt-Eigenschaften (1 bis 9) hat, wird sie erlaubt.
+            const hasNoProperties = weaponProps.includes(0) || weaponProps.length === 0;
+            const allowsAllMainProperties = [1, 2, 3, 4, 5, 6, 7, 8, 9].every(p => validProps.includes(p));
+
+            if (hasNoProperties && allowsAllMainProperties) {
+                return true;
+            }
+            // ---------------------------------------------------------------------------------
+
+            // Normaler Abgleich für Waffen mit speziellen Eigenschaften (z.B. Finesse beim Schurken)
             const propertyMatch = weaponProps.some(p => validProps.includes(p));
             return propertyMatch;
         })
