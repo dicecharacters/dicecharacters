@@ -1,6 +1,24 @@
 // newsData.js
 const newsUpdates = [
     {
+        date: "26.05.2026",
+        version: "v1.3",
+        content: `
+            Bugfixing:
+            <ul class="news-list">
+                <li>Barde: Die Erxpertise-Optionen sind jetzt korrekt auf Stufe 2 verfügbar (nicht bereits auf Stufe 1).</li>
+                <li>Hexenmeister: Die schauerliche Anrufung "Durstige KLinge" steht nun in Schritt 5 als Option zur Verfügung.</li>
+                <li>In den Waffenmeisterschaften werden der Flegel und der Morgenstern nun als Optionen angezeigt.</li>
+            </ul>
+
+            Angepasste Übersetzungen (ans PHB): 
+            <ul class="news-list">
+                <li>Schauerliche Anrufenen (Hexenmeister)</li>
+                <li>Talente (Herkunft, Allgemein, Kampfstile & Gaben)</li>
+            </ul>
+        `
+    },
+    {
         date: "15.05.2026",
         version: "v1.2",
         content: `

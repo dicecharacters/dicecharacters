@@ -77,7 +77,7 @@ const weaponList = [
         "weaponCategoryNumber": 1,
         "weaponDamageValue": "1d6",
         "damageCategoryNumber": 1,
-        "weaponPropertyCategoryNumber": 0,
+        "weaponPropertyCategoryNumber":0,
         "weaponMasteryCategoryNumber": 5,
         "weight": 4,
         "costValue": 5,

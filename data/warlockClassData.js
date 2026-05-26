@@ -1331,8 +1331,8 @@ const eldritchInvocationOptionsList = [
     "level": 5,
     "prerequisite_Invocation": "pactOfTheBladeLabel",
     "repeatable": 0,
-    "translationLabel": "repellingBlastLabel",
-    "eldritchInvocationOptionD": "repellingBlastDLabel"
+    "translationLabel": "thirstingBladeLabel",
+    "eldritchInvocationOptionD": "thirstingBladeDLabel"
   },
   {
     "eldritchInvocationOption": 26,
