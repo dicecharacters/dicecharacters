@@ -125,8 +125,12 @@ const translations = {
     "chooseWTLabel": "Wähle einen Waffentyp",
     "chooseExpertiseLabel": "Wähle eine Fertigkeit für Expertise",
     "chooseInsrumentLabel": "Wähle ein Instrument",
+    "chooseGameLabel": "Wähle ein Spiel",
+    "chooseArtisanToolLabel": "Wähle ein Handwerkzeug",
     "chooseFightingStyleLabel": "Wähle einen Kampfstil",
     "chooseLanguageLabel": "Wähle eine Sprache",
+    "chooseSavingThrowLabel": "Wähle ein Rettungswurf-Attribut",
+    "chooseManeuverLabel": "Wähle ein Manöver",
     "chooseMetamagicLabel": "Wähle eine Metamagie",
     "chooseInvocationLabel": "Wähle eine Anrufung",
     "chooseOptionLabel": "Wähle eine Option",
@@ -176,6 +180,7 @@ const translations = {
     "skillProfAbbr": "Fertigkeit",
     "skillsLabel": "Fertigkeiten",
     "savingThrowLabel": "Rettungswurf",
+    "savingThrowsLabel": "Rettungswürfe",
     "savingThrowAttrLabel": "Rettungswurfattr.",
     "acrobaticsLabel": "Akrobatik",
     "animalHandlingLabel": "Mit Tieren umgehen",
@@ -300,6 +305,9 @@ const translations = {
     "classLabel": "Klasse",
     "subclass": "Unterklasse",
     "classFeaturesTitle": "Klassenmerkmale",
+    "additionalSkillsLabel": "Zusätzliche Fertigkeiten",
+    "additionalSkillsShortD": "Du erlangst Übung in zusätzlichen Fertigkeiten.",
+    "savingThrowChoiceShortD": "Du wählst Attribute aus, die deine Rettungswürfe ergänzen.",
     "proficiencyBonusLabel": "Übungsbonus",
     "proficiencyBonusShortD": "Bonus, den du auf Würfe erhältst, wenn du in einer Fertigkeit geübt bist.",
     "primaryAbilityLabel": "Primär-Attribut",
@@ -563,8 +571,12 @@ const translations = {
     "chooseWTLabel": "Choose a Weapon Type",
     "chooseExpertiseLabel": "Choose a Skill for Expertise",
     "chooseInsrumentLabel": "Choose an Instrument",
+    "chooseGameLabel": "Choose a Gaming Set",
+    "chooseArtisanToolLabel": "Choose an Artisan's Tool",
     "chooseFightingStyleLabel": "Choose a Fighting Style",
     "chooseLanguageLabel": "Choose a Language",
+    "chooseSavingThrowLabel": "Choose a Saving Throw Ability",
+    "chooseManeuverLabel": "Choose a Maneuver",
     "chooseMetamagicLabel": "Choose a Metamagic",
     "chooseInvocationLabel": "Choose a Invocation",
     "chooseOptionLabel": "Choose an Option",
@@ -614,6 +626,7 @@ const translations = {
     "skillProfAbbr": "Skill",
     "skillsLabel": "Skills",
     "savingThrowLabel": "Saving Throw",
+    "savingThrowsLabel": "Saving Throws",
     "savingThrowAttrLabel": "Saving Throw Attr.",
     "acrobaticsLabel": "Acrobatics",
     "animalHandlingLabel": "Animal Handling",
@@ -738,6 +751,9 @@ const translations = {
     "classLabel": "Class",
     "subclass": "Subclass",
     "classFeaturesTitle": "Class Features",
+    "additionalSkillsLabel": "Additional Skills",
+    "additionalSkillsShortD": "You gain proficiency in additional skills.",
+    "savingThrowChoiceShortD": "You choose abilities that add to your saving throw proficiencies.",
     "proficiencyBonusLabel": "Proficiency Bonus",
     "proficiencyBonusShortD": "Bonus you receive on rolls when you are proficient in a skill.",
     "primaryAbilityLabel": "Primary Ability",
@@ -1141,5 +1157,10 @@ function applyTranslations(translations, currentLang) {
     }
 
     updateProgress();
+
+    // Custom-Class-UI (falls geladen) aktualisieren
+    if (typeof refreshCustomClassUI === 'function') {
+        refreshCustomClassUI();
+    }
     
 }

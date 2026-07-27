@@ -7,6 +7,8 @@ Object.assign(translations.de, {
 
         // Zauber: Allgemein
         "spellsLabel": "Zauber",
+        "spellcastingLabel": "Zauberwirken",
+        "spellcastingShortD": "Du erlernst die Kunst, das unsichtbare Geflecht der Welt zu greifen und die rohe Magie des Kosmos durch deinen Willen in konkrete Macht zu verwandeln.",
         "noSpellsForClass": "Deinem Charakter stehen keine Zauber zur Verfügung.",
         "cantripsLabel": "Zaubertricks",
         "cantripLabel": "Zaubertrick",
@@ -180,7 +182,7 @@ Object.assign(translations.de, {
         "thunderousSmiteLabel": "Donnernder Schlag",
         "thunderwaveLabel": "Donnerwelle",
         "unseenServantLabel": "Unsichtbarer Diener",
-        "witchBoltLabel": "Hexenschlag",
+        "witchBoltLabel": "Hexenpfeil",
         "wrathfulSmiteLabel": "Zorniger Schlag",
         "aidLabel": "Hilfe",
         "alterSelfLabel": "Selbst verwandeln",
@@ -236,7 +238,7 @@ Object.assign(translations.de, {
         "silenceLabel": "Stille",
         "spiderClimbLabel": "Spinnenklettern",
         "spikeGrowthLabel": "Dornenwachstum",
-        "spiritualWeaponLabel": "Geistige Waffe",
+        "spiritualWeaponLabel": "Waffe des Glaubens",
         "suggestionLabel": "Suggestion",
         "summonBeastLabel": "Bestie beschwören",
         "wardingBondLabel": "Schutzband",
@@ -323,7 +325,7 @@ Object.assign(translations.de, {
         "staggeringSmiteLabel": "Taumelnder Schlag",
         "stoneShapeLabel": "Steingestalt",
         "stoneskinLabel": "Steinhaut",
-        "summonAberrationLabel": "Abscheulichkeit beschwören",
+        "summonAberrationLabel": "Abscheulichkeit herbeirufen",
         "summonConstructLabel": "Konstrukt beschwören",
         "summonElementalLabel": "Elementar beschwören",
         "vitriolicSphereLabel": "Vitriolische Kugel",
@@ -335,7 +337,7 @@ Object.assign(translations.de, {
         "circleOfPowerLabel": "Kreis der Macht",
         "cloudkillLabel": "Wolkentod",
         "communeLabel": "Kommunion",
-        "communeWithNatureLabel": "Mit der Natur kommunizieren",
+        "communeWithNatureLabel": "Einswerden mit der Natur",
         "coneOfColdLabel": "Kegel der Kälte",
         "conjureElementalLabel": "Elementar beschwören",
         "conjureVolleyLabel": "Salve beschwören",
@@ -466,6 +468,8 @@ Object.assign(translations.en, {
 
         // Spells: General
         "spellsLabel": "Spells",
+        "spellcastingLabel": "Spellcasting",
+        "spellcastingShortD": "You learn the art of reaching into the world's invisible weave and shaping the raw magic of the cosmos into tangible power through your own will.",
         "noSpellsForClass": "Your character has no spells at his disposal.",
         "cantripsLabel": "Cantrips",
         "cantripLabel": "Cantrip",
