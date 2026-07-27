@@ -1843,6 +1843,33 @@ body.modal-open .fixed-button {
     gap: 5px; /* Fügt Abstand zwischen dem Radio-Button und dem Label hinzu */
 }
 
+.cc-attr-dist-block {
+    margin-top: 4px;
+    margin-bottom: 12px;
+}
+
+/* Nur Custom-Class Attribut→Verteilung in der Dynamic-Section */
+.cc-attr-dist-container .asi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 22px;
+    gap: 16px;
+}
+
+.cc-attr-dist-container .asi-header > strong {
+    flex: 1 1 auto;
+    text-align: left;
+}
+
+.cc-attr-dist-container .asi-header .points-tracker {
+    flex: 0 0 auto;
+    text-align: right;
+    white-space: nowrap;
+}
+
 /* Der Haupt-Wrapper für die ASI-Auswahl */
 .asi-container {
     padding-top: 0px;
@@ -3885,3 +3912,1783 @@ textarea::placeholder,
     }
 
 }
+
+/* =======================================================================
+   Custom Class Builder Modal
+   ======================================================================= */
+
+.add-custom-class-item {
+    display: none !important;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* „+“ nur Desktop/Tablet UND nur wenn Feature-Flag aktiv (cc-feature-enabled) */
+@media screen and (min-width: 768px) {
+    #addCustomClassListItem.add-custom-class-item.cc-feature-enabled {
+        display: flex !important;
+    }
+}
+
+.add-custom-class-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #e8d8b5;
+    background: transparent;
+    color: #e8d8b5;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-custom-class-btn:hover {
+    background: rgba(232, 216, 181, 0.15);
+}
+
+.custom-class-overlay {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 24px 12px;
+}
+
+.custom-class-modal {
+    position: relative;
+    width: min(980px, 96vw);
+    max-height: 92vh;
+    overflow-y: auto;
+    margin: auto;
+    background: #1a1a1a;
+    border: 1px solid #e8d8b5;
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 1);
+    padding: 28px 24px 20px;
+    box-sizing: border-box;
+    color: #e8d8b5;
+}
+
+.custom-class-modal .close-icon {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 30px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.custom-class-title {
+    color: #e8d8b5;
+    margin: 0 40px 20px 0;
+    text-align: center;
+}
+
+.custom-class-chooser-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.custom-class-action-btn {
+    background: transparent;
+    border: 1px solid #e8d8b5;
+    color: #e8d8b5;
+    padding: 10px 14px;
+    cursor: pointer;
+    font: inherit;
+}
+
+.custom-class-action-btn:hover {
+    background: rgba(232, 216, 181, 0.12);
+}
+
+.custom-class-action-btn.secondary {
+    opacity: 0.85;
+}
+
+.custom-class-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(232, 216, 181, 0.35);
+    padding-bottom: 8px;
+}
+
+.custom-class-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #e8d8b5;
+    padding: 8px 12px;
+    cursor: pointer;
+    font: inherit;
+    opacity: 0.7;
+}
+
+.custom-class-tab.active {
+    opacity: 1;
+    border-color: #e8d8b5;
+}
+
+.custom-class-tab:disabled,
+.custom-class-tab.custom-class-tab--locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.custom-class-tab-panel {
+    display: none;
+}
+
+.custom-class-tab-panel.active {
+    display: block;
+}
+
+.custom-class-hint {
+    opacity: 0.85;
+    line-height: 1.5;
+}
+
+.custom-class-boilerplate-list {
+    margin: 12px 0 0;
+    padding-left: 20px;
+    line-height: 1.6;
+}
+
+.custom-class-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(232, 216, 181, 0.35);
+}
+
+.custom-class-field {
+    margin-bottom: 16px;
+}
+
+.custom-class-field + .custom-class-field {
+    border-top: 1px solid rgba(232, 216, 181, 0.35);
+    padding-top: 16px;
+    margin-top: 4px;
+}
+
+.custom-class-field > label,
+.custom-class-section-title {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.custom-class-required {
+    color: #c9a66b;
+}
+
+.custom-class-field input[type="text"],
+.custom-class-field textarea,
+.custom-class-field select,
+.custom-class-equip-row select,
+.custom-class-equip-row input[type="number"],
+.custom-class-equip-gp input[type="number"],
+.custom-class-overlay .cc-lf-float input[type="text"],
+.custom-class-overlay .cc-lf-float textarea,
+.custom-class-overlay .cc-lf-float select,
+.custom-class-overlay .cc-lf-float input[type="number"] {
+    width: 100%;
+    box-sizing: border-box;
+    background: #111;
+    border: 1px solid rgba(232, 216, 181, 0.5);
+    color: #e8d8b5;
+    padding: 8px;
+    font: inherit;
+    border-radius: 5px;
+}
+
+.custom-class-overlay .cc-lf-float textarea,
+.custom-class-field textarea {
+    min-height: 90px;
+    resize: vertical;
+    border-radius: 5px;
+}
+
+/* Checkboxen im Seiten-Design (Kupfer/Gold) – Tab1 + Floating-Masken */
+.custom-class-modal input[type="checkbox"],
+.custom-class-overlay .cc-lf-float input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    border: 1px solid #7a431d;
+    border-radius: 4px;
+    background-color: #2e2e33;
+    transition: all 0.3s ease;
+    outline: none;
+    padding: 0;
+    accent-color: unset;
+}
+
+.custom-class-modal input[type="checkbox"]:hover,
+.custom-class-overlay .cc-lf-float input[type="checkbox"]:hover {
+    border-color: #d4a017;
+    box-shadow: 0 0 8px rgba(212, 160, 23, 0.4);
+}
+
+.custom-class-modal input[type="checkbox"]:checked,
+.custom-class-overlay .cc-lf-float input[type="checkbox"]:checked {
+    border-color: #d4a017;
+    background-color: #3e3e45;
+    box-shadow: 0 0 10px rgba(212, 160, 23, 0.5);
+}
+
+.custom-class-modal input[type="checkbox"]:checked::after,
+.custom-class-overlay .cc-lf-float input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 10px;
+    border: solid #d4a017;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.custom-class-name-input {
+    width: 100% !important;
+    max-width: 560px;
+}
+
+.custom-class-hit-die-select {
+    width: 100px !important;
+    max-width: 100px;
+}
+
+.custom-class-tool-select {
+    width: 50%;
+    max-width: 320px;
+}
+
+.custom-class-equip-gp {
+    max-width: 140px;
+    width: 50%;
+}
+
+.custom-class-equip-row,
+.custom-class-equip-header {
+    display: grid;
+    grid-template-columns: minmax(160px, 210px) minmax(120px, 1fr) 72px 24px;
+    gap: 8px;
+    align-items: center;
+}
+
+.custom-class-equip-header {
+    margin-bottom: 6px;
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #d4a017;
+    opacity: 0.95;
+}
+
+.custom-class-equip-header span:last-child {
+    /* Platzhalter über der schmalen X-Spalte */
+    visibility: hidden;
+}
+
+.custom-class-equip-row select,
+.custom-class-equip-row input[type="number"] {
+    width: 100%;
+    max-width: 100%;
+    height: 36px;
+    box-sizing: border-box;
+    margin: 0;
+    vertical-align: middle;
+}
+
+.custom-class-equip-row .cc-equip-item {
+    width: 100%;
+    max-width: 100%;
+}
+
+.custom-class-lang-block {
+    border: 1px solid rgba(232, 216, 181, 0.25);
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 8px;
+}
+
+/* Gestrichelte Sprachboxen nur in Frei-Optionen-Maske; dezent */
+.custom-class-lang-block.cc-lang-box-dashed {
+    border: 1px dashed rgba(232, 216, 181, 0.22);
+}
+
+.custom-class-lang-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    font-weight: bold;
+    margin-bottom: 8px;
+    gap: 10px;
+}
+
+.custom-class-lang-body.collapsed {
+    display: none;
+}
+
+/* Einheitlicher Aufklapp-Pfeil (▼), wie in der restlichen App */
+.cc-collapse-arrow {
+    display: inline-block;
+    transition: transform 0.25s ease-in-out;
+    color: #d4a017;
+    font-size: 0.8rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.cc-collapse-arrow.is-collapsed {
+    transform: rotate(-90deg);
+}
+
+.custom-class-lang-availability .custom-class-lang-avail-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+}
+
+.custom-class-lang-availability .custom-class-section-title {
+    margin: 0;
+}
+
+.custom-class-lang-avail-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    align-items: center;
+}
+
+.cc-lang-avail-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.cc-lang-avail-item.cc-lang-avail--locked {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.cc-lang-avail-item.cc-lang-avail--locked input {
+    cursor: not-allowed;
+}
+
+.custom-class-check-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 6px 12px;
+}
+
+.custom-class-check-grid label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.custom-class-check-grid label.cc-check-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.custom-class-check-grid input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.custom-class-spell-fields {
+    margin-top: 10px;
+    display: grid;
+    gap: 12px;
+}
+
+.custom-class-equip-option {
+    border: 1px solid rgba(232, 216, 181, 0.25);
+    border-radius: 5px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.custom-class-equip-gp-label {
+    font-weight: bold;
+    color: #d4a017;
+}
+
+.custom-class-equip-option-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.custom-class-equip-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.custom-class-remove-btn,
+.custom-class-add-item-btn {
+    background: transparent;
+    border: 1px solid rgba(232, 216, 181, 0.5);
+    color: #e8d8b5;
+    cursor: pointer;
+    padding: 6px 10px;
+    font: inherit;
+}
+
+.custom-class-add-item-btn {
+    border-radius: 5px;
+}
+
+.custom-class-add-item-btn:disabled,
+.custom-class-add-item-btn.custom-class-add-item-btn--disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.custom-class-remove-btn {
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0;
+    line-height: 1;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+@media (max-width: 700px) {
+    .custom-class-modal {
+        padding: 22px 14px 16px;
+    }
+
+    .custom-class-equip-row,
+    .custom-class-equip-header {
+        grid-template-columns: 1fr;
+    }
+
+    .custom-class-check-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---- Custom Class Tab 2: Level Features ---- */
+.cc-lf-intro {
+    margin-bottom: 14px;
+}
+
+.cc-lf-table-wrap {
+    max-height: min(68vh, 720px);
+    overflow: auto;
+    border: 1px solid rgba(232, 216, 181, 0.3);
+    border-radius: 5px;
+    background: #151515;
+}
+
+.cc-lf-table {
+    min-width: 942px;
+}
+
+.cc-lf-header {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: 56px 44px minmax(110px, 1.1fr) minmax(120px, 1.2fr) minmax(140px, 1.4fr) minmax(140px, 1.4fr) 118px 84px;
+    background: #2a2a2a;
+    border-bottom: 1px solid rgba(232, 216, 181, 0.4);
+}
+
+.cc-lf-level-group {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    border-bottom: 2px solid rgba(232, 216, 181, 0.22);
+    min-height: 56px;
+}
+
+.cc-lf-level-group--locked {
+    background: rgba(212, 160, 23, 0.03);
+}
+
+.cc-lf-level-rail {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(232, 216, 181, 0.07);
+    border-right: 1px solid rgba(232, 216, 181, 0.25);
+    padding: 10px 4px;
+}
+
+.cc-lf-level-rail-num {
+    font-weight: bold;
+    font-size: 1.15rem;
+    color: #d4a017;
+    line-height: 1;
+}
+
+.cc-lf-level-rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.cc-lf-row {
+    display: grid;
+    grid-template-columns: 44px minmax(110px, 1.1fr) minmax(120px, 1.2fr) minmax(140px, 1.4fr) minmax(140px, 1.4fr) 118px 84px;
+    align-items: stretch;
+    border-bottom: 1px solid rgba(232, 216, 181, 0.12);
+    background: #1a1a1a;
+}
+
+.cc-lf-level-rows .cc-lf-row:last-child {
+    border-bottom: none;
+}
+
+.cc-lf-cell {
+    padding: 12px 12px;
+    border-right: 1px solid rgba(232, 216, 181, 0.1);
+    font-size: 0.92rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 48px;
+    color: #e8d8b5;
+}
+
+.cc-lf-cell--head {
+    font-weight: bold;
+    color: #d4a017;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    min-height: 42px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.cc-lf-cell--level,
+.cc-lf-cell--handle {
+    justify-content: center;
+}
+
+.cc-lf-cell--muted {
+    color: rgba(232, 216, 181, 0.45);
+}
+
+.cc-lf-cell--placeholder {
+    color: rgba(232, 216, 181, 0.7);
+}
+
+.cc-lf-cell-btn {
+    font-style: normal;
+}
+
+.cc-lf-row--fixed {
+    background: rgba(212, 160, 23, 0.1);
+}
+
+.cc-lf-row--free {
+    background: #1c1c1c;
+}
+
+.cc-lf-row--empty {
+    background: repeating-linear-gradient(
+        -45deg,
+        rgba(232, 216, 181, 0.03),
+        rgba(232, 216, 181, 0.03) 8px,
+        rgba(232, 216, 181, 0.07) 8px,
+        rgba(232, 216, 181, 0.07) 16px
+    );
+}
+
+.cc-lf-row--free.cc-lf-row--draggable {
+    cursor: grab;
+}
+
+.cc-lf-row--free.cc-lf-row--draggable:hover {
+    background: rgba(212, 160, 23, 0.12);
+}
+
+.cc-lf-row--free.cc-lf-row--draggable:active {
+    cursor: grabbing;
+}
+
+.cc-lf-row--blocked {
+    opacity: 0.5;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+/* Tab-übergreifend: nur seitlicher Streifen, Zeilenhintergrund unverändert */
+.cc-lf-row--linked-spellcasting {
+    box-shadow: inset 4px 0 0 #3d8cff;
+}
+
+.cc-lf-row--linked-magic-progression {
+    box-shadow: inset 4px 0 0 #c62828;
+}
+
+.cc-lf-row--linked-subclass {
+    box-shadow: inset 4px 0 0 #d4a017;
+}
+
+.cc-lf-row--linked-tools,
+.cc-lf-row--tool-bound {
+    box-shadow: inset 4px 0 0 #2e9e4f;
+}
+
+.cc-lf-row--dragging {
+    opacity: 0.5;
+}
+
+.cc-lf-row--drag-over {
+    outline: 2px solid #d4a017;
+    outline-offset: -2px;
+    background: rgba(212, 160, 23, 0.18);
+}
+
+.cc-lf-drag-handle {
+    color: #e8d8b5;
+    font-size: 1rem;
+    letter-spacing: -0.08em;
+    user-select: none;
+    font-weight: bold;
+    opacity: 0.85;
+}
+
+.cc-lf-row--draggable .cc-lf-drag-handle {
+    color: #d4a017;
+}
+
+.cc-lf-drag-handle--locked {
+    font-size: 0.75rem;
+    opacity: 0.4;
+    letter-spacing: 0;
+}
+
+.cc-lf-select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    background: #1a1a1a;
+    color: #e8d8b5;
+    border: 1px solid rgba(232, 216, 181, 0.45);
+    border-radius: 4px;
+    padding: 5px 6px;
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    -webkit-user-drag: none;
+}
+
+.cc-lf-select:focus {
+    outline: 1px solid #d4a017;
+    border-color: #d4a017;
+}
+
+.cc-lf-select option:disabled {
+    color: #777;
+}
+
+.cc-lf-cell--center {
+    justify-content: center;
+}
+
+.cc-lf-cell-btn,
+.cc-lf-chip-btn,
+.cc-lf-chips {
+    background: transparent;
+    border: 1px solid rgba(232, 216, 181, 0.35);
+    color: #e8d8b5;
+    border-radius: 4px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 4px 8px;
+}
+
+.cc-lf-cell-btn:hover,
+.cc-lf-chip-btn:hover,
+.cc-lf-chips:hover {
+    border-color: #d4a017;
+    background: rgba(212, 160, 23, 0.1);
+}
+
+.cc-lf-cell-btn--empty {
+    color: rgba(232, 216, 181, 0.65);
+}
+
+.cc-lf-chips {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.cc-lf-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4em;
+    height: 1.4em;
+    border-radius: 3px;
+    border: 1px dashed rgba(232, 216, 181, 0.4);
+    color: rgba(232, 216, 181, 0.4);
+    font-weight: bold;
+    font-size: 0.78rem;
+}
+
+.cc-lf-chip--on {
+    border-style: solid;
+    border-color: #d4a017;
+    color: #d4a017;
+    background: rgba(212, 160, 23, 0.15);
+}
+
+.cc-lf-chip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    line-height: 1;
+    flex-wrap: nowrap;
+}
+
+.cc-lf-chip-btn--maneuver {
+    gap: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+.cc-lf-chip-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.cc-lf-chip-pair .cc-lf-filter-icon,
+.cc-lf-chip-pair .cc-lf-gear-icon {
+    vertical-align: middle;
+}
+
+.cc-lf-chip-num {
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.cc-lf-chip-sep {
+    opacity: 0.7;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.cc-lf-chip-btn--on {
+    border-color: #d4a017;
+    color: #d4a017;
+}
+
+.cc-lf-chip-muted {
+    color: rgba(232, 216, 181, 0.35);
+}
+
+/* Floating mask – muss über .modal-overlay (z-index 999999) liegen */
+.cc-lf-float-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000001;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.65);
+    padding: 16px;
+}
+
+/* Gleicher 🔒-Look wie bei select:disabled */
+.cc-lf-lock {
+    display: inline-block;
+    width: 1em;
+    margin-right: 0.3em;
+    font-size: 0.95em;
+    line-height: 1;
+    vertical-align: -0.05em;
+    flex-shrink: 0;
+}
+
+.cc-lf-float {
+    position: relative;
+    width: min(560px, 96vw);
+    max-height: 86vh;
+    overflow: auto;
+    background: #1a1a1a;
+    border: 1px solid #e8d8b5;
+    border-radius: 8px;
+    padding: 28px 20px 18px;
+    color: #e8d8b5;
+    box-shadow: 0 0 28px rgba(0, 0, 0, 0.8);
+}
+
+/* Bezeichnung / Optionen / Beschreibung */
+.cc-lf-float.cc-lf-float--wide {
+    width: min(720px, 96vw);
+}
+
+/* Bezeichnungs-Felder wie Tab 1 (custom-class-name-input) */
+.cc-lf-float-input-wrap--name {
+    width: 100%;
+    max-width: 560px;
+}
+
+.cc-lf-float .close-icon {
+    top: 10px;
+    right: 12px;
+    font-size: 20px;
+    z-index: 2;
+}
+
+.cc-lf-float-title {
+    margin: 0 36px 14px;
+    color: #d4a017;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35em;
+    font-weight: bold;
+    text-align: center;
+}
+
+.cc-lf-float-title .cc-lf-lock {
+    margin-right: 0;
+}
+
+.cc-lf-float-divider {
+    border: none;
+    border-top: 1px solid rgba(212, 160, 23, 0.75);
+    margin: 16px 0;
+}
+
+.cc-lf-float-context {
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+    font-weight: normal;
+    color: rgba(232, 216, 181, 0.85);
+}
+
+/* Zeichenzähler in Masken = gleiches .char-counter wie Tab 1 */
+.cc-lf-float .char-counter {
+    margin: 2px 0 10px;
+}
+
+.cc-lf-float-field-label {
+    display: block;
+    margin: 0 0 4px;
+    font-size: 0.85rem;
+    color: rgba(232, 216, 181, 0.75);
+    font-weight: normal;
+}
+
+.cc-lf-float-hint,
+.cc-lf-float-meta,
+.cc-lf-float-pool {
+    margin: 0 0 10px;
+    font-size: 0.85rem;
+    color: rgba(232, 216, 181, 0.75);
+}
+
+.cc-lf-float-hint--after-filter {
+    margin-top: 14px;
+}
+
+.cc-lf-filter-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: -0.1em;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.cc-lf-filter-icon svg {
+    display: block;
+}
+
+.cc-lf-gear-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-size: 0.95em;
+    flex-shrink: 0;
+}
+
+.cc-tab4-spell-lists {
+    margin: 6px 0 14px 1.2em;
+    padding: 0;
+    color: #e8d8b5;
+}
+
+.cc-lf-float-pool strong {
+    color: #d4a017;
+}
+
+.cc-lf-float-pool--center {
+    text-align: center;
+    margin-top: 14px;
+}
+
+.cc-lf-float-label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+/* Einfach→Frei: Verbesserung unter der Bezeichnung, linksbündig */
+.cc-lf-improve-block {
+    text-align: left;
+    margin-top: 4px;
+}
+
+.cc-lf-improve-block > .cc-lf-float-label {
+    text-align: left;
+}
+
+.cc-lf-improve-block > select.cc-lf-float-input {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+}
+
+/* System-Token-Alias in Langbeschreibung (LEVEL_VAL / CHOICE_LIST) */
+.cc-lf-desc-token {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    box-sizing: border-box;
+    width: auto;
+    max-width: 100%;
+    min-height: 2.6rem;
+    margin-top: 10px;
+    padding: 8px 10px;
+    border: 1px solid rgba(212, 160, 23, 0.55);
+    border-radius: 5px;
+    background: rgba(212, 160, 23, 0.12);
+    color: #e8d8b5;
+    text-align: left;
+    font: inherit;
+    cursor: default;
+}
+
+.cc-lf-desc-token--add,
+.custom-class-overlay button.cc-lf-desc-token.cc-lf-desc-token--add[type="button"],
+button.cc-lf-desc-token.cc-lf-desc-token--add[type="button"] {
+    border: 1px dashed rgba(232, 216, 181, 0.45) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #e8d8b5 !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.cc-lf-desc-token--add:hover,
+.custom-class-overlay button.cc-lf-desc-token.cc-lf-desc-token--add[type="button"]:hover,
+button.cc-lf-desc-token.cc-lf-desc-token--add[type="button"]:hover {
+    border-color: rgba(232, 216, 181, 0.7) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #e8d8b5 !important;
+}
+
+.cc-lf-desc-token--add .cc-lf-desc-token-plus {
+    color: #e8d8b5;
+}
+
+.cc-lf-desc-token-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+
+.cc-lf-desc-token-remove {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    margin: 0;
+    padding: 0;
+    border: none !important;
+    border-radius: 3px !important;
+    background: transparent !important;
+    color: #e8d8b5 !important;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: none !important;
+}
+
+.cc-lf-desc-token-remove--spacer {
+    visibility: hidden;
+    pointer-events: none;
+    cursor: default;
+}
+
+.cc-lf-desc-token-remove:hover {
+    color: #d4a017 !important;
+    background: rgba(212, 160, 23, 0.18) !important;
+}
+
+.cc-lf-desc-token-plus {
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+/* Basis-Klasse für Masken-Inputs; Optik kommt von Tab-1-Regeln oben */
+.cc-lf-float-input {
+    margin-bottom: 0;
+}
+
+.custom-class-overlay .cc-lf-float input[type="number"].cc-lf-amount-input {
+    width: 140px;
+    max-width: 140px;
+    margin-bottom: 10px;
+}
+
+.custom-class-overlay .cc-lf-float input[type="number"].cc-lf-maneuver-dice-input {
+    width: 12%;
+    max-width: 4.5rem;
+    min-width: 3.5rem;
+}
+
+.cc-lf-maneuver-dice-block {
+    margin-top: 28px;
+}
+
+.cc-lf-free-options-copy {
+    margin: 0 0 16px;
+    text-align: left;
+}
+
+.cc-lf-free-options-copy > .cc-lf-float-label {
+    margin-bottom: 6px;
+    text-align: left;
+}
+
+.custom-class-overlay .cc-lf-float .cc-lf-free-options-copy > select.cc-lf-options-filter {
+    width: 18%;
+    max-width: 18%;
+    min-width: 7rem;
+    display: block;
+    margin-left: 0;
+    margin-right: auto;
+}
+
+.cc-lf-param-value-block {
+    margin-top: 28px;
+}
+
+.cc-lf-param-value-block .cc-lf-float-label {
+    margin-bottom: 6px;
+}
+
+.cc-lf-param-mode-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin-top: 18px;
+    margin-bottom: 4px;
+}
+
+.cc-lf-param-value-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.cc-lf-param-value-row > span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.cc-lf-param-times-sep {
+    font-weight: 700;
+    font-size: 1.1rem;
+    line-height: 1;
+    user-select: none;
+}
+
+/* Wert-Input und Würfel-Select exakt auf einer Höhe (Frei + Vordefiniert/Sneak) */
+.custom-class-overlay .cc-lf-float .cc-lf-param-value-row input.cc-lf-amount-input,
+.custom-class-overlay .cc-lf-float .cc-lf-param-value-row select.cc-lf-options-filter {
+    height: 40px;
+    min-height: 40px;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 1rem;
+    line-height: 38px;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+.custom-class-overlay .cc-lf-float .cc-lf-param-value-row select.cc-lf-options-filter {
+    width: auto;
+    min-width: 5.5rem;
+    max-width: 8rem;
+}
+
+.custom-class-overlay .cc-lf-float .cc-lf-param-value-row select.cc-lf-options-filter:disabled {
+    padding-right: 35px;
+}
+
+.custom-class-overlay .cc-lf-float select.cc-lf-options-filter {
+    width: 60%;
+    max-width: 60%;
+}
+
+/* Label + Dropdown als zentrierte Zeile; feste Spalten → Beschriftungen bündig */
+.cc-lf-control-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.cc-lf-control-row > .cc-lf-float-label {
+    margin: 0;
+    flex: 0 0 11rem;
+    width: 11rem;
+    min-width: 7rem;
+    max-width: 7rem;
+    box-sizing: border-box;
+    white-space: nowrap;
+    text-align: left;
+    justify-content: flex-start;
+}
+
+.cc-lf-control-row > select.cc-lf-options-filter,
+.custom-class-overlay .cc-lf-float .cc-lf-control-row > select.cc-lf-options-filter {
+    flex: 0 0 18rem;
+    width: 18rem !important;
+    max-width: 18rem !important;
+    margin: 0;
+}
+
+/* Waffen-/Rüstungsvertrautheit: längere Titel + Zahnrad brauchen mehr Label-Breite */
+.cc-lf-control-row--training-pick {
+    gap: 16px;
+}
+
+.cc-lf-control-row--training-pick > .cc-lf-float-label {
+    flex: 0 0 10rem;
+    width: 10rem;
+    min-width: 10rem;
+    max-width: 10rem;
+}
+
+.cc-lf-control-row--training-pick > select.cc-lf-options-filter,
+.custom-class-overlay .cc-lf-float .cc-lf-control-row--training-pick > select.cc-lf-options-filter {
+    flex: 0 0 14rem;
+    width: 14rem !important;
+    max-width: 14rem !important;
+}
+
+.cc-lf-control-row--predef-select {
+    justify-content: center;
+    margin-top: 6px;
+    margin-bottom: 0;
+}
+
+.cc-lf-control-row--predef-select > .cc-lf-float-label {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+}
+
+.cc-lf-control-row--predef-select > select.cc-lf-options-filter,
+.custom-class-overlay .cc-lf-float .cc-lf-control-row--predef-select > select.cc-lf-options-filter {
+    flex: 0 0 8rem;
+    width: 8rem !important;
+    max-width: 8rem !important;
+}
+
+.cc-lf-float-label.cc-lf-float-label--filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cc-lf-float-input-wrap {
+    width: 100%;
+    max-width: 100%;
+}
+
+.cc-lf-float-input-wrap > .cc-lf-float-input {
+    margin-bottom: 0;
+}
+
+.cc-lf-float .custom-class-lang-block {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.cc-lf-float-preview-lang {
+    margin: 8px 0 4px;
+    font-size: 0.78rem;
+    color: #8a8070;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.cc-lf-float-preview {
+    background: #1a1814;
+    border: 1px solid #3a342a;
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: #e8e0d0;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    max-height: 180px;
+    overflow: auto;
+}
+
+.cc-lf-float-preview ul {
+    margin: 0.4em 0 0.4em 1.2em;
+    padding: 0;
+}
+
+.cc-lf-chips--readonly,
+.cc-lf-cell-btn--locked {
+    cursor: pointer;
+}
+
+.cc-lf-chips--readonly .cc-lf-lock,
+.cc-lf-cell-btn--locked .cc-lf-lock {
+    opacity: 0.9;
+}
+
+.cc-lf-float-body {
+    margin-bottom: 14px;
+}
+
+.cc-lf-float-footer {
+    display: none;
+}
+
+.cc-lf-choice-row {
+    position: relative;
+    border: 1px solid rgba(232, 216, 181, 0.55);
+    border-radius: 5px;
+    padding: 10px 28px 10px 12px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.custom-class-overlay .cc-lf-float button.cc-lf-choice-remove,
+.cc-lf-float button.cc-lf-choice-remove,
+button.cc-lf-choice-remove[type="button"] {
+    position: absolute !important;
+    top: 4px !important;
+    right: 6px !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    color: #e8d8b5 !important;
+    font: inherit !important;
+    font-size: 1rem !important;
+    font-weight: normal !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    transition: none !important;
+    min-width: 0 !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+.custom-class-overlay .cc-lf-float button.cc-lf-choice-remove:hover,
+.custom-class-overlay .cc-lf-float button.cc-lf-choice-remove:focus,
+.cc-lf-float button.cc-lf-choice-remove:hover,
+.cc-lf-float button.cc-lf-choice-remove:focus,
+button.cc-lf-choice-remove[type="button"]:hover,
+button.cc-lf-choice-remove[type="button"]:focus {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #e8d8b5 !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.cc-lf-choice-row > label {
+    margin-bottom: 6px;
+}
+
+.cc-lf-check-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 6px 10px;
+    max-height: 240px;
+    overflow: auto;
+}
+
+.cc-lf-check-grid label,
+.cc-lf-check-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.cc-lf-check-grid label.cc-lf-check-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.custom-class-overlay .cc-lf-float .cc-lf-check-grid input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    box-shadow: none;
+    border-color: #5a4030;
+}
+
+.custom-class-overlay .cc-lf-float .cc-lf-check-grid input[type="checkbox"]:disabled:hover {
+    border-color: #5a4030;
+    box-shadow: none;
+}
+
+.cc-lf-attr-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.cc-lf-attr-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-weight: normal;
+}
+
+.cc-lf-attr-direct-label {
+    align-items: center;
+    text-align: center;
+}
+
+.cc-lf-attr-direct-label .cc-lf-attr-name {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.custom-class-overlay .cc-lf-float input[type="number"].cc-lf-attr-direct-input {
+    width: 30%;
+    max-width: 30%;
+    margin: 0 auto;
+    align-self: center;
+}
+
+.cc-lf-sc-level-block {
+    margin: 14px 0 18px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(212, 160, 23, 0.35);
+}
+
+.cc-lf-sc-level-block .cc-lf-float-input {
+    margin-bottom: 8px;
+}
+
+/* Zaubertrick erhalten: engerer Abstand Überschrift → Min-Hinweis */
+.cc-lf-sc-cantrip-picks > .cc-lf-float-label {
+    margin-bottom: 2px;
+}
+
+.cc-lf-sc-cantrip-picks-hint {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+/* Abstand zwischen Slot-Überschrift und vorherigem Dropdown */
+.cc-lf-sc-cantrip-slot--spaced {
+    margin-top: 16px;
+}
+
+.cc-lf-add-to-spellbook {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+/* Zauberbuch als Fokus in Tab 1 und Zauberwirken-Maske */
+.cc-spellbook-focus-label {
+    color: #4ea1ff;
+}
+
+.cc-lf-add-to-spellbook-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #e8d8b5;
+    cursor: pointer;
+}
+
+.cc-lf-sc-pick-counter {
+    color: #c62828;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    align-self: center;
+    margin-left: auto;
+}
+    color: #c62828;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    align-self: center;
+    margin-left: auto;
+}
+
+.cc-lf-subclass-spells-hint-intro {
+    text-align: center;
+    margin: 0 0 10px;
+}
+
+.cc-lf-subclass-spells-hint-list {
+    text-align: left;
+    margin: 0 0 14px;
+    padding-left: 1.35em;
+}
+
+.cc-lf-subclass-spells-hint-list li {
+    margin: 0.35em 0;
+    text-align: left;
+}
+
+.cc-lf-control-row > input.cc-lf-amount-input,
+.custom-class-overlay .cc-lf-float .cc-lf-control-row > input.cc-lf-amount-input {
+    flex: 0 0 140px;
+    width: 140px !important;
+    max-width: 140px !important;
+    margin: 0;
+}
+
+/* Tab 3: Unterklassen-Boxen */
+.cc-sc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.cc-sc-box {
+    border: 1px solid rgba(232, 216, 181, 0.35);
+    border-radius: 5px;
+    background: #1a1a1a;
+    overflow: hidden;
+}
+
+.cc-sc-box-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px;
+    background: #2a2a2a;
+    cursor: pointer;
+    user-select: none;
+}
+
+.cc-sc-box-header:hover {
+    background: #333;
+}
+
+.cc-sc-box-title {
+    font-weight: bold;
+    color: #d4a017;
+    font-size: 1.02rem;
+}
+
+.cc-sc-box-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+button.cc-sc-remove-btn {
+    background: transparent;
+    border: 1px solid rgba(232, 216, 181, 0.35);
+    color: #e8d8b5;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    line-height: 1;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0;
+}
+
+button.cc-sc-remove-btn:hover {
+    border-color: #c44;
+    color: #f88;
+}
+
+.cc-sc-box-body {
+    padding: 14px 14px 16px;
+}
+
+.cc-sc-box-body.collapsed {
+    display: none;
+}
+
+.cc-sc-empty-levels {
+    color: rgba(232, 216, 181, 0.7);
+    margin: 8px 0 0;
+}
+
+.cc-sc-add-btn {
+    margin-top: 4px;
+}
+
+.cc-sc-table-wrap {
+    margin-top: 8px;
+}
+
+/* Tab 4 – Zauberprogression */
+.cc-spell-prog-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px 20px;
+    margin-bottom: 12px;
+}
+
+.cc-spell-prog-mode {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #e8d8b5;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.cc-spell-prog-mode span {
+    font-weight: bold;
+}
+
+.cc-spell-prog-mode select {
+    min-width: 10rem;
+    /* Globale Margins entfernen, damit Titel und Buttons mittig auf einer Linie liegen */
+    margin: 0;
+}
+
+.cc-spell-prog-table-wrap {
+    overflow-x: auto;
+    border: 1px solid rgba(232, 216, 181, 0.25);
+    border-radius: 6px;
+    /* Rahmen endet am Tabelleninhalt – keine leere Restspalte rechts */
+    width: max-content;
+    max-width: 100%;
+}
+
+.cc-spell-prog-table {
+    width: max-content;
+}
+
+.cc-spell-prog-row {
+    display: grid;
+    /* Feste Spaltenbreiten; Zauberlisten-Spalte wächst per Variable mit der Auswahl mit */
+    grid-template-columns: 48px var(--cc-spell-lists-col, 104px) 72px 72px repeat(9, 56px);
+    align-items: center;
+    border-bottom: 1px solid rgba(232, 216, 181, 0.12);
+    background: #1a1a1a;
+}
+
+.cc-spell-prog-row--head {
+    background: rgba(232, 216, 181, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* Gruppenzeile: „Zauberplätze“ spannt 1.–9. Grad */
+.cc-spell-prog-row--group-head {
+    background: rgba(232, 216, 181, 0.12);
+    border-bottom: 1px solid rgba(184, 115, 51, 0.45);
+}
+
+.cc-spell-prog-cell--group-spacer {
+    grid-column: 1 / 5;
+    border-right: 2px solid rgba(184, 115, 51, 0.55);
+}
+
+.cc-spell-prog-cell--slot-group {
+    grid-column: 5 / 14;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    color: #d4a017;
+    border-right: none;
+    padding-top: 8px;
+    padding-bottom: 4px;
+}
+
+.cc-spell-prog-row--locked {
+    opacity: 0.45;
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.cc-spell-prog-cell {
+    padding: 6px 4px;
+    text-align: center;
+    border-right: 1px solid rgba(232, 216, 181, 0.08);
+    color: #e8d8b5;
+    font-size: 0.85rem;
+}
+
+/* Zaubergrad-Bereich: Spaltenlinien dicker und kupferfarben hervorheben */
+.cc-spell-prog-row .cc-spell-prog-cell:nth-child(n+4) {
+    border-right: 2px solid rgba(184, 115, 51, 0.55);
+}
+
+/* Keine Kupferlinie am rechten Tabellenrand (nach 9. Grad) */
+.cc-spell-prog-row .cc-spell-prog-cell:last-child {
+    border-right: none;
+}
+
+.cc-spell-prog-cell--head {
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.cc-spell-prog-cell--lvl {
+    font-weight: bold;
+    color: #d4a017;
+}
+
+/* Freie Zauberkonfig.: nur Zahl + Spinner, ohne Rahmen und Hintergrund.
+   Hohe Spezifität nötig, da globale input[type="number"]-Regeln sonst greifen. */
+.cc-spell-prog-table input.cc-spell-prog-input {
+    width: 100%;
+    max-width: 52px;
+    background: transparent;
+    color: #e8d8b5;
+    border: none;
+    border-radius: 4px;
+    margin: 0;
+    padding: 4px 2px;
+    text-align: center;
+    font: inherit;
+    font-size: 0.85rem;
+}
+
+.cc-spell-prog-table input.cc-spell-prog-input:focus {
+    outline: 1px solid rgba(184, 115, 51, 0.6);
+}
+
+/* Hard-Reset-Button im Zauberlisten-Spaltenkopf (nur Freie Zauberkonfig.) */
+.cc-spell-prog-reset-btn {
+    margin-left: 6px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    line-height: 1;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.cc-spell-prog-reset-btn img {
+    width: 12px;
+    height: 12px;
+    display: block;
+}
+
+.cc-spell-prog-reset-btn:hover img {
+    filter: drop-shadow(0 0 3px #fce181);
+}
+
+/* „0“-Button neben dem Konfigurations-Dropdown (nur Freie Zauberkonfig.) */
+.cc-spell-prog-zero-btn {
+    background: transparent;
+    border: 1px solid rgba(184, 115, 51, 0.55);
+    border-radius: 4px;
+    color: #d4a017;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: bold;
+    line-height: 1;
+    margin: 0;
+    padding: 4px 8px;
+    cursor: pointer;
+    align-self: center;
+}
+
+.cc-spell-prog-zero-btn:hover {
+    background: rgba(184, 115, 51, 0.25);
+    filter: drop-shadow(0 0 2px #fce181);
+}
+
+/* Einheitliche Schriftfarben der Zauberlisten in allen Masken (gedeckte Töne) */
+.cc-spell-list-color--bard { color: #c97ba4; }
+.cc-spell-list-color--druid { color: #7da87b; }
+.cc-spell-list-color--warlock { color: #8a6fae; }
+.cc-spell-list-color--cleric { color: #e6e6e6; }
+.cc-spell-list-color--wizard { color: #6f93c4; }
+.cc-spell-list-color--paladin { color: #c9a24a; }
+.cc-spell-list-color--ranger { color: #a08055; }
+.cc-spell-list-color--sorcerer { color: #bd6a63; }

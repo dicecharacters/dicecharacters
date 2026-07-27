@@ -1154,9 +1154,49 @@ input[type="checkbox"].rounded-checkbox:checked { background-color: #000; }
 .feature-text ul, .feature-text ol, .compact-list {
     margin: 0;
     padding-left: 2rem; /* Hier rücken wir die Punkte ein */
+    /* Blocksatz aus .feature-text erzeugt Wortlücken in kurzen Listenzeilen
+       (z.B. Manöver „Tänzelnde Beinarbeit“, Metamagie, Anrufungen) */
+    text-align: left;
 }
 .feature-text li, .compact-list li {
     margin-bottom: 0;
+    text-align: left;
+}
+
+/* Eingebettete Regel-Tabellen nur in Klassenmerkmalen
+   (nicht Zauberliste #mainSpellTable, nicht Anhang .sd-text) */
+.feature-text .spell-table {
+    height: auto;
+    font-size: inherit;
+    margin-top: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+
+.feature-text .spell-table caption {
+    caption-side: top;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+    font-size: inherit;
+}
+
+/* Fallback: Titel als <b> direkt vor der Tabelle (z.B. Druiden-Tiergestalt) */
+.feature-text b:has(+ table.spell-table) {
+    display: block;
+    text-align: center;
+}
+
+.feature-text .spell-table th,
+.feature-text .spell-table td {
+    text-align: center;
+    font-size: inherit;
+    height: auto;
+    padding: 0.2rem 0.4rem;
+    vertical-align: middle;
+}
+
+.feature-text .spell-table th {
+    font-weight: bold;
 }
 
 /* --- APPEND (Erweiterungen) --- */
