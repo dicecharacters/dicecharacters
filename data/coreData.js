@@ -329,7 +329,7 @@ const classCoreTraitsList = [
     "weaponPropertyCategoryNumber": [1],
     "armorCategoryNumber": 0,
     "toolLabel": ["artisansToolsLabel", "musicalInstrumentLabel"],
-    "startingEquipmentA": ["spearLabel", "5xdaggerLabel", "artisansToolsLabel(1)","musicalInstrumentLabel(1)","explorersPackLabel", "11 GP"],
+    "startingEquipmentA": ["spearLabel", "5xdaggerLabel", "artisansToolsLabel(1)||musicalInstrumentLabel(1)", "explorersPackLabel", "11 GP"],
     "startingEquipmentB": "50 GP",
     "startingEquipmentC": 0
   },
@@ -356,7 +356,7 @@ const classCoreTraitsList = [
     "translationLabel": "ranger",
     "primaryAbility": ["dexterityLabel", "wisdomLabel"],
     "hitPointDie": "D10",
-    "savingThrowProficiencies": ["dexterityLabel", "wisdomLabel"],
+    "savingThrowProficiencies": ["strengthLabel", "dexterityLabel"],
     "skillCategoryNumber": [2, 4, 7, 9, 11, 12, 17, 18],
     "spellcastingLabel": 1,
     "spellcastingAbility": "wisdomLabel",

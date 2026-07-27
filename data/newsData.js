@@ -1,6 +1,35 @@
 // newsData.js
 const newsUpdates = [
     {
+        date: "28.07.2026",
+        version: "v1.4",
+        content: `
+            Bugfixing:
+            <ul class="news-list">
+                <li>Charakterbogen: Die passive Wahrnehmung berücksichtigt nun korrekt den Übungsbonus.</li>
+                <li>Kleriker (Domäne des Lebens): Der Zauber "Wunden heilen" wird nun ordnungsgemäß in der Zauberprogression angezeigt.</li>
+                <li>Krieger: Darstellungsfehler bei den Merkmalen "Angriffsstudien", "Tatendrang", "Unbeugsamkeit" und "Kampfüberlegenheit" auf dem Charakterbogen behoben.</li>
+                <li>Charakterbogen: Fehlende Beschreibungen für die Merkmale "Kletteraffe", "Außerordentliches Schleichen" und "Magischen Gegenstand verwenden" hinzugefügt.</li>
+                <li>Hexenmeister (Der Große Alte): Das fehlende Merkmal "Gedankenschild" wurde ergänzt.</li>
+                <li>Hexenmeister: Die Anzahl der Zaubertricks auf Stufe 4 wurde gemäß PHB von 2 auf 3 korrigiert.</li>
+                <li>Magier (Schritt 6): Beim Merkmal "Gelehrter" sind die Expertise-Optionen nun korrekterweise erst ab Stufe 2 (statt Stufe 1) und nur noch für die Regelfeld-Fertigkeiten auswählbar (Arkane Kunde, Geschichte, Heilkunde, Nachforschungen, Naturkunde, Religion).</li>
+                <li>Datenbank: Falsche Rettungswürfe des Waldläufers auf Stärke und Geschicklichkeit korrigiert (war fälschlicherweise Geschicklichkeit und Weisheit).</li>
+                <li>Mönch (Schritt 8): Bei der Startausrüstung wird nun korrekt nur noch ein Instrument ODER Handwerkszeug gewährt (statt beidem).</li>
+            </ul>
+
+            Optimierungen:
+            <ul class="news-list">
+                <li>Charakterbogen: In den Ausrüstungstabellen für Werkzeuge wurde das entsprechende Attribut-Feld angelegt. Die Typ-Spalte in der Sonstiges-Tabelle wird nun mit Ausrüstungstypen wie "Zauberfokus" oder "Zaubermaterial" befüllt.</li>
+                <li>Charakterbogen: Regelabgleich sowie Formulierungs-Optimierungen der Merkmalsbeschreibungen aller Klassen und Unterklassen durchgeführt.</li>
+            </ul>
+
+            Angepasste Übersetzungen (ans PHB):
+            <ul class="news-list">
+                <li>Sämtliche Merkmals-, Unterklassen- und Unterklassenmerkmalsbezeichnungen aller Klassen im Charakterbogen überarbeitet.</li>
+            </ul>
+        `
+    },
+    {
         date: "26.05.2026",
         version: "v1.3",
         content: `

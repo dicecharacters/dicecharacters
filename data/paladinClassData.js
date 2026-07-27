@@ -446,7 +446,7 @@ const paladinClassData = [
     "constForChoice": 0,
     "classFeaturesStep2": 0,
     "infoBox": 0,
-    "classFeaturesCharacterSheet": 1,
+    "classFeaturesCharacterSheet": 0,
     "skillCategoryNumber": 0,
     "channelDivinity": 2,
     "healPoints": 15,

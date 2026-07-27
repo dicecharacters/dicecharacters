@@ -9020,7 +9020,7 @@ const subclassSpellsList = [
     "level": 3,
     "subclassCategoryNumber": 1,
     "landCategoryNumber": 0,
-    "preparedSpells": ["aidLabel", "blessLabel", "cureWounds", "lesserRestorationLabel"]
+    "preparedSpells": ["aidLabel", "blessLabel", "cureWoundsLabel", "lesserRestorationLabel"]
   },
   {
     "ID": 2,
@@ -9044,7 +9044,7 @@ const subclassSpellsList = [
     "ID": 4,
     "class": "cleric",
     "classFeature": ["lifeDomainSpellsLabel"],
-    "level": 8,
+    "level": 9,
     "subclassCategoryNumber": 1,
     "landCategoryNumber": 0,
     "preparedSpells": ["greaterRestorationLabel", "massCureWoundsLabel"]
