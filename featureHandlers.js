@@ -516,6 +516,49 @@ const speciesHandlers = {
         // Da die Bewegungsrate AUF 35 steigt (und nicht um +5 addiert wird),
         // setzen wir hier eine globale Überschreibung. 
         window.baseSpeedOverride = 35; 
+    },
+
+    // --- CUSTOM CLASS: Waffenvertrautheit (Einfach→Grant) ---
+    // feat = aktuelle Merkmalszeile aus applyClassFeatureLogic (Get_* / granted*)
+    "weaponTrainingLabel": (charData, stats, feat) => {
+        if (!feat) return;
+        if (!stats.additionalProficiencies) stats.additionalProficiencies = { armor: [], weapon: [] };
+        if (!stats.additionalWeaponProperties) stats.additionalWeaponProperties = [];
+
+        if (feat.Get_weaponCategoryNumber && feat.Get_weaponCategoryNumber !== 0) {
+            const weapons = Array.isArray(feat.Get_weaponCategoryNumber)
+                ? feat.Get_weaponCategoryNumber
+                : [feat.Get_weaponCategoryNumber];
+            weapons.forEach(n => {
+                const id = parseInt(n, 10);
+                if (Number.isFinite(id) && id > 0) stats.additionalProficiencies.weapon.push(id);
+            });
+        }
+
+        const props = feat.grantedWeaponPropertyCategoryNumbers;
+        if (props && props !== 0) {
+            const list = Array.isArray(props) ? props : [props];
+            list.forEach(n => {
+                const id = parseInt(n, 10);
+                if (Number.isFinite(id) && id > 0) stats.additionalWeaponProperties.push(id);
+            });
+        }
+    },
+
+    // --- CUSTOM CLASS: Rüstungsvertrautheit (Einfach→Grant) ---
+    "armorTrainingLabel": (charData, stats, feat) => {
+        if (!feat) return;
+        if (!stats.additionalProficiencies) stats.additionalProficiencies = { armor: [], weapon: [] };
+
+        if (feat.Get_armorCategoryNumber && feat.Get_armorCategoryNumber !== 0) {
+            const armor = Array.isArray(feat.Get_armorCategoryNumber)
+                ? feat.Get_armorCategoryNumber
+                : [feat.Get_armorCategoryNumber];
+            armor.forEach(n => {
+                const id = parseInt(n, 10);
+                if (Number.isFinite(id) && id > 0) stats.additionalProficiencies.armor.push(id);
+            });
+        }
     }
 
 };

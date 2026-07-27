@@ -157,6 +157,13 @@
                     <input type="radio" id="wizard" name="class" value="Wizard" onclick="selectClass('wizard')">
                     <label for="wizard" id="wizardLabel"><strong>Wizard</strong></label>
                 </li>
+                <li id="customClassListItem" class="custom-class-list-item" style="display: none;">
+                    <input type="radio" id="customClassRadio" name="class" value="" onclick="selectCustomClass()">
+                    <label for="customClassRadio" id="customClassRadioLabel"><strong></strong></label>
+                </li>
+                <li id="addCustomClassListItem" class="add-custom-class-item">
+                    <button type="button" id="addCustomClassBtn" class="add-custom-class-btn" onclick="openCustomClassChooser()" aria-label="+">+</button>
+                </li>
             </ul>
             <!-- Container für die Klassenbeschreibung -->
             <div id="classTextContainer" style="display: none;">
@@ -766,6 +773,66 @@
         </div>
     </div>
 
+    <!-- Custom Class Modal -->
+    <!-- Bewusst kein onclick auf dem Overlay: Klick außerhalb schließt den Klassenersteller nicht -->
+    <div id="customClassOverlay" class="modal-overlay custom-class-overlay">
+        <div class="custom-class-modal" onclick="event.stopPropagation()">
+            <span class="close-icon" onclick="requestCloseCustomClassModal()">&times;</span>
+
+            <!-- Auswahl: Neu oder Hochladen -->
+            <div id="customClassChooserView">
+                <h3 id="customClassModalTitleLabel" class="custom-class-title"></h3>
+                <div class="custom-class-chooser-actions">
+                    <button type="button" id="customClassCreateNewBtn" class="custom-class-action-btn" onclick="startCustomClassCreate()"></button>
+                    <button type="button" id="customClassUploadBtn" class="custom-class-action-btn" onclick="triggerCustomClassUpload()"></button>
+                    <input type="file" id="customClassFileInput" accept=".json,application/json" style="display: none;" onchange="handleCustomClassFile(event)">
+                </div>
+            </div>
+
+            <!-- Editor mit Tabs -->
+            <div id="customClassEditorView" style="display: none;">
+                <h3 id="customClassEditorTitleLabel" class="custom-class-title"></h3>
+
+                <div class="custom-class-tabs">
+                    <button type="button" class="custom-class-tab active" data-tab="1" id="customClassTabCoreBtn" onclick="switchCustomClassTab(1)"></button>
+                    <button type="button" class="custom-class-tab" data-tab="2" id="customClassTabLevelsBtn" onclick="switchCustomClassTab(2)"></button>
+                    <button type="button" class="custom-class-tab" data-tab="3" id="customClassTabSubclassBtn" onclick="switchCustomClassTab(3)"></button>
+                    <button type="button" class="custom-class-tab custom-class-tab--locked" data-tab="4" id="customClassTabSpellcastingBtn" onclick="switchCustomClassTab(4)" disabled></button>
+                </div>
+
+                <div class="custom-class-tab-panels">
+                    <div id="customClassTab1" class="custom-class-tab-panel active">
+                        <div id="customClassTab1Content"></div>
+                    </div>
+                    <div id="customClassTab2" class="custom-class-tab-panel">
+                        <div id="customClassTab2Content"></div>
+                    </div>
+                    <div id="customClassTab3" class="custom-class-tab-panel">
+                        <div id="customClassTab3Content"></div>
+                    </div>
+                    <div id="customClassTab4" class="custom-class-tab-panel">
+                        <div id="customClassTab4Content"></div>
+                    </div>
+                </div>
+
+                <div class="custom-class-footer">
+                    <button type="button" id="customClassSaveBtn" class="custom-class-action-btn" onclick="saveCustomClass()"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating-Maske innerhalb des Custom-Class-Overlays (über dem Modal, z-index) -->
+        <div id="ccLfFloatOverlay" class="cc-lf-float-overlay" style="display: none;"
+             onclick="event.stopPropagation(); closeLfFloat()">
+            <div class="cc-lf-float" onclick="event.stopPropagation()">
+                <span class="close-icon" onclick="event.stopPropagation(); closeLfFloat()" aria-label="×">&times;</span>
+                <h4 id="ccLfFloatTitle" class="cc-lf-float-title"></h4>
+                <p id="ccLfFloatHint" class="cc-lf-float-hint" style="display:none;"></p>
+                <div id="ccLfFloatBody" class="cc-lf-float-body"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="disclaimerLabel" class="permanent-disclaimer"></div>
 
     <!-- Fixierte Buttons -->
@@ -849,8 +916,11 @@
     <script src="data/spellData.js"></script>
     <script src="data/religionData.js"></script>
     <script src="main.js"></script>
+    <script src="dcPackage.js"></script>
+    <script src="customFeaturesBuilder.js"></script>
 
     <script src="translations/translationsCore.js"></script>
+    <script src="translations/translationsCustomFeatures.js"></script>
 
     <script src="translations/translationsBarbarian.js"></script>
     <script src="translations/translationsBard.js"></script>
