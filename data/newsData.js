@@ -9,7 +9,7 @@ const newsUpdates = [
                 <li>Charakterbogen: Die passive Wahrnehmung berücksichtigt nun korrekt den Übungsbonus.</li>
                 <li>Kleriker (Domäne des Lebens): Der Zauber "Wunden heilen" wird nun ordnungsgemäß in der Zauberprogression angezeigt.</li>
                 <li>Krieger: Darstellungsfehler bei den Merkmalen "Angriffsstudien", "Tatendrang", "Unbeugsamkeit" und "Kampfüberlegenheit" auf dem Charakterbogen behoben.</li>
-                <li>Charakterbogen: Fehlende Beschreibungen für die Merkmale "Kletteraffe", "Außerordentliches Schleichen" und "Magischen Gegenstand verwenden" hinzugefügt.</li>
+                <li>Schurke: Fehlende Beschreibungen für die Merkmale "Kletteraffe", "Außerordentliches Schleichen" und "Magischen Gegenstand verwenden" auf dem Charakterbogen hinzugefügt.</li>
                 <li>Hexenmeister (Der Große Alte): Das fehlende Merkmal "Gedankenschild" wurde ergänzt.</li>
                 <li>Hexenmeister: Die Anzahl der Zaubertricks auf Stufe 4 wurde gemäß PHB von 2 auf 3 korrigiert.</li>
                 <li>Magier (Schritt 6): Beim Merkmal "Gelehrter" sind die Expertise-Optionen nun korrekterweise erst ab Stufe 2 (statt Stufe 1) und nur noch für die Regelfeld-Fertigkeiten auswählbar (Arkane Kunde, Geschichte, Heilkunde, Nachforschungen, Naturkunde, Religion).</li>
