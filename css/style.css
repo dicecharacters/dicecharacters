@@ -1133,9 +1133,9 @@ input[type="number"]:disabled {
     text-align: center;
     flex-shrink: 0; /* KORREKTUR: Verhindert Schrumpfen */
 }
-.live-attr-header-row .col-attr { flex-basis: 85px; text-align: left; }
-.live-attr-header-row .col-mod   { flex-basis: 30px; }
-.live-attr-header-row .col-total { flex-basis: 45px; }
+.live-attr-header-row .col-attr { flex-basis: 65px; text-align: left; }
+.live-attr-header-row .col-mod   { flex-basis: 80px; }
+.live-attr-header-row .col-total { flex-basis: 45px; margin-left: 8px; }
 .live-attr-header-row .col-base  { flex-basis: 45px; }
 .live-attr-header-row .col-feat  { flex-basis: 45px; }
 .live-attr-header-row .col-bg    { flex-basis: 80px; }
@@ -1148,9 +1148,9 @@ input[type="number"]:disabled {
     text-align: center;
     flex-shrink: 0; /* KORREKTUR: Verhindert Schrumpfen */
 }
-.live-attr-data-row .col-attr { flex-basis: 125px; text-align: left; font-weight: bold; }
+.live-attr-data-row .col-attr { flex-basis: 85px; text-align: left; font-weight: bold; }
 .live-attr-data-row .col-mod   { flex-basis: 30px; }
-.live-attr-data-row .col-total { flex-basis: 45px; }
+.live-attr-data-row .col-total { flex-basis: 45px; margin-left: 35px; }
 .live-attr-data-row .col-base  { flex-basis: 45px; }
 .live-attr-data-row .col-feat  { flex-basis: 45px; }
 .live-attr-data-row .col-bg    { flex-basis: 45px; }
@@ -1257,6 +1257,29 @@ input[type="text"], input[type="number"] {
     text-align: center; /* Zentriert den Text innerhalb der Eingabefelder */
     box-sizing: border-box; /* Inklusive Padding und Border in der Breite */
     margin-bottom: 5vh; /* Fügt unteren Abstand hinzu */
+}
+
+/* Schritt 5: Stufen-Input (vergrößert), horizontal zentriert */
+#step5 .level-input-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 5vh;
+}
+
+/* Anker hält das Input fest in der Mitte; Stepper wird absolut rechts daneben gelegt */
+#step5 .level-input-anchor {
+    position: relative;
+    display: inline-block;
+}
+
+#step5 #level {
+    width: 80px;
+    height: 60px;
+    font-size: 30px;
+    margin-bottom: 0;
+    display: block;
 }
 
 /* =======================================================================
@@ -3611,6 +3634,53 @@ textarea::placeholder,
 
 
 /* =======================================================================
+   MOBILE/TABLET - Schritt 5: Stufen-Stepper (≤1000px)
+   Design = identisch zu Schritt-4-.stepper-btn; Position absolut rechts
+   vom Input, damit das zentrierte Feld nicht verrutscht.
+   ======================================================================= */
+
+@media screen and (max-width: 1000px) {
+    #step5 .mobile-stepper-ui {
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        margin-left: 10px;
+        z-index: 5;
+    }
+
+    #step5 .mobile-stepper-ui.active-stepper {
+        display: flex !important;
+    }
+
+    /* Gleiche effektive Farben wie Schritt 4 (dort gewinnt button[type=button]: #8b5e34) */
+    #step5 .stepper-btn {
+        background-color: #8b5e34;
+        color: #e8d8b5;
+        border: none;
+        width: 45px;
+        height: 25px;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    #step5 .stepper-btn:hover {
+        background-color: #a36a42;
+    }
+
+    #step5 .stepper-btn:first-child { border-radius: 4px 4px 0 0; }
+    #step5 .stepper-btn:last-child { border-radius: 0 0 4px 4px; }
+}
+
+
+/* =======================================================================
    MOBILE - Schritt 7: Zuaberliste
    ======================================================================= */
 
@@ -3658,8 +3728,8 @@ textarea::placeholder,
         width: 40px !important;
         text-align: center;
     }
-    #classLabel::before { content: "C"; font-size: 1rem; color: #d4a017; font-weight: bold; }
-    #backgroundLabel::before { content: "B"; font-size: 1rem; color: #d4a017; font-weight: bold; }
+    #classLabel::before { content: attr(data-short); font-size: 1rem; color: #d4a017; font-weight: bold; }
+    #backgroundLabel::before { content: attr(data-short); font-size: 1rem; color: #d4a017; font-weight: bold; }
 
     /* --- 2. Sektion 2: Geldbörse (Purse) vertikal stapeln --- */
     #purseInputs {
@@ -3923,7 +3993,8 @@ textarea::placeholder,
     justify-content: flex-start;
 }
 
-/* „+“ nur Desktop/Tablet UND nur wenn Feature-Flag aktiv (cc-feature-enabled) */
+/* „+“ ab Standard-/mittelgroßen Tablets (768px+) UND Feature-Flag (cc-feature-enabled).
+   Smartphones darunter bleiben ausgeblendet. */
 @media screen and (min-width: 768px) {
     #addCustomClassListItem.add-custom-class-item.cc-feature-enabled {
         display: flex !important;
@@ -3950,6 +4021,75 @@ textarea::placeholder,
     background: rgba(232, 216, 181, 0.15);
 }
 
+/* Custom Subclass „+“ unter der Unterklassen-Liste (Schritt 6) */
+.add-custom-subclass-wrap {
+    display: none !important;
+    margin-top: 10px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* Custom Subclass „+“: gleiche Breakpoints wie Class-Builder (ab mittelgroßen Tablets) */
+@media screen and (min-width: 768px) {
+    #addCustomSubclassWrap.add-custom-subclass-wrap.cc-feature-enabled {
+        display: flex !important;
+    }
+}
+
+.add-custom-subclass-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #e8d8b5;
+    background: transparent;
+    color: #e8d8b5;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-custom-subclass-btn:hover {
+    background: rgba(232, 216, 181, 0.15);
+}
+
+/* Custom Background „+“ in der Hintergrund-Liste (Schritt 2).
+   Gleicher Breakpoint wie Class/Subclass: ab 768px + Feature-Flag; darunter ausgeblendet. */
+.add-custom-background-item {
+    display: none !important;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+@media screen and (min-width: 768px) {
+    #addCustomBackgroundListItem.add-custom-background-item.cc-feature-enabled {
+        display: flex !important;
+    }
+}
+
+.add-custom-background-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #e8d8b5;
+    background: transparent;
+    color: #e8d8b5;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-custom-background-btn:hover {
+    background: rgba(232, 216, 181, 0.15);
+}
+
 .custom-class-overlay {
     align-items: flex-start;
     overflow-y: auto;
@@ -3958,7 +4098,7 @@ textarea::placeholder,
 
 .custom-class-modal {
     position: relative;
-    width: min(980px, 96vw);
+    width: min(900px, 96vw);
     max-height: 92vh;
     overflow-y: auto;
     margin: auto;
@@ -3969,6 +4109,11 @@ textarea::placeholder,
     padding: 28px 24px 20px;
     box-sizing: border-box;
     color: #e8d8b5;
+}
+
+/* Chooser (Erstellen / Hochladen) – schmaler; Editor bleibt bei 900px */
+.custom-class-modal.custom-class-modal--chooser {
+    width: min(650px, 96vw);
 }
 
 .custom-class-modal .close-icon {
@@ -3990,7 +4135,7 @@ textarea::placeholder,
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-width: 420px;
+    max-width: 300px;
     margin: 0 auto;
 }
 
