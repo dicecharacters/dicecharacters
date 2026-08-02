@@ -15,6 +15,7 @@ const barbarianClassData = [
     "rages": 2,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 0,
     "skillCategoryNumber": 0
   },
   {
@@ -33,6 +34,7 @@ const barbarianClassData = [
     "rages": 2,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 0,
     "skillCategoryNumber": 0
   },
   {
@@ -51,6 +53,7 @@ const barbarianClassData = [
     "rages": 2,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 0,
     "skillCategoryNumber": [2, 4, 8, 11, 12, 18]
   },
   {
@@ -69,6 +72,7 @@ const barbarianClassData = [
     "rages": 2,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 0,
     "skillCategoryNumber": 0
   },
   {
@@ -87,6 +91,7 @@ const barbarianClassData = [
     "rages": 2,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 0,
     "skillCategoryNumber": 0
   },
   {
@@ -105,6 +110,7 @@ const barbarianClassData = [
     "rages": 2,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 0,
     "skillCategoryNumber": 0
   },
   {
@@ -123,6 +129,7 @@ const barbarianClassData = [
     "rages": 2,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 0,
     "skillCategoryNumber": 0
   },
   {
@@ -141,6 +148,7 @@ const barbarianClassData = [
     "rages": 2,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 0,
     "skillCategoryNumber": 0
   },
   {
@@ -159,6 +167,7 @@ const barbarianClassData = [
     "rages": 3,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 4,
     "skillCategoryNumber": 0
   },
   {
@@ -177,6 +186,7 @@ const barbarianClassData = [
     "rages": 3,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 4,
     "skillCategoryNumber": 0
   },
   {
@@ -195,6 +205,7 @@ const barbarianClassData = [
     "rages": 3,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 4,
     "skillCategoryNumber": 0
   },
   {
@@ -213,6 +224,7 @@ const barbarianClassData = [
     "rages": 3,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 4,
     "skillCategoryNumber": 0
   },
   {
@@ -231,6 +243,7 @@ const barbarianClassData = [
     "rages": 3,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 4,
     "skillCategoryNumber": 0
   },
   {
@@ -249,6 +262,7 @@ const barbarianClassData = [
     "rages": 3,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 4,
     "skillCategoryNumber": 0
   },
   {
@@ -267,6 +281,7 @@ const barbarianClassData = [
     "rages": 3,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 4,
     "skillCategoryNumber": 0
   },
   {
@@ -285,6 +300,7 @@ const barbarianClassData = [
     "rages": 3,
     "rageDamage": "+2",
     "weaponMastery": 2,
+    "poolDiceAmount": 4,
     "skillCategoryNumber": [2, 4, 8, 11, 12, 18]
   },
   {
@@ -296,13 +312,14 @@ const barbarianClassData = [
     "classFeatureDescription": 0,
     "choiceInStep3": 1,
     "subclassCategoryNumber": 0,
-    "constForChoice": "feats [4]",
+    "constForChoice": "feats[4]",
     "classFeaturesStep2": 1,
     "infoBox": 1,
     "classFeaturesCharacterSheet": 0,
     "rages": 3,
     "rageDamage": "+2",
     "weaponMastery": 3,
+    "poolDiceAmount": 4,
     "skillCategoryNumber": 0
   },
   {
@@ -321,6 +338,7 @@ const barbarianClassData = [
     "rages": 3,
     "rageDamage": "+2",
     "weaponMastery": 3,
+    "poolDiceAmount": 4,
     "skillCategoryNumber": 0
   },
   {
@@ -339,6 +357,7 @@ const barbarianClassData = [
     "rages": 3,
     "rageDamage": "+2",
     "weaponMastery": 3,
+    "poolDiceAmount": 4,
     "skillCategoryNumber": 0
   },
   {
@@ -357,6 +376,7 @@ const barbarianClassData = [
     "rages": 3,
     "rageDamage": "+2",
     "weaponMastery": 3,
+    "poolDiceAmount": 4,
     "skillCategoryNumber": 0
   },
   {
@@ -375,6 +395,7 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+2",
     "weaponMastery": 3,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -393,6 +414,7 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+2",
     "weaponMastery": 3,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -411,6 +433,7 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+2",
     "weaponMastery": 3,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -429,6 +452,7 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+2",
     "weaponMastery": 3,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -447,6 +471,7 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+2",
     "weaponMastery": 3,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -465,6 +490,7 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+2",
     "weaponMastery": 3,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -476,13 +502,14 @@ const barbarianClassData = [
     "classFeatureDescription": 0,
     "choiceInStep3": 1,
     "subclassCategoryNumber": 0,
-    "constForChoice": 3,
+    "constForChoice": "feats[8]",
     "classFeaturesStep2": 1,
     "infoBox": 0,
     "classFeaturesCharacterSheet": 0,
     "rages": 4,
     "rageDamage": "+2",
     "weaponMastery": 3,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -501,6 +528,7 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+3",
     "weaponMastery": 3,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -519,6 +547,7 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -537,6 +566,7 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -555,6 +585,7 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -573,6 +604,7 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -591,6 +623,7 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
@@ -609,24 +642,26 @@ const barbarianClassData = [
     "rages": 4,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 5,
     "skillCategoryNumber": 0
   },
   {
     "ID": 35,
     "level": 12,
-    "ProficiencyBonus": "+5",
+    "ProficiencyBonus": "+4",
     "translationLabel": "asiAndFeat",
     "classFeatureShortDescription": 0,
     "classFeatureDescription": 0,
     "choiceInStep3": 1,
     "subclassCategoryNumber": 0,
-    "constForChoice": "feats [8]",
+    "constForChoice": "feats[12]",
     "classFeaturesStep2": 1,
     "infoBox": 0,
     "classFeaturesCharacterSheet": 0,
     "rages": 5,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 6,
     "skillCategoryNumber": 0
   },
   {
@@ -635,7 +670,7 @@ const barbarianClassData = [
     "ProficiencyBonus": "+5",
     "translationLabel": "improvedBrutalStrike",
     "classFeatureShortDescription": "improvedBrutalStrikeShortD",
-    "classFeatureDescription": "improvedBrutalStrikeD2",
+    "classFeatureDescription": "improvedBrutalStrikeD",
     "choiceInStep3": 0,
     "subclassCategoryNumber": 0,
     "constForChoice": 0,
@@ -645,6 +680,7 @@ const barbarianClassData = [
     "rages": 5,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 6,
     "skillCategoryNumber": 0
   },
   {
@@ -663,6 +699,7 @@ const barbarianClassData = [
     "rages": 5,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 6,
     "skillCategoryNumber": 0
   },
   {
@@ -681,6 +718,7 @@ const barbarianClassData = [
     "rages": 5,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 6,
     "skillCategoryNumber": 0
   },
   {
@@ -699,6 +737,7 @@ const barbarianClassData = [
     "rages": 5,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 6,
     "skillCategoryNumber": 0
   },
   {
@@ -717,6 +756,7 @@ const barbarianClassData = [
     "rages": 5,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 6,
     "skillCategoryNumber": 0
   },
   {
@@ -735,6 +775,7 @@ const barbarianClassData = [
     "rages": 5,
     "rageDamage": "+3",
     "weaponMastery": 4,
+    "poolDiceAmount": 6,
     "skillCategoryNumber": 0
   },
   {
@@ -746,13 +787,14 @@ const barbarianClassData = [
     "classFeatureDescription": 0,
     "choiceInStep3": 1,
     "subclassCategoryNumber": 0,
-    "constForChoice": "feats [10]",
+    "constForChoice": "feats[16]",
     "classFeaturesStep2": 1,
     "infoBox": 0,
     "classFeaturesCharacterSheet": 0,
     "rages": 5,
     "rageDamage": "+4",
     "weaponMastery": 4,
+    "poolDiceAmount": 6,
     "skillCategoryNumber": 0
   },
   {
@@ -761,7 +803,7 @@ const barbarianClassData = [
     "ProficiencyBonus": "+6",
     "translationLabel": "improvedBrutalStrike",
     "classFeatureShortDescription": 0,
-    "classFeatureDescription": "improvedBrutalStrikeD",
+    "classFeatureDescription": "improvedBrutalStrikeD2",
     "choiceInStep3": 0,
     "subclassCategoryNumber": 0,
     "constForChoice": 0,
@@ -771,6 +813,7 @@ const barbarianClassData = [
     "rages": 6,
     "rageDamage": "+4",
     "weaponMastery": 4,
+    "poolDiceAmount": 7,
     "skillCategoryNumber": 0
   },
   {
@@ -789,6 +832,7 @@ const barbarianClassData = [
     "rages": 6,
     "rageDamage": "+4",
     "weaponMastery": 4,
+    "poolDiceAmount": 7,
     "skillCategoryNumber": 0
   },
   {
@@ -807,6 +851,7 @@ const barbarianClassData = [
     "rages": 6,
     "rageDamage": "+4",
     "weaponMastery": 4,
+    "poolDiceAmount": 7,
     "skillCategoryNumber": 0
   },
   {
@@ -825,6 +870,7 @@ const barbarianClassData = [
     "rages": 6,
     "rageDamage": "+4",
     "weaponMastery": 4,
+    "poolDiceAmount": 7,
     "skillCategoryNumber": 0
   }
 ]
@@ -833,21 +879,25 @@ const subclassListBarbarian = [
     {
         "subclassCategoryNumber": 1,
         "translationLabel": "pathOfBerserkerLabel",
-        "subclassD": "pathOfBerserkerDLabel"
+        "subclassD": "pathOfBerserkerDLabel",
+        "source": ["phb2024","SRD521"]
     },
     {
         "subclassCategoryNumber": 2,
         "translationLabel": "pathOfWildHeartLabel",
-        "subclassD": "pathOfWildHeartDLabel"
+        "subclassD": "pathOfWildHeartDLabel",
+        "source": ["phb2024"]
     },
     {
         "subclassCategoryNumber": 3,
         "translationLabel": "pathOfWorldTreeLabel",
-        "subclassD": "pathOfWorldTreeDLabel"
+        "subclassD": "pathOfWorldTreeDLabel",
+        "source": ["phb2024"]
     },
     {
         "subclassCategoryNumber": 4,
         "translationLabel": "pathOfZealotLabel",
-        "subclassD": "pathOfZealotDLabel"
+        "subclassD": "pathOfZealotDLabel",
+        "source": ["phb2024"]
     }
 ];

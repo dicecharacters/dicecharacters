@@ -18,7 +18,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 2,
@@ -39,7 +40,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 3,
@@ -60,7 +62,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 4,
@@ -81,7 +84,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 5,
@@ -102,7 +106,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 6,
@@ -123,7 +128,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 7,
@@ -144,7 +150,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 8,
@@ -165,7 +172,8 @@ const featList = [
     "Get_skillCategoryNumber": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 9,
@@ -186,7 +194,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 10,
@@ -207,7 +216,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 11,
@@ -228,7 +238,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 12,
@@ -249,7 +260,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 13,
@@ -270,7 +282,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 14,
@@ -291,7 +304,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 15,
@@ -312,7 +326,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["constitutionLabel", "wisdomLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 16,
@@ -333,7 +348,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 17,
@@ -354,7 +370,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "constitutionLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 18,
@@ -375,7 +392,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 19,
@@ -396,7 +414,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 20,
@@ -417,7 +436,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["constitutionLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 21,
@@ -431,14 +451,15 @@ const featList = [
     "prerequisite_Level": 4,
     "prerequisite_Attribute": 0,
     "prerequisite_AttributeValue": 0,
-    "prerequisite_Feature": ["spellcastingLabel", "pactMagicFeatureLabel"],
+    "prerequisite_Feature": ["spellcastingLabel", "pactMagicLabel"],
     "prerequisite_armorCategoryNumber": 0,
     "Get_toolID": 0,
     "Get_spellID": 0,
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 22,
@@ -459,7 +480,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 23,
@@ -480,7 +502,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 24,
@@ -501,7 +524,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 25,
@@ -520,9 +544,10 @@ const featList = [
     "Get_toolID": 0,
     "Get_spellID": 0,
     "Get_skillCategoryNumber": 0,
-    "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
+    "Get_attrImprovement": ["constitutionLabel", "strengthLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": [3]
+    "Get_armorCategoryNumber": [3],
+    "source": ["phb2024"]
   },
   {
     "ID": 26,
@@ -541,9 +566,10 @@ const featList = [
     "Get_toolID": 0,
     "Get_spellID": 0,
     "Get_skillCategoryNumber": 0,
-    "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
+    "Get_attrImprovement": ["constitutionLabel", "strengthLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 27,
@@ -564,7 +590,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 28,
@@ -585,7 +612,8 @@ const featList = [
     "Get_skillCategoryNumber": [3, 6, 9, 10, 11, 15],
     "Get_attrImprovement": ["intelligenceLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 29,
@@ -606,7 +634,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": [1,4]
+    "Get_armorCategoryNumber": [1,4],
+    "source": ["phb2024"]
   },
   {
     "ID": 30,
@@ -627,7 +656,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 31,
@@ -648,7 +678,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": [3, 4],
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 32,
@@ -669,7 +700,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 33,
@@ -690,7 +722,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": [2]
+    "Get_armorCategoryNumber": [2],
+    "source": ["phb2024"]
   },
   {
     "ID": 34,
@@ -709,9 +742,10 @@ const featList = [
     "Get_toolID": 0,
     "Get_spellID": 0,
     "Get_skillCategoryNumber": 0,
-    "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
+    "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "wisdomLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 35,
@@ -732,7 +766,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["intelligenceLabel", "wisdomLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 36,
@@ -753,7 +788,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 37,
@@ -774,7 +810,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["dexterityLabel", "intelligenceLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 38,
@@ -795,7 +832,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 39,
@@ -816,7 +854,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 40,
@@ -828,7 +867,7 @@ const featList = [
     "multipleSelection": 0,
     "takeChoice": 4,
     "prerequisite_Level": 4,
-    "prerequisite_Attribute": ["strengthLabel", "dexterityLabel", "charismaLabel"],
+    "prerequisite_Attribute": ["intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "prerequisite_AttributeValue": 13,
     "prerequisite_Feature": 0,
     "prerequisite_armorCategoryNumber": 0,
@@ -837,7 +876,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 41,
@@ -858,7 +898,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 42,
@@ -879,7 +920,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 43,
@@ -900,7 +942,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 44,
@@ -921,7 +964,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 45,
@@ -942,7 +986,8 @@ const featList = [
     "Get_skillCategoryNumber": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 46,
@@ -963,7 +1008,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 47,
@@ -984,7 +1030,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 48,
@@ -1005,7 +1052,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["constitutionLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 49,
@@ -1019,14 +1067,15 @@ const featList = [
     "prerequisite_Level": 4,
     "prerequisite_Attribute": 0,
     "prerequisite_AttributeValue": 0,
-    "prerequisite_Feature": ["spellcastingLabel", "pactMagicFeatureLabel"],
+    "prerequisite_Feature": ["spellcastingLabel", "pactMagicLabel"],
     "prerequisite_armorCategoryNumber": 0,
     "Get_toolID": 0,
     "Get_spellID": 0,
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 50,
@@ -1047,7 +1096,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 51,
@@ -1068,7 +1118,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 52,
@@ -1082,14 +1133,15 @@ const featList = [
     "prerequisite_Level": 4,
     "prerequisite_Attribute": 0,
     "prerequisite_AttributeValue": 0,
-    "prerequisite_Feature": ["spellcastingLabel", "pactMagicFeatureLabel"],
+    "prerequisite_Feature": ["spellcastingLabel", "pactMagicLabel"],
     "prerequisite_armorCategoryNumber": 0,
     "Get_toolID": 0,
     "Get_spellID": 0,
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 53,
@@ -1110,7 +1162,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 54,
@@ -1131,7 +1184,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 55,
@@ -1152,7 +1206,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 56,
@@ -1173,7 +1228,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 57,
@@ -1194,7 +1250,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 58,
@@ -1215,7 +1272,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 59,
@@ -1236,7 +1294,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 60,
@@ -1257,7 +1316,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 61,
@@ -1278,7 +1338,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 62,
@@ -1299,7 +1360,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 63,
@@ -1320,7 +1382,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 64,
@@ -1341,7 +1404,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 65,
@@ -1362,7 +1426,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 66,
@@ -1383,7 +1448,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 67,
@@ -1404,7 +1470,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 68,
@@ -1425,7 +1492,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 69,
@@ -1446,7 +1514,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 70,
@@ -1467,7 +1536,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 71,
@@ -1488,7 +1558,8 @@ const featList = [
     "Get_skillCategoryNumber": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 72,
@@ -1509,7 +1580,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024"]
   },
   {
     "ID": 73,
@@ -1523,14 +1595,15 @@ const featList = [
     "prerequisite_Level": 19,
     "prerequisite_Attribute": 0,
     "prerequisite_AttributeValue": 0,
-    "prerequisite_Feature": 0,
+    "prerequisite_Feature": "spellcastingLabel",
     "prerequisite_armorCategoryNumber": 0,
     "Get_toolID": 0,
     "Get_spellID": 0,
     "Get_skillCategoryNumber": 0,
-    "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
+    "Get_attrImprovement": ["intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 74,
@@ -1549,9 +1622,10 @@ const featList = [
     "Get_toolID": 0,
     "Get_spellID": 0,
     "Get_skillCategoryNumber": 0,
-    "Get_attrImprovement": ["intelligenceLabel", "wisdomLabel", "charismaLabel"],
+    "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 75,
@@ -1572,7 +1646,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": ["strengthLabel", "dexterityLabel", "constitutionLabel", "intelligenceLabel", "wisdomLabel", "charismaLabel"],
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": ["phb2024","SRD521"]
   },
   { // Paladin: Fighting Style - Blessed Warrior 
     "ID": 76, 
@@ -1580,8 +1655,7 @@ const featList = [
     "featDLabel": "blessedWarriorDLabel",
     "featD_sheet": "blessedWarriorDsheet",
     "characterSheet": 1,
-    "featDLabel": 0,
-    "featCategoryNumber": 5, // Eigene Kategorie für Paladin-Alternative
+    "featCategoryNumber": 5, // Eigene Kategorie fuer Paladin-Alternative
     "multipleSelection": 0,
     "takeChoice": 4,
     "prerequisite_Level": 2,
@@ -1594,7 +1668,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": 0
   },
   { // Ranger: Fighting Style - Druidic Warrior 
     "ID": 77, 
@@ -1602,7 +1677,7 @@ const featList = [
     "featDLabel": "druidicWarriorDLabel",
     "featD_sheet": "druidicWarriorDsheet",
     "characterSheet": 1,
-    "featCategoryNumber": 6, // Eigene Kategorie für Ranger-Alternative
+    "featCategoryNumber": 6, // Eigene Kategorie fuer Ranger-Alternative
     "multipleSelection": 0,
     "takeChoice": 4,
     "prerequisite_Level": 2,
@@ -1615,7 +1690,8 @@ const featList = [
     "Get_skillCategoryNumber": 0,
     "Get_attrImprovement": 0,
     "Get_weaponCategoryNumber": 0,
-    "Get_armorCategoryNumber": 0
+    "Get_armorCategoryNumber": 0,
+    "source": 0
   }
 ];
 

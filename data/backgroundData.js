@@ -10,7 +10,8 @@ const backgroundList = [
     "createOptions": 0,
     "bgEquipmentA": ["calligraphersSuppliesLabel", "holyBookLabel", "list_holySymbolLabel", "10xparchmentLabel", "robeLabel", "8 GP"], 
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "acolyteText"
+    "bgDLabel": "acolyteText",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 2,
@@ -21,9 +22,10 @@ const backgroundList = [
     "bgSkillProf": [9, 14],
     "bgToolProf": "artisansToolsLabel",
     "createOptions": "createToolOptions([1,3])",
-    "bgEquipmentA": ["artisansToolsLabel(1)", "2xpouchLabel", "list_holySymbolLabel", "travelersClothesLabel", "32 GP"], 
+    "bgEquipmentA": ["artisansToolsLabel(1)", "2xpouchLabel", "travelersClothesLabel", "32 GP"], 
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "artisanText"
+    "bgDLabel": "artisanText",
+    "source": ["phb2024"]
   },
   {
     "ID": 3,
@@ -36,7 +38,8 @@ const backgroundList = [
     "createOptions": 0,
     "bgEquipmentA": ["forgeryKitLabel", "costumeLabel", "fineClothesLabel", "15 GP"],
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "charlatanText"
+    "bgDLabel": "charlatanText",
+    "source": ["phb2024"]
   },
   {
     "ID": 4,
@@ -49,7 +52,8 @@ const backgroundList = [
     "createOptions": 0,
     "bgEquipmentA": ["2xdaggerLabel", "thievesToolsLabel", "crowbarLabel", "2xpouchLabel", "travelersClothesLabel", "16 GP"], 
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "criminalText"
+    "bgDLabel": "criminalText",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 5,
@@ -62,7 +66,8 @@ const backgroundList = [
     "createOptions": "createInstrumentOptions()",
     "bgEquipmentA": ["musicalInstrumentLabel(1)", "2xcostumeLabel", "mirrorLabel", "perfumeLabel", "travelersClothesLabel", "11 GP"], 
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "entertainerText"
+    "bgDLabel": "entertainerText",
+    "source": ["phb2024"]
   },
   {
     "ID": 6,
@@ -75,7 +80,8 @@ const backgroundList = [
     "createOptions": 0,
     "bgEquipmentA": ["sickleLabel", "carpentersToolsLabel", "healersKitLabel", "ironPotLabel", "shovelLabel", "travelersClothesLabel", "30 GP"],
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "farmerText"
+    "bgDLabel": "farmerText",
+    "source": ["phb2024"]
   },
   {
     "ID": 7,
@@ -88,7 +94,8 @@ const backgroundList = [
     "createOptions": "createGameOptions()",
     "bgEquipmentA": ["spearLabel", "lightCrossbowLabel", "20xboltLabel", "gameLabel(1)", "hoodedLanternLabel", "manaclesLabel", "quiverLabel", "travelersClothesLabel", "12 GP"], 
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "guardText"
+    "bgDLabel": "guardText",
+    "source": ["phb2024"]
   },
   {
     "ID": 8,
@@ -101,7 +108,8 @@ const backgroundList = [
     "createOptions": 0,
     "bgEquipmentA": ["shortbowLabel", "20xarrowLabel", "cartographersToolsLabel", "bedrollLabel", "quiverLabel", "tentLabel", "travelersClothesLabel", "3 GP"], 
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "guideText"
+    "bgDLabel": "guideText",
+    "source": ["phb2024"]
   },
   {
     "ID": 9,
@@ -114,7 +122,8 @@ const backgroundList = [
     "createOptions": 0,
     "bgEquipmentA": ["quarterstaffLabel", "herbalismKitLabel", "bedrollLabel", "philosophyBookLabel", "lampLabel", "3xoilLabel", "travelersClothesLabel", "16 GP"], 
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "hermitText"
+    "bgDLabel": "hermitText",
+    "source": ["phb2024"]
   },
   {
     "ID": 10,
@@ -127,7 +136,8 @@ const backgroundList = [
     "createOptions": 0,
     "bgEquipmentA": ["navigatorsToolsLabel", "2xpouchLabel", "travelersClothesLabel", "22 GP"], 
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "merchantText"
+    "bgDLabel": "merchantText",
+    "source": ["phb2024"]
   },
   {
     "ID": 11,
@@ -140,7 +150,8 @@ const backgroundList = [
     "createOptions": "createGameOptions()",
     "bgEquipmentA": ["gameLabel(1)", "fineClothesLabel", "perfumeLabel", "29 GP"],
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "nobleText"
+    "bgDLabel": "nobleText",
+    "source": ["phb2024"]
   },
   {
     "ID": 12,
@@ -153,7 +164,8 @@ const backgroundList = [
     "createOptions": 0,
     "bgEquipmentA": ["quarterstaffLabel", "calligraphersSuppliesLabel", "historyBookLabel", "8xparchmentLabel", "robeLabel", "8 GP"], 
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "sageText"
+    "bgDLabel": "sageText",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 13,
@@ -166,7 +178,8 @@ const backgroundList = [
     "createOptions": 0,
     "bgEquipmentA": ["daggerLabel", "navigatorsToolsLabel", "ropeLabel", "travelersClothesLabel", "20 GP"],
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "sailorText"
+    "bgDLabel": "sailorText",
+    "source": ["phb2024"]
   },
   {
     "ID": 14,
@@ -179,7 +192,8 @@ const backgroundList = [
     "createOptions": 0,
     "bgEquipmentA": ["calligraphersSuppliesLabel", "fineClothesLabel", "lampLabel", "3xoilLabel", "12xparchmentLabel", "23 GP"], 
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "scribeText"
+    "bgDLabel": "scribeText",
+    "source": ["phb2024"]
   },
   {
     "ID": 15,
@@ -192,7 +206,8 @@ const backgroundList = [
     "createOptions": "createGameOptions()",
     "bgEquipmentA": ["spearLabel", "shortbowLabel", "20xarrowLabel", "gameLabel(1)", "healersKitLabel", "quiverLabel", "travelersClothesLabel", "14 GP"], 
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "soldierText"
+    "bgDLabel": "soldierText",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 16,
@@ -205,6 +220,7 @@ const backgroundList = [
     "createOptions": 0,
     "bgEquipmentA": ["2xdaggerLabel", "thievesToolsLabel", "list_gameLabel", "bedrollLabel", "2xpouchLabel", "travelersClothesLabel", "16 GP"], 
     "bgEquipmentB": "50 GP",
-    "bgDLabel": "wayfarerText"
+    "bgDLabel": "wayfarerText",
+    "source": ["phb2024"]
   }
 ];

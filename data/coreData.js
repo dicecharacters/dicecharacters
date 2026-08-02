@@ -241,7 +241,8 @@ const classCoreTraitsList = [
     "toolLabel": 0,
     "startingEquipmentA": ["greataxeLabel", "4xhandaxeLabel", "explorersPackLabel", "15 GP"],
     "startingEquipmentB": "75 GP",
-    "startingEquipmentC": 0
+    "startingEquipmentC": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 2,
@@ -259,7 +260,8 @@ const classCoreTraitsList = [
     "toolLabel": "musicalInstrumentLabel",
     "startingEquipmentA": ["leatherArmorLabel", "2xdaggerLabel", "musicalInstrumentLabel(3)", "entertainersPackLabel", "19 GP"],
     "startingEquipmentB": "90 GP",
-    "startingEquipmentC": 0
+    "startingEquipmentC": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 3,
@@ -277,7 +279,8 @@ const classCoreTraitsList = [
     "toolLabel": 0,
     "startingEquipmentA": ["chainShirtLabel", "shieldLabel", "maceLabel", "list_holySymbolLabel", "priestsPackLabel", "7 GP"],
     "startingEquipmentB": "110 GP",
-    "startingEquipmentC": 0
+    "startingEquipmentC": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 4,
@@ -295,7 +298,8 @@ const classCoreTraitsList = [
     "toolLabel": "herbalismKitLabel",
     "startingEquipmentA": ["leatherArmorLabel", "shieldLabel", "sickleLabel", "woodenStaffFocusLabel", "explorersPackLabel", "herbalismKitLabel", "9 GP"],
     "startingEquipmentB": "50 GP",
-    "startingEquipmentC": 0
+    "startingEquipmentC": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 5,
@@ -313,7 +317,8 @@ const classCoreTraitsList = [
     "toolLabel": 0,
     "startingEquipmentA": ["chainMailLabel", "greatswordLabel", "flailLabel", "8xjavelinLabel", "dungeoneersPackLabel", "4 GP"],
     "startingEquipmentB": ["studdedLeatherArmorLabel", "scimitarLabel", "shortswordLabel", "longbowLabel", "20xarrowLabel", "quiverLabel", "dungeoneersPackLabel", "11 GP"],
-    "startingEquipmentC": "155 GP"
+    "startingEquipmentC": "155 GP",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 6,
@@ -331,7 +336,8 @@ const classCoreTraitsList = [
     "toolLabel": ["artisansToolsLabel", "musicalInstrumentLabel"],
     "startingEquipmentA": ["spearLabel", "5xdaggerLabel", "artisansToolsLabel(1)||musicalInstrumentLabel(1)", "explorersPackLabel", "11 GP"],
     "startingEquipmentB": "50 GP",
-    "startingEquipmentC": 0
+    "startingEquipmentC": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 7,
@@ -349,7 +355,8 @@ const classCoreTraitsList = [
     "toolLabel": 0,
     "startingEquipmentA": ["chainMailLabel", "shieldLabel", "longswordLabel", "6xjavelinLabel", "list_holySymbolLabel", "priestsPackLabel", "9 GP"],
     "startingEquipmentB": "150 GP",
-    "startingEquipmentC": 0
+    "startingEquipmentC": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 8,
@@ -367,7 +374,8 @@ const classCoreTraitsList = [
     "toolLabel": 0,
     "startingEquipmentA": ["studdedLeatherArmorLabel", "scimitarLabel", "shortswordLabel", "longbowLabel", "20xarrowLabel", "quiverLabel", "sprigOfMistletoeFocusLabel", "explorersPackLabel", "7 GP"],
     "startingEquipmentB": "150 GP",
-    "startingEquipmentC": 0
+    "startingEquipmentC": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 9,
@@ -385,7 +393,8 @@ const classCoreTraitsList = [
     "toolLabel": "thievesToolsLabel",
     "startingEquipmentA": ["leatherArmorLabel", "2xdaggerLabel", "shortswordLabel", "shortbowLabel", "20xarrowLabel", "quiverLabel", "thievesToolsLabel", "burglarsPackLabel", "8 GP"],
     "startingEquipmentB": "100 GP",
-    "startingEquipmentC": 0
+    "startingEquipmentC": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 10,
@@ -403,7 +412,8 @@ const classCoreTraitsList = [
     "toolLabel": 0,
     "startingEquipmentA": ["spearLabel", "2xdaggerLabel", "crystalFocusLabel", "dungeoneersPackLabel", "28 GP"],
     "startingEquipmentB": "50 GP",
-    "startingEquipmentC": 0
+    "startingEquipmentC": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 11,
@@ -421,7 +431,8 @@ const classCoreTraitsList = [
     "toolLabel": 0,
     "startingEquipmentA": ["leatherArmorLabel", "sickleLabel", "2xdaggerLabel", "orbFocusLabel", "bookOccultLoreLabel", "scholarsPackLabel", "15 GP"],
     "startingEquipmentB": "100 GP",
-    "startingEquipmentC": 0
+    "startingEquipmentC": 0,
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 12,
@@ -439,7 +450,8 @@ const classCoreTraitsList = [
     "toolLabel": 0,
     "startingEquipmentA": ["2xdaggerLabel", "staffFocusLabel", "robeLabel", "spellbookLabel", "scholarsPackLabel", "5 GP"],
     "startingEquipmentB": "55 GP",
-    "startingEquipmentC": 0
+    "startingEquipmentC": 0,
+    "source": ["phb2024","SRD521"]
   }
 ];
 

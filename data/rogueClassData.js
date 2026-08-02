@@ -41,7 +41,7 @@ const rogueClassData = [
     "classFeaturesStep2": 0,
     "infoBox": 0,
     "classFeaturesCharacterSheet": 0,
-    "skillCategoryNumber": [1, 4, 5, 7, 8, 9, 10, 12, 14, 16, 17],
+    "skillCategoryNumber": [1, 4, 5, 7, 8, 9, 12, 14, 16, 17],
     "sneakAttackDice": "1D6",
     "soulknifeEnergyDiceSize": 0,
     "soulknifeEnergyDiceNumber": 0,
@@ -325,7 +325,7 @@ const rogueClassData = [
     "translationLabel": "assassinateLabel",
     "classFeatureShortDescription": 0,
     "classFeatureDescription": "assassinateLabelD",
-    "choiceInStep3": 1,
+    "choiceInStep3": 0,
     "subclassCategoryNumber": 2,
     "constForChoice": 0,
     "classFeaturesStep2": 0,
@@ -354,7 +354,7 @@ const rogueClassData = [
     "translationLabel": "assassinsToolsLabel",
     "classFeatureShortDescription": 0,
     "classFeatureDescription": "assassinsToolsD",
-    "choiceInStep3": 1,
+    "choiceInStep3": 0,
     "subclassCategoryNumber": 2,
     "constForChoice": 0,
     "classFeaturesStep2": 0,
@@ -657,7 +657,7 @@ const rogueClassData = [
     "cantripsAmount": 3,
     "preparedSpellsAmount": 5,
     "SSpSL1": 4,
-    "SSpSL2": 3,
+    "SSpSL2": 2,
     "SSpSL3": 0,
     "SSpSL4": 0,
     "SSpSL5": 0,
@@ -820,7 +820,7 @@ const rogueClassData = [
     "classFeatureDescription": 0,
     "choiceInStep3": 1,
     "subclassCategoryNumber": 0,
-    "constForChoice": "feat [10]",
+    "constForChoice": "feats [10]",
     "classFeaturesStep2": 1,
     "infoBox": 0,
     "classFeaturesCharacterSheet": 0,
@@ -907,7 +907,7 @@ const rogueClassData = [
     "classFeatureDescription": 0,
     "choiceInStep3": 1,
     "subclassCategoryNumber": 0,
-    "constForChoice": "feat [12]",
+    "constForChoice": "feats [12]",
     "classFeaturesStep2": 1,
     "infoBox": 0,
     "classFeaturesCharacterSheet": 0,
@@ -1110,7 +1110,7 @@ const rogueClassData = [
     "classFeatureDescription": 0,
     "choiceInStep3": 1,
     "subclassCategoryNumber": 0,
-    "constForChoice": "feat [16]",
+    "constForChoice": "feats [16]",
     "classFeaturesStep2": 1,
     "infoBox": 0,
     "classFeaturesCharacterSheet": 0,
@@ -1119,7 +1119,7 @@ const rogueClassData = [
     "soulknifeEnergyDiceSize": "D10",
     "soulknifeEnergyDiceNumber": 10,
     "cantripsAmount": 4,
-    "preparedSpellsAmount": 10,
+    "preparedSpellsAmount": 11,
     "SSpSL1": 4,
     "SSpSL2": 3,
     "SSpSL3": 3,
@@ -1339,22 +1339,26 @@ const subclassListRogue = [
   {
     "subclassCategoryNumber": 1,
     "translationLabel": "arcaneTricksterLabel",
-    "subclassD": "arcaneTricksterDLabel"
+    "subclassD": "arcaneTricksterDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 2,
     "translationLabel": "assassinLabel",
-    "subclassD": "assassinDLabel"
+    "subclassD": "assassinDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 3,
     "translationLabel": "soulknifeLabel",
-    "subclassD": "soulknifeDLabel"
+    "subclassD": "soulknifeDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 4,
     "translationLabel": "thiefLabel",
-    "subclassD": "thiefDLabel"
+    "subclassD": "thiefDLabel",
+    "source": ["phb2024","SRD521"]
   }
 ];
 

@@ -2108,7 +2108,49 @@ const adventuringGearList = [
     "varies": 0,
     "pack": 0,
     "packConent": 0
-  }
+  },
+
+  {
+    "ID": 212,
+    "translationLabel": "tartLabel",
+    "weight": 0,
+    "costValue": 0,
+    "costUnit": "GPLabel",
+    "varies": 0,
+    "pack": 0,
+    "packConent": 0
+  },
+
+  {
+    "ID": 213,
+    "translationLabel": "miniatureDoorLabel",
+    "weight": 0,
+    "costValue": 0,
+    "costUnit": "GPLabel",
+    "varies": 0,
+    "pack": 0,
+    "packConent": 0
+  },
+  {
+    "ID": 214,
+    "translationLabel": "miniatureSwordLabel",
+    "weight": 0,
+    "costValue": 0,
+    "costUnit": "GPLabel",
+    "varies": 0,
+    "pack": 0,
+    "packConent": 0
+  },
+  {
+    "ID": 215,
+    "translationLabel": "featherLabel",
+    "weight": 0,
+    "costValue": 0,
+    "costUnit": "GPLabel",
+    "varies": 0,
+    "pack": 0,
+    "packConent": 0
+  },
 
 ];
 

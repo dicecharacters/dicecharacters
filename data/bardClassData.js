@@ -62,7 +62,7 @@ const bardClassData = [
     "classFeatureDescription": "musicalInstrumentToolProfD",
     "choiceInStep3": 1,
     "subclassCategoryNumber": 0,
-    "constForChoice": "selectedIntsrument1;selectedIntsrument2;selectedIntsrument3",
+    "constForChoice": "selectedInstrument1;selectedInstrument2;selectedInstrument3",
     "classFeaturesStep2": 1,
     "infoBox": 1,
     "classFeaturesCharacterSheet": 1,
@@ -305,7 +305,7 @@ const bardClassData = [
     "classFeatureDescription": 0,
     "choiceInStep3": 1,
     "subclassCategoryNumber": 3,
-    "constForChoice": "selectedSkill5;selectedSkill6",
+    "constForChoice": "selectedSkill5;selectedSkill6;selectedSkill7",
     "classFeaturesStep2": 0,
     "infoBox": 0,
     "classFeaturesCharacterSheet": 0,
@@ -1058,21 +1058,25 @@ const subclassListBard = [
   {
     "subclassCategoryNumber": 1,
     "translationLabel": "collegeOfDanceLabel",
-    "subclassD": "collegeOfDanceDLabel"
+    "subclassD": "collegeOfDanceDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 2,
     "translationLabel": "collegeOfGlamourLabel",
-    "subclassD": "collegeOfGlamourDLabel"
+    "subclassD": "collegeOfGlamourDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 3,
     "translationLabel": "collegeOfLoreLabel",
-    "subclassD": "collegeOfLoreDLabel"
+    "subclassD": "collegeOfLoreDLabel",
+    "source": ["phb2024","SRD521"]
   },
   {
     "subclassCategoryNumber": 4,
     "translationLabel": "collegeOfValorLabel",
-    "subclassD": "collegeOfValorDLabel"
+    "subclassD": "collegeOfValorDLabel",
+    "source": ["phb2024"]
   }
 ];

@@ -16,7 +16,8 @@ const speciesList = [
     ],
     "ancestryLabel": 0,
     "lineageLabel": 0,
-    "speciesDLabel": "aasimarD"
+    "speciesDLabel": "aasimarD",
+    "source": ["phb2024"]
   },
   {
     "ID": 2,
@@ -46,7 +47,8 @@ const speciesList = [
       "whiteLabel"
     ],
     "lineageLabel": 0,
-    "speciesDLabel": "dragonbornD"
+    "speciesDLabel": "dragonbornD",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 3,
@@ -64,7 +66,8 @@ const speciesList = [
     ],
     "ancestryLabel": 0,
     "lineageLabel": 0,
-    "speciesDLabel": "dwarfD"
+    "speciesDLabel": "dwarfD",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 4,
@@ -83,7 +86,8 @@ const speciesList = [
     ],
     "ancestryLabel": 0,
     "lineageLabel": ["drowLabel", "highElfLabel", "woodElfLabel"],
-    "speciesDLabel": "elfD"
+    "speciesDLabel": "elfD",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 5,
@@ -100,15 +104,16 @@ const speciesList = [
     ],
     "ancestryLabel": 0,
     "lineageLabel": ["forestGnomeLabel", "rockGnomeLabel"],
-    "speciesDLabel": "gnomeD"
+    "speciesDLabel": "gnomeD",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 6,
     "translationLabel": "goliathLabel",
     "creatureType": "humanoidLabel",
     "speciesAge_years": 110,
-    "size": ["tallLabel"],
-    "sizeRange_ft": [7.2,8.5],
+    "size": ["mediumLabel"],
+    "sizeRange_ft": [7.0,8.0],
     "speedFT": 35,
     "speciesTraitLabel": [
       "giantAncestryLabel",
@@ -124,7 +129,8 @@ const speciesList = [
       "stormsThunderLabel"
     ],
     "lineageLabel": 0,
-    "speciesDLabel": "goliathD"
+    "speciesDLabel": "goliathD",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 7,
@@ -142,7 +148,8 @@ const speciesList = [
     ],
     "ancestryLabel": 0,
     "lineageLabel": 0,
-    "speciesDLabel": "halflingD"
+    "speciesDLabel": "halflingD",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 8,
@@ -159,7 +166,8 @@ const speciesList = [
     ],
     "ancestryLabel": 0,
     "lineageLabel": 0,
-    "speciesDLabel": "humanD"
+    "speciesDLabel": "humanD",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 9,
@@ -176,7 +184,8 @@ const speciesList = [
     ],
     "ancestryLabel": 0,
     "lineageLabel": 0,
-    "speciesDLabel": "orcD"
+    "speciesDLabel": "orcD",
+    "source": ["phb2024","SRD521"]
   },
   {
     "ID": 10,
@@ -193,7 +202,8 @@ const speciesList = [
     ],
     "ancestryLabel": 0,
     "lineageLabel": ["abyssalLabel", "chthonicLabel", "infernalLabel"],
-    "speciesDLabel": "tieflingD"
+    "speciesDLabel": "tieflingD",
+    "source": ["phb2024","SRD521"]
   }
 ];
 
@@ -941,11 +951,11 @@ const sizeList = [
   {
     "ID": 2,
     "sizeCategory": "mediumLabel",
-    "sizeRange_ft": [4.0, 6.9]
+    "sizeRange_ft": [4.0, 8.0]
   },
   {
     "ID": 3,
     "sizeCategory": "tallLabel",
-    "sizeRange_ft": [7.0, 10.0]
+    "sizeRange_ft": [8.1, 16.0]
   }
 ];

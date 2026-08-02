@@ -138,7 +138,7 @@ const wizardClassData = [
     "classFeatureDescription": "expertiseD",
     "choiceInStep3": 1,
     "subclassCategoryNumber": 0,
-    "constForChoice": "selectedSkill3; selectedExpertise1",
+    "constForChoice": "selectedExpertise1",
     "classFeaturesStep2": 1,
     "infoBox": 1,
     "classFeaturesCharacterSheet": 3,
@@ -1071,21 +1071,25 @@ const subclassListWizard = [
   {
     "subclassCategoryNumber": 1,
     "translationLabel": "abjurerLabel",
-    "subclassD": "abjurerDLabel"
+    "subclassD": "abjurerDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 2,
     "translationLabel": "divinerLabel",
-    "subclassD": "divinerDLabel"
+    "subclassD": "divinerDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 3,
     "translationLabel": "evokerLabel",
-    "subclassD": "evokerDLabel"
+    "subclassD": "evokerDLabel",
+    "source": ["phb2024","SRD521"]
   },
   {
     "subclassCategoryNumber": 4,
     "translationLabel": "illusionistLabel",
-    "subclassD": "illusionistDLabel"
+    "subclassD": "illusionistDLabel",
+    "source": ["phb2024"]
   }
 ];

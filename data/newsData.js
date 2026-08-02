@@ -1,5 +1,45 @@
 // newsData.js
 const newsUpdates = [
+      {
+        date: "03.08.2026",
+        version: "v1.5",
+        content: `
+            Bugfixing:
+            <ul class="news-list">
+                <li>Barbar: Vertauschte Merkmalsbeschreibungen für "Verstärkter Bruter Schlag" auf Stufe 13 und Stufe 17 korrigiert.</li>
+                <li>Barbar: Der Falsche Übungsbonus auf Stufe 15 von +5 wurde auf die korrekten +4 angepasst.</li>
+                <li>Barde (Schritt 6): Beim Merkmal "Zusätzliches Wissen" (Schule des Wissens) können nun ordnungsgemäß 3 statt 2 Fertigkeiten gewählt werden.</li>
+                <li>Kleriker: Die Anzahl der verfügbaren Nutzungen für "Göttliche Macht fokussieren" auf Stufe 7 wurde von 4 auf 3 korrigiert.</li>
+                <li>Kleriker (Schritt 7): Auf Stufe 12 beträgt die Anzahl der wählbaren vorbereiteten Zauber nun korrekt 16 (statt 17).</li>
+                <li>Kämpfer: Das Merkmal "Zauberwirken" der Unterklasse "Mystischer Ritter" wird nun wieder ordnungsgemäß auf dem Charakterbogen angezeigt.</li>
+                <li>Mönch: Fehler in der Beschreibung der "Technik der offenen Hand" (Krieger der offenen Hand) behoben – gewährt nun wie vorgesehen das Unterbinden von Gelegenheitsangriffen (statt Reaktionen).</li>
+                <li>Paladin: Zauberprogression bezüglich verfügbarer Zaubergrade und vorbereiteter Zauber auf den Stufen 2 bis 4 korrigiert.</li>
+                <li>Waldläufer: Die Merkmale "Grässliche Schläge" (Feenwanderer) und "Defensive Taktiken" (Jäger) werden nun korrekt auf dem Charakterbogen dargestellt.</li>
+                <li>Schurke (Schritt 6): "Heilkunde" wurde aus den wählbaren Basisfertigkeiten entfernt.</li>
+                <li>Hexenmeister (Schritt 6): Fehler behoben, durch den Talente mit der Bedingung "Zauberwirken/Paktmagie" nicht ausgewählt werden konnten.</li>
+                <li>Hintergrund "Handwerker" (Schritt 2): Das fälschlicherweise enthaltene heilige Symbol wurde aus Startausrüstung A entfernt.</li>
+                <li>Volk "Goliath": Die Kreaturengröße wurde von "Groß" auf die regelkonforme Größe "Mittel" korrigiert.</li>
+                <li>Talente (Schritt 6): Die Attributswerte-Boni für "Schwer gerüstet", "Meister der schweren Rüstungen" und "Berittener Kämpfer" wurden korrigiert.</li>
+                <li>Fehlende Zauber ergänzt (Schritt 7): Strahlendes Niederstrecken, Melfs Säurepfeil, Nystuls Magische Aura, Leomunds Winzige Hütte, Leomunds Geheime Truhe, Tensers Schwebende Scheibe, Evards Schwarze Tentakel, Mordenkainens Treuer Hund, Mordenkainens Privates Heiligtum, Otilukes Unverwüstliche Sphäre, Bigbys Hand, Drawmijs Sofortige Herbeizauberung, Heldenmahl, Otilukes Frostsphäre, Ottos Unwiderstehlicher Tanz, Mordenkainens Herrliches Herrenhaus und Mordenkainens Schwert hinzugefügt.</li>
+            </ul>
+
+            Optimierungen:
+            <ul class="news-list">
+                <li>Barbar: Die Merkmalsbeschreibung von "Krieger der Götter" (Pfad des Eiferers) wurde um die Progression der Heilungswürfel (W12) über die Stufen hinweg ergänzt.</li>
+                <li>Druide: Die Ausprägung "Naturmagier" des Merkmals "Erzdruide" wurde klarer formuliert (jede Anwendung stellt 2 Zaubergrade wieder her).</li>
+                <li>Talente: Beschreibungen präzisiert und Fachbegriffe strikt an das offizielle Spielerhandbuch (2024/5.5e) angepasst.</li>
+                <li>Charakterersteller (Schritt 5): Stufen-Eingabefeld inklusive Schriftgröße vergrößert und Stepper-Buttons für eine deutlich bessere mobile Bedienung hinzugefügt.</li>
+                <li>Charakterersteller: Die Erklärtexte aller Schritte (1 bis 12) wurden immersiver und ansprechender gestaltet.</li>
+            </ul>
+
+            Angepasste Übersetzungen (ans PHB):
+            <ul class="news-list">
+                <li>Sämtliche Hintergrundbezeichnungen an das deutsche Spielerhandbuch angeglichen.</li>
+                <li>Merkmalsbezeichnungen und -beschreibungen aller Völker an das deutsche Spielerhandbuch angeglichen.</li>
+                <li>Deutsche Zauberbezeichnungen und Zauberbeschreibungen an das deutsche Spielerhandbuch angeglichen..</li>
+            </ul>
+        `
+    },
     {
         date: "28.07.2026",
         version: "v1.4",

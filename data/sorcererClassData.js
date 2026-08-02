@@ -1140,22 +1140,26 @@ const subclassListSorcerer = [
   {
     "subclassCategoryNumber": 1,
     "translationLabel": "aberrantSorceryLabel",
-    "subclassD": "aberrantSorceryDLabel"
+    "subclassD": "aberrantSorceryDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 2,
     "translationLabel": "clockworkSorceryLabel",
-    "subclassD": "clockworkSorceryDLabel"
+    "subclassD": "clockworkSorceryDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 3,
     "translationLabel": "draconicSorceryLabel",
-    "subclassD": "draconicSorceryDLabel"
+    "subclassD": "draconicSorceryDLabel",
+    "source": ["phb2024","SRD521"]
   },
   {
     "subclassCategoryNumber": 4,
     "translationLabel": "wildMagicSorceryLabel",
-    "subclassD": "wildMagicSorceryDLabel"
+    "subclassD": "wildMagicSorceryDLabel",
+    "source": ["phb2024"]
   }
 ];
 

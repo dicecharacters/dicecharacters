@@ -1139,22 +1139,26 @@ const subclassListWarlock = [
   {
     "subclassCategoryNumber": 1,
     "translationLabel": "archfeyPatronLabel",
-    "subclassD": "archfeyPatronDLabel"
+    "subclassD": "archfeyPatronDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 2,
     "translationLabel": "celestialPatronLabel",
-    "subclassD": "celestialPatronDLabel"
+    "subclassD": "celestialPatronDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 3,
     "translationLabel": "fiendPatronLabel",
-    "subclassD": "fiendPatronDLabel"
+    "subclassD": "fiendPatronDLabel",
+    "source": ["phb2024","SRD521"]
   },
   {
     "subclassCategoryNumber": 4,
     "translationLabel": "greatOldOnePatronLabel",
-    "subclassD": "greatOldOnePatronDLabel"
+    "subclassD": "greatOldOnePatronDLabel",
+    "source": ["phb2024"]
   }
 ];
 

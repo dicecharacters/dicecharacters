@@ -46,7 +46,7 @@ const monkClassData = [
     "classFeatureDescription": 0,
     "choiceInStep3": 1,
     "subclassCategoryNumber": 0,
-    "constForChoice": "selectedInstrumen1;selectedTool1",
+    "constForChoice": "selectedInstrument1;selectedTool1",
     "classFeaturesStep2": 1,
     "infoBox": 1,
     "classFeaturesCharacterSheet": 0,
@@ -674,7 +674,7 @@ const monkClassData = [
     "choiceInStep3": 1,
     "subclassCategoryNumber": 0,
     "constForChoice": "feats [12]",
-    "classFeaturesStep2": 0,
+    "classFeaturesStep2": 1,
     "infoBox": 0,
     "classFeaturesCharacterSheet": 0,
     "skillCategoryNumber": 0,
@@ -898,21 +898,25 @@ const subclassListMonk = [
   {
     "subclassCategoryNumber": 1,
     "translationLabel": "warriorOfMercyLabel",
-    "subclassD": "warriorOfMercyDLabel"
+    "subclassD": "warriorOfMercyDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 2,
     "translationLabel": "warriorOfShadowLabel",
-    "subclassD": "warriorOfShadowDLabel"
+    "subclassD": "warriorOfShadowDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 3,
     "translationLabel": "warriorOfTheElementsLabel",
-    "subclassD": "warriorOfTheElementsDLabel"
+    "subclassD": "warriorOfTheElementsDLabel",
+    "source": ["phb2024"]
   },
   {
     "subclassCategoryNumber": 4,
     "translationLabel": "warriorOfTheOpenHandLabel",
-    "subclassD": "warriorOfTheOpenHandDLabel"
+    "subclassD": "warriorOfTheOpenHandDLabel",
+    "source": ["phb2024","SRD521"]
   }
 ];
