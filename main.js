@@ -372,8 +372,14 @@ function getClassData(className, type = "class") {
     }
 
     if (type === "class") {
+        if (typeof mergeRegisteredCustomSubclassIntoClassData === "function") {
+            return mergeRegisteredCustomSubclassIntoClassData(className, classData);
+        }
         return classData;
     } else if (type === "subclass") {
+        if (typeof getEffectiveSubclassListForClass === "function") {
+            return getEffectiveSubclassListForClass(className);
+        }
         return subclassData;
     } else {
         console.error("Invalid type specified for getClassData");
@@ -582,6 +588,30 @@ function updateAttributeBonusesInStep4() {
     });
 }
 
+/** Magic-Initiate-Listen-ID (cleric/druid/wizard) aus bg.spellList oder PHB-Fallback */
+function resolveBackgroundMagicInitiateSpellListId(backgroundName, backgroundData) {
+    const slugToId = (slug) => {
+        if (!slug || slug === 0) return null;
+        const core = (typeof classCoreTraitsList !== "undefined" && Array.isArray(classCoreTraitsList))
+            ? classCoreTraitsList.find(c =>
+                String(c.translationLabel || "").toLowerCase() === String(slug).toLowerCase()
+            )
+            : null;
+        return core && Number.isFinite(Number(core.ID)) ? Number(core.ID) : null;
+    };
+
+    // Data-driven (Custom + PHB-Feld spellList)
+    if (backgroundData && backgroundData.spellList && backgroundData.spellList !== 0) {
+        const fromData = slugToId(backgroundData.spellList);
+        if (fromData != null) return fromData;
+    }
+
+    // Legacy-Fallback für bekannte PHB-Namen
+    const bgLower = String(backgroundName || "").toLowerCase();
+    const fixedLists = { acolyte: 3, guide: 4, sage: 12 };
+    return fixedLists[bgLower] || null;
+}
+
 function updateBackgroundDetails(backgroundName) {
 
     // Setze das Hintergrundbild für die Seite
@@ -721,25 +751,19 @@ function updateBackgroundDetails(backgroundName) {
                 updateFeatDynamicContent(selectedFeatID, featLevel, backgroundFeatDropdownElement);
                 // console.log(`Hintergrund-Talent "${featForBackground.translationLabel}" (ID: ${selectedFeatID}) hat takeChoice. Rufe updateFeatDynamicContent.`);
 
-                // --- NEU: FIXIERUNG DER ZAUBERLISTE FÜR SPEZIFISCHE HINTERGRÜNDE ---
-                const bgLower = backgroundName.toLowerCase();
-                const fixedLists = {
-                    "acolyte": 3,  // Cleric
-                    "guide": 4,    // Druid
-                    "sage": 12     // Wizard
-                };
-
-                if (featForBackground.translationLabel === "magicInitiateLabel" && fixedLists[bgLower]) {
-                    // Wir warten kurz, bis updateFeatDynamicContent die Dropdowns erzeugt hat
-                    setTimeout(() => {
-                        const listDropdown = backgroundFeatDropdownElement.parentNode.querySelector('select[id^="spellList"]');
-                        if (listDropdown) {
-                            listDropdown.value = fixedLists[bgLower];
-                            listDropdown.disabled = true; // Auswahl sperren
-                            // Event triggern, falls andere Logiken darauf lauschen
-                            listDropdown.dispatchEvent(new Event('change'));
-                        }
-                    }, 10);
+                // --- FIXIERUNG DER ZAUBERLISTE (data-driven spellList + PHB-Fallback) ---
+                if (featForBackground.translationLabel === "magicInitiateLabel") {
+                    const fixedListId = resolveBackgroundMagicInitiateSpellListId(backgroundName, backgroundData);
+                    if (fixedListId != null) {
+                        setTimeout(() => {
+                            const listDropdown = backgroundFeatDropdownElement.parentNode.querySelector('select[id^="spellList"]');
+                            if (listDropdown) {
+                                listDropdown.value = fixedListId;
+                                listDropdown.disabled = true;
+                                listDropdown.dispatchEvent(new Event('change'));
+                            }
+                        }, 10);
+                    }
                 }
             }
         } else {
@@ -752,14 +776,26 @@ function updateBackgroundDetails(backgroundName) {
 }
 
 function setPageBackground(backgroundName) {
-    const root = document.documentElement; 
+    const root = document.documentElement;
 
-    if (backgroundName) {
-        const imageUrl = `url('../images/${backgroundName.toLowerCase()}.webp')`;
-        root.style.setProperty('--page-background-image', imageUrl);
-    } else {
+    if (!backgroundName) {
         root.style.setProperty('--page-background-image', 'none');
+        return;
     }
+
+    // Custom-Hintergrund: gemeinsames Bild images/customBackground.webp
+    const isCustomBg = (typeof isRegisteredCustomBackgroundSlug === "function"
+            && isRegisteredCustomBackgroundSlug(backgroundName))
+        || String(backgroundName).toLowerCase().startsWith("custom_bg_")
+        || (() => {
+            const bgEntry = (typeof backgroundList !== "undefined" && Array.isArray(backgroundList))
+                ? backgroundList.find(b => b && b.translationLabel === backgroundName)
+                : null;
+            return !!(bgEntry?.isCustom);
+        })();
+
+    const imageKey = isCustomBg ? "customBackground" : String(backgroundName).toLowerCase();
+    root.style.setProperty('--page-background-image', `url('../images/${imageKey}.webp')`);
 }
 
 function fadePageBackground(isFaded) {
@@ -1110,7 +1146,7 @@ function showLineageDetails(lineageLabel) {
     const description = elements[lineageLevel1.lineageDLabel] || lineageLevel1.lineageDLabel;
     const subspeciesDescription = elements[lineageLevel1.lineageTraitDLabel] || lineageLevel1.lineageTraitDLabel;
 
-    // Tabelle (deine Original-Struktur)
+    // Tabelle (Original-Struktur)
     let tableHTML = `<table style="width: 100%; margin-top: 10px;">
         <thead>
             <tr>
@@ -1747,7 +1783,9 @@ function initializeLiveAttributes() {
     // Die Datenzeilen für jedes Attribut
     attributeList.forEach(attr => {
         const stringId = attr.translationLabel.replace('Label', '');
-        const translatedName = elements[attr.translationLabel] || attr.translationLabel;
+        // Attributübersicht: Abkürzungen (STÄ/STR …) statt Vollnamen
+        const abbrKey = `${stringId}AbbrLabel`;
+        const translatedName = elements[abbrKey] || elements[attr.translationLabel] || attr.translationLabel;
 
         contentHTML += `
             <div class="live-attr-data-row">
@@ -3336,7 +3374,15 @@ function populateClassFormOptions(className) {
         return;
     }
 
-    const { data: classData, subclasses: subclassList, dynamicContent1, dynamicContent2, dynamicContent3, dynamicContent4} = classInfo;
+    const { data: rawClassData, subclasses: rawSubclassList, dynamicContent1, dynamicContent2, dynamicContent3, dynamicContent4} = classInfo;
+    const classData = (typeof getClassData === "function")
+        ? (getClassData(className.toLowerCase(), "class") || rawClassData)
+        : rawClassData;
+    const subclassList = (typeof getEffectiveSubclassListForClass === "function")
+        ? getEffectiveSubclassListForClass(className)
+        : (typeof getClassData === "function"
+            ? (getClassData(className.toLowerCase(), "subclass") || rawSubclassList)
+            : rawSubclassList);
 
     // Skills generieren
     const level1Data = classData.find(data => data.level === 1 && Array.isArray(data.skillCategoryNumber));
@@ -4121,12 +4167,22 @@ function showSubclassDetails(subclassCategoryNumber) {
     if (selectedSubclass) {
         const elements = translations[currentLang];
         const title = elements[selectedSubclass.translationLabel] || selectedSubclass.translationLabel;
-        const description = elements[selectedSubclass.subclassD] || selectedSubclass.subclassD;
+        // Leere Custom-UC-Beschreibung: kein Roh-Key, sondern "-"
+        const descKey = selectedSubclass.subclassD;
+        const rawDesc = descKey ? elements[descKey] : "";
+        const description = (rawDesc != null
+            && String(rawDesc).trim() !== ""
+            && String(rawDesc).trim() !== String(descKey).trim())
+            ? rawDesc
+            : "-";
         const featuresLabel = elements.subclassFeaturesLabel || "Features";
 
         const level = character.level || 1;
-        const features = classData.filter(f => 
-            f.subclassCategoryNumber === subclassCategoryNumber && f.level <= level
+        const features = classData.filter(f =>
+            f.subclassCategoryNumber === subclassCategoryNumber
+            && f.level <= level
+            && f.translationLabel
+            && f.translationLabel !== 0
         ).map(f => `<li>${elements[f.translationLabel] || f.translationLabel}</li>`).join('');
 
         // 1. Textinhalt der Box
@@ -4139,13 +4195,21 @@ function showSubclassDetails(subclassCategoryNumber) {
 
         // 2. Bild in den vertikalen Container schieben
 	if (subclassImgContainer) {
-            // Custom Class: feste Platzhalter csc1Label…csc4Label; sonst translationLabel wie PHB
+            // Custom Class UC1–4: csc1…csc4; Standalone-Custom-UC: Bildschlüssel csc5Label
             const subclassNum = parseInt(selectedSubclass.subclassCategoryNumber, 10) || 1;
-            const isCustom = typeof isRegisteredCustomClassSlug === "function"
+            const cscNum = (typeof CUSTOM_SUBCLASS_CATEGORY_NUMBER !== "undefined")
+                ? CUSTOM_SUBCLASS_CATEGORY_NUMBER
+                : 100;
+            const isCustomClass = typeof isRegisteredCustomClassSlug === "function"
                 && isRegisteredCustomClassSlug(character.class);
-            const imageKey = isCustom
-                ? `csc${Math.min(4, Math.max(1, subclassNum))}Label`
-                : selectedSubclass.translationLabel;
+            let imageKey;
+            if (subclassNum === cscNum) {
+                imageKey = "csc5Label";
+            } else if (isCustomClass) {
+                imageKey = `csc${Math.min(4, Math.max(1, subclassNum))}Label`;
+            } else {
+                imageKey = selectedSubclass.translationLabel;
+            }
             subclassImgContainer.innerHTML = `
                 <img src="images/${imageKey}.webp" 
                      alt="" 
@@ -4199,9 +4263,15 @@ function updateSubclassDynamicContent(subclassCategoryNumber, characterLevel) {
 
     const elements = translations[currentLang];
 
-    // Custom Class: generische Auswahlen aus kompilierten Rows
-    if (typeof isRegisteredCustomClassSlug === "function"
-        && isRegisteredCustomClassSlug(character.class)
+    // Custom Class oder Standalone-Custom-UC (#5): generische Auswahlen
+    const isCustomClass = typeof isRegisteredCustomClassSlug === "function"
+        && isRegisteredCustomClassSlug(character.class);
+    const isCustomSubclass = typeof getRegisteredCustomSubclassBundle === "function"
+        && !!getRegisteredCustomSubclassBundle(character.class)
+        && Number(subclassCategoryNumber) === (typeof CUSTOM_SUBCLASS_CATEGORY_NUMBER !== "undefined"
+            ? CUSTOM_SUBCLASS_CATEGORY_NUMBER
+            : 100);
+    if ((isCustomClass || isCustomSubclass)
         && typeof populateCustomClassSubclassChoiceSection === "function") {
         populateCustomClassSubclassChoiceSection(dynamicSubclassContentDiv, subclassInfo, {
             level: characterLevel
@@ -4214,7 +4284,7 @@ function updateSubclassDynamicContent(subclassCategoryNumber, characterLevel) {
 	//bard
         if (feature.translationLabel === "bonusProficienciesLabel") {
             const label = elements.bonusProficienciesLabel || "Bonus-Proficiencies";
-            createSelectionDropdowns(dynamicSubclassContentDiv, feature.skillCategoryNumber, label, 2, 5, "skill"); // 2 Dropdowns / "skill5", "skill6"
+            createSelectionDropdowns(dynamicSubclassContentDiv, feature.skillCategoryNumber, label, 3, 5, "skill"); // 3 Dropdowns / "skill5", "skill6", "skill7"
         }
 
 	//druid
@@ -4546,7 +4616,11 @@ function createAbilityScoreImprovementUI(container, featLevel) {
 
     attributeList.forEach(attr => {
         const stringId = attr.translationLabel.replace('Label', '');
-        const translatedName = elements[attr.translationLabel] || attr.translationLabel;
+        // Mobil (≤600px): Abkürzungen (STÄ/GES/…), sonst Vollnamen
+        const abbrKey = `${stringId}AbbrLabel`;
+        const translatedName = (window.innerWidth <= 600
+            ? (elements[abbrKey] || elements[attr.translationLabel])
+            : elements[attr.translationLabel]) || attr.translationLabel;
         asiHTML += `
             <div class="asi-row">
                 <label>${translatedName}</label>
@@ -5252,39 +5326,39 @@ function updateToolDynamicContent(toolID, selectElement) {
 // Aktualisiert die Dropdown-Listen für skills, um ausgewählte skills auszublenden
 function updateSkills() {
     const skillSelects = [
-        document.getElementById("skill0"), //step 5, class = barbarian, level = 3, primal Knowledge
+        document.getElementById("skill0"), //step 6, class = barbarian, level = 3, primal Knowledge
         document.getElementById("skill1"),
         document.getElementById("skill2"),
         document.getElementById("skill3"),
         document.getElementById("skill4"),
-        document.getElementById("skill5"), //step 5, subclass
-        document.getElementById("skill6"), //step 5, subclass
-        document.getElementById("skill7"),
+        document.getElementById("skill5"), //step 6, subclass
+        document.getElementById("skill6"), //step 6, subclass
+        document.getElementById("skill7"), //step 6, subclass
         document.getElementById("skill8"),
         document.getElementById("skill9"),
-        document.getElementById("skill10"), //step 5, feat = skilled
-        document.getElementById("skill11"), //step 5, feat = skilled
-        document.getElementById("skill12"), //step 5, feat = skilled
-        document.getElementById("skill13"), //step 5, feat = skilled
-        document.getElementById("skill14"), //step 5, feat = skilled
-        document.getElementById("skill15"), //step 5, feat = skilled
-        document.getElementById("skill16"), //step 5, feat = skilled
-        document.getElementById("skill17"), //step 5, feat = skilled
-        document.getElementById("skill18"), //step 5, feat = skilled
-        document.getElementById("skill19"), //step 5, feat = skilled
-        document.getElementById("skill20"), //step 5, feat = skilled
-        document.getElementById("skill21"), //step 5, feat = skilled
-        document.getElementById("skill22"), //step 5, feat = skilled
-        document.getElementById("skill23"), //step 5, feat = skilled
-        document.getElementById("skill24"), //step 5, feat = skilled
-        document.getElementById("skill25"), //step 5, feat = skilled
-        document.getElementById("skill26"), //step 5, feat = skilled
-        document.getElementById("skill27"), //step 5, feat = skilled
+        document.getElementById("skill10"), //step 6, feat = skilled
+        document.getElementById("skill11"), //step 6, feat = skilled
+        document.getElementById("skill12"), //step 6, feat = skilled
+        document.getElementById("skill13"), //step 6, feat = skilled
+        document.getElementById("skill14"), //step 6, feat = skilled
+        document.getElementById("skill15"), //step 6, feat = skilled
+        document.getElementById("skill16"), //step 6, feat = skilled
+        document.getElementById("skill17"), //step 6, feat = skilled
+        document.getElementById("skill18"), //step 6, feat = skilled
+        document.getElementById("skill19"), //step 6, feat = skilled
+        document.getElementById("skill20"), //step 6, feat = skilled
+        document.getElementById("skill21"), //step 6, feat = skilled
+        document.getElementById("skill22"), //step 6, feat = skilled
+        document.getElementById("skill23"), //step 6, feat = skilled
+        document.getElementById("skill24"), //step 6, feat = skilled
+        document.getElementById("skill25"), //step 6, feat = skilled
+        document.getElementById("skill26"), //step 6, feat = skilled
+        document.getElementById("skill27"), //step 6, feat = skilled
         document.getElementById("skill28"), 
         document.getElementById("skill29"), 
-        document.getElementById("skill30"), //step 5, feat = keenMind
-        document.getElementById("skill31"), //step 5, feat = observant
-        document.getElementById("skill32"), //step 5, feat = skillExpert
+        document.getElementById("skill30"), //step 6, feat = keenMind
+        document.getElementById("skill31"), //step 6, feat = observant
+        document.getElementById("skill32"), //step 6, feat = skillExpert
         document.getElementById("skill33"), 
         document.getElementById("skill34"), 
         document.getElementById("skill35"), 
@@ -5292,25 +5366,25 @@ function updateSkills() {
         document.getElementById("skill37"), 
         document.getElementById("skill38"), 
         document.getElementById("skill39"), 
-        document.getElementById("skill40"), //step 5, feat = boon of skill
-        document.getElementById("skill41"), //step 5, feat = boon of skill
-        document.getElementById("skill42"), //step 5, feat = boon of skill
-        document.getElementById("skill43"), //step 5, feat = boon of skill
-        document.getElementById("skill44"), //step 5, feat = boon of skill
-        document.getElementById("skill45"), //step 5, feat = boon of skill
-        document.getElementById("skill46"), //step 5, feat = boon of skill
-        document.getElementById("skill47"), //step 5, feat = boon of skill
-        document.getElementById("skill48"), //step 5, feat = boon of skill
-        document.getElementById("skill49"), //step 5, feat = boon of skill
-        document.getElementById("skill50"), //step 5, feat = boon of skill
-        document.getElementById("skill51"), //step 5, feat = boon of skill
-        document.getElementById("skill52"), //step 5, feat = boon of skill
-        document.getElementById("skill53"), //step 5, feat = boon of skill
-        document.getElementById("skill54"), //step 5, feat = boon of skill
-        document.getElementById("skill55"), //step 5, feat = boon of skill
-        document.getElementById("skill56"), //step 5, feat = boon of skill
-        document.getElementById("skill57"), //step 5, feat = boon of skill
-        document.getElementById("skill58"), //step 5, feat = boon of skill
+        document.getElementById("skill40"), //step 6, feat = boon of skill
+        document.getElementById("skill41"), //step 6, feat = boon of skill
+        document.getElementById("skill42"), //step 6, feat = boon of skill
+        document.getElementById("skill43"), //step 6, feat = boon of skill
+        document.getElementById("skill44"), //step 6, feat = boon of skill
+        document.getElementById("skill45"), //step 6, feat = boon of skill
+        document.getElementById("skill46"), //step 6, feat = boon of skill
+        document.getElementById("skill47"), //step 6, feat = boon of skill
+        document.getElementById("skill48"), //step 6, feat = boon of skill
+        document.getElementById("skill49"), //step 6, feat = boon of skill
+        document.getElementById("skill50"), //step 6, feat = boon of skill
+        document.getElementById("skill51"), //step 6, feat = boon of skill
+        document.getElementById("skill52"), //step 6, feat = boon of skill
+        document.getElementById("skill53"), //step 6, feat = boon of skill
+        document.getElementById("skill54"), //step 6, feat = boon of skill
+        document.getElementById("skill55"), //step 6, feat = boon of skill
+        document.getElementById("skill56"), //step 6, feat = boon of skill
+        document.getElementById("skill57"), //step 6, feat = boon of skill
+        document.getElementById("skill58"), //step 6, feat = boon of skill
         document.getElementById("skill59"), //step 3, species = human, skillful
         document.getElementById("skill60"), //step 3, species = elf, keenSenses
         document.getElementById("skill61"), //step 3, species = human, versatile, feat = skilled
@@ -5932,16 +6006,50 @@ function resolveCustomClassSpellListSources(classData, level, levelData) {
     return [];
 }
 
-/** PHB + registrierte Custom Class: magicSkillsList */
+/**
+ * Magic-Skill-IDs über Quellen hinweg eindeutig machen.
+ * Custom Class + Custom UC kompilieren beide ab ID 1 → sonst dedupliziert
+ * Schritt 7 (uniqueFeatures by ID) die Magieprogression / UC-Zauber weg.
+ */
+function withStableUniqueMagicSkillIds(entries, sourceTag) {
+    if (!Array.isArray(entries) || !entries.length) return [];
+    return entries.map((entry, index) => {
+        if (!entry) return entry;
+        const label = Array.isArray(entry.translationLabel)
+            ? entry.translationLabel.join("|")
+            : String(entry.translationLabel || "");
+        const stableId = [
+            sourceTag,
+            String(entry.class || "").toLowerCase(),
+            String(entry.subclass ?? 0),
+            label,
+            String(entry.ID ?? index)
+        ].join(":");
+        return Object.assign({}, entry, { ID: stableId });
+    });
+}
+
+/** PHB + registrierte Custom Class + Custom UC: magicSkillsList */
 function getEffectiveMagicSkillsListForCharacter() {
     const base = (typeof magicSkillsList !== "undefined" && Array.isArray(magicSkillsList))
         ? magicSkillsList
         : [];
-    if (typeof getRegisteredCustomClassBundle !== "function" || !character?.class) return base;
-    const bundle = getRegisteredCustomClassBundle(character.class);
-    const custom = bundle?.magicSkillsList;
-    if (Array.isArray(custom) && custom.length) return base.concat(custom);
-    return base;
+    let list = withStableUniqueMagicSkillIds(base, "phb");
+    if (typeof getRegisteredCustomClassBundle === "function" && character?.class) {
+        const bundle = getRegisteredCustomClassBundle(character.class);
+        const custom = bundle?.magicSkillsList;
+        if (Array.isArray(custom) && custom.length) {
+            list = list.concat(withStableUniqueMagicSkillIds(custom, "cc"));
+        }
+    }
+    if (typeof getRegisteredCustomSubclassBundle === "function" && character?.class) {
+        const scBundle = getRegisteredCustomSubclassBundle(character.class);
+        const scMagic = scBundle?.compiledMagicSkillsList;
+        if (Array.isArray(scMagic) && scMagic.length) {
+            list = list.concat(withStableUniqueMagicSkillIds(scMagic, "csc"));
+        }
+    }
+    return list;
 }
 
 /** PHB + registrierte Custom Class: subclassSpellsList */
@@ -5949,11 +6057,18 @@ function getEffectiveSubclassSpellsListForCharacter() {
     const base = (typeof subclassSpellsList !== "undefined" && Array.isArray(subclassSpellsList))
         ? subclassSpellsList
         : [];
-    if (typeof getRegisteredCustomClassBundle !== "function" || !character?.class) return base;
-    const bundle = getRegisteredCustomClassBundle(character.class);
-    const custom = bundle?.subclassSpellsList;
-    if (Array.isArray(custom) && custom.length) return base.concat(custom);
-    return base;
+    let list = base.slice();
+    if (typeof getRegisteredCustomClassBundle === "function" && character?.class) {
+        const bundle = getRegisteredCustomClassBundle(character.class);
+        const custom = bundle?.subclassSpellsList;
+        if (Array.isArray(custom) && custom.length) list = list.concat(custom);
+    }
+    if (typeof getRegisteredCustomSubclassBundle === "function" && character?.class) {
+        const scBundle = getRegisteredCustomSubclassBundle(character.class);
+        const scSpells = scBundle?.compiledSubclassSpellsList;
+        if (Array.isArray(scSpells) && scSpells.length) list = list.concat(scSpells);
+    }
+    return list;
 }
 
 /** Fokus-Liste aus CoreTraits normalisieren */
@@ -5994,14 +6109,14 @@ function populateSpells() {
 
     const classData = getClassData(character.class.toLowerCase());
     const selectedSubclassNumber = character.classForm?.subclass ? parseInt(character.classForm.subclass, 10) : null;
-    let levelData = classData.find(entry => 
-        entry.level === character.level &&
-        (entry.subclassCategoryNumber === 0 || entry.subclassCategoryNumber === selectedSubclassNumber) &&
-        (entry.cantripsAmount > 0 || entry.preparedSpellsAmount > 0)
-    );
-    if (!levelData) {
-        levelData = classData.find(entry => entry.level === character.level);
-    }
+    // Eine Slot-Zeile: gewählte UC vor Basis (Fighter/Rogue denormalisieren EK/AT-Slots auf 0)
+    const levelData = (typeof resolveClassLevelSpellResourceRow === "function")
+        ? resolveClassLevelSpellResourceRow(classData, character.level, selectedSubclassNumber)
+        : classData.find(entry =>
+            entry.level === character.level
+            && (entry.subclassCategoryNumber === 0 || entry.subclassCategoryNumber === selectedSubclassNumber)
+            && ((entry.cantripsAmount > 0) || (entry.preparedSpellsAmount > 0))
+        );
 
     const unlockedSpellLevels = new Set(["cantripLabel"]);
     if (levelData) {
@@ -7185,12 +7300,14 @@ function initializeEquipmentStep() {
 
     // --- KLASSENREIHE ---
     const classRow = document.getElementById("classEquipmentRow");
-    classRow.querySelector('td').id = 'classLabel';
-    classRow.querySelector('td').textContent = elements.classLabel || 'Klasse';
-    classRow.querySelector('td').style.fontSize = "1.0em";
-    classRow.querySelector('td').style.fontWeight = "bold";
-    classRow.querySelector('td').style.textAlign = "left";
-    classRow.innerHTML = classRow.querySelector('td').outerHTML;
+    const classLabelTd = classRow.querySelector('td');
+    classLabelTd.id = 'classLabel';
+    classLabelTd.textContent = elements.classLabel || 'Klasse';
+    classLabelTd.setAttribute('data-short', elements.equipmentSourceClassAbbrev || (currentLang === 'de' ? 'K' : 'C'));
+    classLabelTd.style.fontSize = "1.0em";
+    classLabelTd.style.fontWeight = "bold";
+    classLabelTd.style.textAlign = "left";
+    classRow.innerHTML = classLabelTd.outerHTML;
 
     classRow.innerHTML += options.map(opt => {
         const optionKey = `startingEquipment${opt}`;
@@ -7209,13 +7326,14 @@ function initializeEquipmentStep() {
 
     // --- HINTERGRUNDREIHE ---
     const backgroundRow = document.getElementById("backgroundEquipmentRow");
-    backgroundRow.querySelector('td').id = 'backgroundLabel';
-    backgroundRow.querySelector('td').style.fontSize = "1.0em";
-    backgroundRow.querySelector('td').style.fontWeight = "bold";
-    backgroundRow.querySelector('td').style.textAlign = "left";
-
-    backgroundRow.querySelector('td').textContent = elements.backgroundLabel || 'Hintergrund';
-    backgroundRow.innerHTML = backgroundRow.querySelector('td').outerHTML;
+    const backgroundLabelTd = backgroundRow.querySelector('td');
+    backgroundLabelTd.id = 'backgroundLabel';
+    backgroundLabelTd.style.fontSize = "1.0em";
+    backgroundLabelTd.style.fontWeight = "bold";
+    backgroundLabelTd.style.textAlign = "left";
+    backgroundLabelTd.textContent = elements.backgroundLabel || 'Hintergrund';
+    backgroundLabelTd.setAttribute('data-short', elements.equipmentSourceBackgroundAbbrev || (currentLang === 'de' ? 'H' : 'B'));
+    backgroundRow.innerHTML = backgroundLabelTd.outerHTML;
     
     backgroundRow.innerHTML += options.map(opt => {
         const optionKey = `bgEquipment${opt}`;
@@ -9829,6 +9947,20 @@ function finishCharacter() {
         persistCustomClassRuntimeToLocalStorage();
     }
 
+    // Custom-Unterklasse (Standalone) für den Charakterbogen
+    if (typeof getRegisteredCustomSubclassBundle === "function"
+        && getRegisteredCustomSubclassBundle(character.class)
+        && typeof persistCustomSubclassRuntimeToLocalStorage === "function") {
+        persistCustomSubclassRuntimeToLocalStorage();
+    }
+
+    // Custom-Hintergrund-Runtime für den Charakterbogen
+    if (typeof isRegisteredCustomBackgroundSlug === "function"
+        && isRegisteredCustomBackgroundSlug(character.background)
+        && typeof persistCustomBackgroundRuntimeToLocalStorage === "function") {
+        persistCustomBackgroundRuntimeToLocalStorage();
+    }
+
     // Weiterleitung
     window.location.href = "charakterbogen.html";
 }
@@ -10262,6 +10394,7 @@ function goToStep(step) {
         initializeLiveAttributes();
         liveContainer.style.display = 'block';
 	updateLiveAttributes();
+        setupMobileLevelUI();
 
 
     } else if (step === 6) { //Class Form
@@ -10324,6 +10457,13 @@ function goToStep(step) {
 
 // Wählt eine Klasse aus und setzt das Level zurück
 function selectClass(className) {
+    const prevClass = character.class ? String(character.class).toLowerCase() : null;
+    const nextClass = String(className || "").toLowerCase();
+    // Klassenwechsel: Custom-UC inkl. LocalStorage verwerfen (Schrittwechsel bleibt unberührt)
+    if (prevClass !== nextClass && typeof clearCustomSubclassRuntimeCompletely === "function") {
+        clearCustomSubclassRuntimeCompletely();
+    }
+
     selectedClassName = className;
     resetDynamicSubclassContent(); // Subklasseninhalte zurücksetzen, wenn die Klasse geändert wird
     character.class = className; // Stellen Sie sicher, dass die Klasse hier gesetzt wird
@@ -10455,6 +10595,10 @@ character = {
     // Fortschrittsanzeige zurücksetzen
     updateProgress();
     closeInfoBox();
+
+    if (typeof clearCustomSubclassRuntimeCompletely === "function") {
+        clearCustomSubclassRuntimeCompletely();
+    }
 }
 
 function resetDynamicSubclassContent() {
@@ -10922,6 +11066,65 @@ function removeMobileSteppers() {
     document.querySelectorAll('.active-stepper').forEach(el => {
         el.classList.remove('active-stepper');
     });
+}
+
+/** Mobile/Tablet (≤1000px): Pfeil-Stepper für Charakterstufe in Schritt 5 */
+function setupMobileLevelUI() {
+    const levelInput = document.getElementById("level");
+    const row = document.getElementById("levelInputRow");
+    const anchor = document.getElementById("levelInputAnchor");
+    if (!levelInput || !row || !anchor) return;
+
+    // Desktop: natives Number-Input, Stepper entfernen
+    if (window.innerWidth > 1000) {
+        levelInput.readOnly = false;
+        const existing = document.getElementById("stepper-level");
+        if (existing) existing.remove();
+        levelInput.onclick = null;
+        levelInput.onfocus = null;
+        row.onclick = null;
+        return;
+    }
+
+    levelInput.readOnly = true;
+
+    if (!document.getElementById("stepper-level")) {
+        const stepperDiv = document.createElement("div");
+        stepperDiv.id = "stepper-level";
+        stepperDiv.className = "mobile-stepper-ui";
+        stepperDiv.innerHTML = `
+            <button type="button" class="stepper-btn" onclick="adjustLevel(1)">▲</button>
+            <button type="button" class="stepper-btn" onclick="adjustLevel(-1)">▼</button>
+        `;
+        // Am Anker befestigen → absolute Position rechts vom Input, Input bleibt mittig
+        anchor.appendChild(stepperDiv);
+    }
+
+    const activateLevelStepper = (event) => {
+        if (event && event.target && event.target.closest && event.target.closest(".stepper-btn")) {
+            return;
+        }
+        document.querySelectorAll(".mobile-stepper-ui").forEach(s => s.classList.remove("active-stepper"));
+        const stepper = document.getElementById("stepper-level");
+        if (stepper) stepper.classList.add("active-stepper");
+    };
+
+    levelInput.onclick = activateLevelStepper;
+    levelInput.onfocus = activateLevelStepper;
+    row.onclick = activateLevelStepper;
+}
+
+/** Stufenwert per Pfeil anpassen (1–20) */
+function adjustLevel(delta) {
+    const input = document.getElementById("level");
+    if (!input) return;
+    let currentVal = parseInt(input.value, 10);
+    if (!Number.isFinite(currentVal)) currentVal = 1;
+    const newVal = currentVal + delta;
+    if (newVal >= 1 && newVal <= 20) {
+        input.value = newVal;
+        updateLevelInfo();
+    }
 }
 
 // TABLET - Schritt 10: Präzises Drag & Drop für Traits (iOS-Fix integriert)

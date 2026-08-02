@@ -151,6 +151,14 @@ function detectLegacyDcPackageType(raw) {
     if (raw.type === "customClassRuntime" && raw.slug) {
         return DC_PACKAGE_TYPE.CUSTOM_CLASS_RUNTIME;
     }
+    if ((raw.type === "customSubclass" || raw.type === "customSubclassRuntime")
+        && raw.targetClassSlug) {
+        return DC_PACKAGE_TYPE.CUSTOM_SUBCLASS;
+    }
+    if ((raw.type === "customBackground" || raw.type === "customBackgroundRuntime")
+        && raw.slug && raw.compiledBackgroundListEntry) {
+        return DC_PACKAGE_TYPE.CUSTOM_BACKGROUND;
+    }
     if (typeof raw.type === "string" && Object.values(DC_PACKAGE_TYPE).includes(raw.type)) {
         return raw.type;
     }
@@ -231,6 +239,20 @@ function validateDcPackagePayload(packageType, payload) {
         }
         if (!payload.base || typeof payload.base !== "object") {
             return { ok: false, errorCode: "invalidCharacterSheet" };
+        }
+        return { ok: true };
+    }
+    if (packageType === DC_PACKAGE_TYPE.CUSTOM_SUBCLASS) {
+        const okType = payload.type === "customSubclass" || payload.type === "customSubclassRuntime";
+        if (!okType || !payload.targetClassSlug || !payload.compiledSubclassListEntry) {
+            return { ok: false, errorCode: "invalidCustomSubclass" };
+        }
+        return { ok: true };
+    }
+    if (packageType === DC_PACKAGE_TYPE.CUSTOM_BACKGROUND) {
+        const okType = payload.type === "customBackground" || payload.type === "customBackgroundRuntime";
+        if (!okType || !payload.slug || !payload.compiledBackgroundListEntry) {
+            return { ok: false, errorCode: "invalidCustomBackground" };
         }
         return { ok: true };
     }
@@ -345,6 +367,14 @@ function alertMessageForDcPackageError(errorCode, vars) {
         invalidCharacterSheet: [
             "dcPackageInvalidCharacterSheetLabel",
             "Die Datei ist kein gültiger Charakterbogen."
+        ],
+        invalidCustomSubclass: [
+            "dcPackageInvalidCustomSubclassLabel",
+            "Die Datei ist keine gültige Custom-Unterklasse."
+        ],
+        invalidCustomBackground: [
+            "dcPackageInvalidCustomBackgroundLabel",
+            "Die Datei ist kein gültiger Custom-Hintergrund."
         ]
     };
     const entry = map[errorCode] || ["customClassImportErrorLabel", "Die Datei konnte nicht gelesen werden oder ist ungültig."];
@@ -470,46 +500,86 @@ const DC_CHARACTER_PACKAGE_ID_KEY = "dcCharacterPackageId";
 const DC_CHARACTER_PACKAGE_CREATED_KEY = "dcCharacterPackageCreatedAt";
 
 /**
- * Dependencies aus eingebetteter customClassRuntime (Envelope oder Legacy).
+ * Dependencies aus eingebetteter Custom-Class- / Custom-Background-Runtime.
  */
 function buildCharacterSheetDependencies(baseStorage) {
     const deps = [];
-    const raw = baseStorage && baseStorage.customClassRuntime;
-    if (!raw) return deps;
-    let parsed;
-    try {
-        parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-    } catch (e) {
-        return deps;
+    if (!baseStorage) return deps;
+
+    const pushFromRuntime = (raw, expectedType, depPackageType) => {
+        if (!raw) return;
+        let parsed;
+        try {
+            parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+        } catch (e) {
+            return;
+        }
+        if (typeof normalizeDcPackageInput !== "function") return;
+        const norm = normalizeDcPackageInput(parsed);
+        if (!norm.ok || norm.detectedType !== expectedType) return;
+
+        const packageId = norm.envelope?.packageId || norm.payload?.packageId || null;
+        const slug = norm.payload?.slug
+            || norm.payload?.compiledBackgroundListEntry?.translationLabel
+            || null;
+        if (packageId || slug) {
+            deps.push({
+                packageType: depPackageType,
+                packageId: packageId || null,
+                slug: slug ? String(slug) : undefined,
+                verificationCode: packageId
+                    ? buildDcVerificationCode(depPackageType, packageId)
+                    : undefined,
+                required: true
+            });
+        }
+    };
+
+    // Custom Class Runtime → Abhängigkeit zur Custom Class
+    const classRaw = baseStorage.customClassRuntime;
+    if (classRaw) {
+        let parsed;
+        try {
+            parsed = typeof classRaw === "string" ? JSON.parse(classRaw) : classRaw;
+        } catch (e) {
+            parsed = null;
+        }
+        if (parsed && typeof normalizeDcPackageInput === "function") {
+            const norm = normalizeDcPackageInput(parsed);
+            if (norm.ok && norm.detectedType === DC_PACKAGE_TYPE.CUSTOM_CLASS_RUNTIME) {
+                const classDep = (norm.envelope?.dependencies || []).find(d =>
+                    d && d.packageType === DC_PACKAGE_TYPE.CUSTOM_CLASS
+                );
+                if (classDep && classDep.packageId) {
+                    deps.push({
+                        packageType: DC_PACKAGE_TYPE.CUSTOM_CLASS,
+                        packageId: classDep.packageId,
+                        slug: classDep.slug || norm.payload?.slug || undefined,
+                        verificationCode: classDep.verificationCode
+                            || (classDep.packageId
+                                ? buildDcVerificationCode(DC_PACKAGE_TYPE.CUSTOM_CLASS, classDep.packageId)
+                                : undefined),
+                        required: true
+                    });
+                } else if (norm.payload?.slug) {
+                    deps.push({
+                        packageType: DC_PACKAGE_TYPE.CUSTOM_CLASS,
+                        packageId: null,
+                        slug: String(norm.payload.slug),
+                        required: true
+                    });
+                }
+            }
+        }
     }
-    if (typeof normalizeDcPackageInput !== "function") return deps;
-    const norm = normalizeDcPackageInput(parsed);
-    if (!norm.ok || norm.detectedType !== DC_PACKAGE_TYPE.CUSTOM_CLASS_RUNTIME) {
-        return deps;
-    }
-    const classDep = (norm.envelope?.dependencies || []).find(d =>
-        d && d.packageType === DC_PACKAGE_TYPE.CUSTOM_CLASS
+
+    // Custom Background Runtime → Abhängigkeit zum Background-Paket
+    pushFromRuntime(
+        baseStorage.customBackgroundRuntime,
+        DC_PACKAGE_TYPE.CUSTOM_BACKGROUND,
+        DC_PACKAGE_TYPE.CUSTOM_BACKGROUND
     );
-    if (classDep && classDep.packageId) {
-        deps.push({
-            packageType: DC_PACKAGE_TYPE.CUSTOM_CLASS,
-            packageId: classDep.packageId,
-            slug: classDep.slug || norm.payload?.slug || undefined,
-            verificationCode: classDep.verificationCode
-                || (classDep.packageId
-                    ? buildDcVerificationCode(DC_PACKAGE_TYPE.CUSTOM_CLASS, classDep.packageId)
-                    : undefined),
-            required: true
-        });
-    } else if (norm.payload?.slug) {
-        // Legacy-Runtime ohne Klassen-packageId
-        deps.push({
-            packageType: DC_PACKAGE_TYPE.CUSTOM_CLASS,
-            packageId: null,
-            slug: String(norm.payload.slug),
-            required: true
-        });
-    }
+
     return deps;
 }
 
@@ -538,4 +608,61 @@ function wrapCharacterSheetExport(flatPayload, meta) {
         dependencies: buildCharacterSheetDependencies(flatPayload?.base || {}),
         payload: flatPayload
     });
+}
+
+//=======================================================================
+// ClassData: Zauber-Ressourcenzeile (Basis vs. Unterklasse)
+//=======================================================================
+
+/** Zeile hat Tricks, vorbereitete Zauber oder mindestens einen Slot */
+function classDataRowHasSpellResources(entry) {
+    if (!entry) return false;
+    if ((parseInt(entry.cantripsAmount, 10) || 0) > 0) return true;
+    if ((parseInt(entry.preparedSpellsAmount, 10) || 0) > 0) return true;
+    for (let i = 1; i <= 9; i++) {
+        if ((parseInt(entry[`SSpSL${i}`], 10) || 0) > 0) return true;
+    }
+    return false;
+}
+
+/**
+ * Eine konsistente Slot-/Progressionszeile für Charakterstufe + gewählte UC.
+ * UC-Caster zuerst (Custom-UC darf nicht Fighter-/Rogue-Basis-Slots erben);
+ * PHB-EK/AT fallen auf Basis zurück, wenn die UC auf 19/20 keine eigene Zeile hat.
+ */
+function resolveClassLevelSpellResourceRow(classDataArray, characterLevel, subclassCategoryNumber) {
+    if (!Array.isArray(classDataArray)) return null;
+    const level = Number(characterLevel) || 0;
+    const sc = subclassCategoryNumber != null ? parseInt(subclassCategoryNumber, 10) : 0;
+    const atLevel = (pred) => classDataArray.find(entry =>
+        entry && Number(entry.level) === level && pred(entry)
+    );
+
+    if (sc > 0) {
+        const scRow = atLevel(e =>
+            e.subclassCategoryNumber === sc && classDataRowHasSpellResources(e)
+        );
+        if (scRow) return scRow;
+    }
+
+    let row = atLevel(e =>
+        (e.subclassCategoryNumber === 0 || e.subclassCategoryNumber === sc)
+        && classDataRowHasSpellResources(e)
+    );
+    if (row) return row;
+
+    row = atLevel(e =>
+        (e.subclassCategoryNumber === 0 || !e.subclassCategoryNumber)
+        && classDataRowHasSpellResources(e)
+    );
+    if (row) return row;
+
+    row = atLevel(e =>
+        e.subclassCategoryNumber === 0 || e.subclassCategoryNumber === sc
+    );
+    if (row) return row;
+
+    return atLevel(e =>
+        e.subclassCategoryNumber === 0 || !e.subclassCategoryNumber
+    ) || null;
 }

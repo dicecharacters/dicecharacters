@@ -10,6 +10,7 @@
     <script defer src="https://cloud.umami.is/script.js" data-website-id="69f61406-c360-48a7-9559-13da14ddd7cb"></script>
 
     <script src="translations/translationsCore.js"></script>
+    <script src="translations/translationsDCPackage.js"></script>
     <script src="translations/translationsCustomFeatures.js"></script>
     <script src="translations/translationsBarbarian.js"></script>
     <script src="translations/translationsBard.js"></script>
@@ -58,7 +59,7 @@
     <script src="data/imageData.js"></script>
     <script src="featureHandlers.js"></script>
     <script src="dcPackage.js"></script>
-    <script src="customFeaturesSheet.js"></script>
+    <script src="customFeatures/customFeaturesSheet.js"></script>
 </head>
 <body>
 <div class="fab-container no-print">
@@ -1458,8 +1459,14 @@ function updateHitPointsAndDice() {
     const className = charData.basic.class;
     if (!className) return;
 
-    // Klassendaten finden
-    const classData = classCoreTraitsList.find(c => c.translationLabel.toLowerCase() === className.toLowerCase());
+    // Klassendaten finden (Custom: Runtime-Fallback wie in processClassBasics)
+    let classData = classCoreTraitsList.find(c => c.translationLabel.toLowerCase() === className.toLowerCase());
+    if (!classData && typeof isSheetCustomClassSlug === "function" && isSheetCustomClassSlug(className)) {
+        const runtime = (typeof getSheetCustomClassRuntime === "function")
+            ? getSheetCustomClassRuntime()
+            : null;
+        if (runtime?.coreTraits) classData = runtime.coreTraits;
+    }
     if (!classData) return;
 
     const conMod = parseInt(conModInput.value, 10) || 0;
@@ -1546,27 +1553,30 @@ function calculateFinalSpeed() {
 function getSubclassTranslation(classType, subclassCategoryNumber) {
     if (!classType) return '';
 
-    // Mapping mit Sicherheitscheck (falls eine Datei mal nicht geladen wurde)
-    const subclassLists = {
-        'barbarian': (typeof subclassListBarbarian !== 'undefined') ? subclassListBarbarian : [],
-        'bard': (typeof subclassListBard !== 'undefined') ? subclassListBard : [],
-        'cleric': (typeof subclassListCleric !== 'undefined') ? subclassListCleric : [],
-        'druid': (typeof subclassListDruid !== 'undefined') ? subclassListDruid : [],
-        'fighter': (typeof subclassListFighter !== 'undefined') ? subclassListFighter : [],
-        'monk': (typeof subclassListMonk !== 'undefined') ? subclassListMonk : [],
-        'paladin': (typeof subclassListPaladin !== 'undefined') ? subclassListPaladin : [],
-        'ranger': (typeof subclassListRanger !== 'undefined') ? subclassListRanger : [],
-        'rogue': (typeof subclassListRogue !== 'undefined') ? subclassListRogue : [],
-        'sorcerer': (typeof subclassListSorcerer !== 'undefined') ? subclassListSorcerer : [],
-        'warlock': (typeof subclassListWarlock !== 'undefined') ? subclassListWarlock : [],
-        'wizard': (typeof subclassListWizard !== 'undefined') ? subclassListWizard : []
-    };
-
-    let list = subclassLists[classType.toLowerCase().trim()];
-    // Custom-Class: kompilierte Unterklassenliste aus Runtime
+    let list = null;
+    if (typeof getSheetEffectiveSubclassList === "function") {
+        list = getSheetEffectiveSubclassList(classType);
+    }
     if (!list || !list.length) {
-        if (typeof getSheetCustomSubclassList === "function") {
-            list = getSheetCustomSubclassList(classType) || [];
+        const subclassLists = {
+            'barbarian': (typeof subclassListBarbarian !== 'undefined') ? subclassListBarbarian : [],
+            'bard': (typeof subclassListBard !== 'undefined') ? subclassListBard : [],
+            'cleric': (typeof subclassListCleric !== 'undefined') ? subclassListCleric : [],
+            'druid': (typeof subclassListDruid !== 'undefined') ? subclassListDruid : [],
+            'fighter': (typeof subclassListFighter !== 'undefined') ? subclassListFighter : [],
+            'monk': (typeof subclassListMonk !== 'undefined') ? subclassListMonk : [],
+            'paladin': (typeof subclassListPaladin !== 'undefined') ? subclassListPaladin : [],
+            'ranger': (typeof subclassListRanger !== 'undefined') ? subclassListRanger : [],
+            'rogue': (typeof subclassListRogue !== 'undefined') ? subclassListRogue : [],
+            'sorcerer': (typeof subclassListSorcerer !== 'undefined') ? subclassListSorcerer : [],
+            'warlock': (typeof subclassListWarlock !== 'undefined') ? subclassListWarlock : [],
+            'wizard': (typeof subclassListWizard !== 'undefined') ? subclassListWizard : []
+        };
+        list = subclassLists[classType.toLowerCase().trim()];
+        if (!list || !list.length) {
+            if (typeof getSheetCustomSubclassList === "function") {
+                list = getSheetCustomSubclassList(classType) || [];
+            }
         }
     }
     if (!list || !list.length) return '';
@@ -2265,8 +2275,13 @@ function processInventory(data) {
         const strMod = Math.floor((strScore - 10) / 2);
         const dexMod = Math.floor((dexScore - 10) / 2);
 
-        const className = data.basic.class; 
-        const canAutoEquipArmor = (className !== "Barbarian" && className !== "Monk");
+        const className = data.basic.class;
+        // Keine Auto-Rüstung bei Unarmored Defense (PHB + Custom PreDefined)
+        const canAutoEquipArmor = !classHasUnarmoredDefenseFeature(
+            className,
+            data.basic.level,
+            data.classForm && data.classForm.subclass
+        );
 
         let maxWeaponMod = -999;
         let maxArmorAC = -1;
@@ -3685,12 +3700,26 @@ function getDynamicLevelValue(key, level, dataSource) {
         const v = r[key];
         // Sentinel 0 / leer = nicht gesetzt (echte Werte: Zahlen > 0, "+2", "D6", …)
         if (v === undefined || v === null || v === "" || v === 0) continue;
+        if (Array.isArray(v) && v.length === 0) continue;
         if (r.level >= bestLevel) {
             bestLevel = r.level;
             bestVal = v;
         }
     }
     if (bestVal === undefined) return "-";
+
+    // Zauberlisten der Stufe (Custom Class / Custom UC): ["wizard","druid"] → "Magier, Druide"
+    if (key === "spellListLabels" && Array.isArray(bestVal)) {
+        const lang = (typeof currentLanguage !== "undefined" && currentLanguage)
+            || (typeof currentLang !== "undefined" && currentLang)
+            || "de";
+        const els = (typeof translations !== "undefined" && translations[lang]) || {};
+        const names = bestVal.filter(Boolean).map(lab => {
+            const keyStr = String(lab);
+            return els[keyStr] || els[`${keyStr}Label`] || keyStr;
+        }).filter(Boolean);
+        return names.length ? names.join(", ") : "-";
+    }
 
     // Fuß-Felder (_ft): bei DE in Meter umrechnen (wie Infobox Mönch)
     if (/_ft$/i.test(key) && (typeof currentLanguage !== "undefined" ? currentLanguage : "de") === "de") {
@@ -3720,14 +3749,41 @@ function getClassDataArray(className) {
         'warlock': (typeof warlockClassData !== 'undefined') ? warlockClassData : null,
         'wizard': (typeof wizardClassData !== 'undefined') ? wizardClassData : null
     };
-    if (map[c]) return map[c];
+    let data = map[c] || null;
 
     // Custom-Class: hydratisierte Runtime (LocalStorage / Import)
-    if (typeof getSheetCustomClassData === "function") {
-        const customData = getSheetCustomClassData(className);
-        if (customData) return customData;
+    if (!data && typeof getSheetCustomClassData === "function") {
+        data = getSheetCustomClassData(className);
     }
-    return null;
+
+    // Standalone Custom-UC #5 in ClassData mergen
+    if (data && typeof mergeSheetCustomSubclassIntoClassData === "function") {
+        data = mergeSheetCustomSubclassIntoClassData(className, data);
+    }
+    return data || null;
+}
+
+/**
+ * True, wenn die Klasse (PHB oder Custom) Unarmored Defense freigeschaltet hat.
+ * Ersetzt die alte Hardcode-Prüfung "Barbarian"/"Monk" (Slug war ohnehin lowercase).
+ */
+function classHasUnarmoredDefenseFeature(className, level, subclassId) {
+    const dataSource = (typeof getClassDataArray === "function")
+        ? getClassDataArray(className)
+        : null;
+    if (!dataSource || !Array.isArray(dataSource)) return false;
+
+    const udLabels = new Set(["unarmoredDefense", "unarmoredDefenseLabel", "customUnarmoredDefense"]);
+    const currentLevel = Number(level) || 1;
+    const userSubclassId = parseInt(subclassId, 10) || 0;
+
+    return dataSource.some(feat => {
+        if (!feat || !udLabels.has(feat.translationLabel)) return false;
+        if ((Number(feat.level) || 1) > currentLevel) return false;
+        const featSc = feat.subclassCategoryNumber || 0;
+        if (featSc > 0 && featSc !== userSubclassId) return false;
+        return true;
+    });
 }
 
 // 10. Beschwörungs-Namen auflösen (Einfache Übersetzung)
@@ -5097,8 +5153,8 @@ function calculateSpellSlots(spellLevel, data) {
         if (subEntry) hasSlots = true;
     }
 
-    // C. Custom Class Fallback: Spellcasting-Merkmal / SSpSL im Scope (Base oder gewählte UC)
-    if (!hasSlots && coreTrait.isCustom) {
+    // C. Custom Class / Standalone-UC: Spellcasting-Merkmal / SSpSL im Scope (Base oder gewählte UC)
+    if (!hasSlots) {
         const classDataArray = typeof getClassDataArray === "function"
             ? getClassDataArray(className)
             : null;
@@ -5119,39 +5175,21 @@ function calculateSpellSlots(spellLevel, data) {
 
     if (!hasSlots) return 0;
 
-    // D. Daten abrufen (SSpSLX)
-    // Wir brauchen das Array mit den Progressionsdaten (z.B. bardClassData)
+    // D. Eine konsistente Slot-Zeile (UC vor Basis – nicht pro Grad die erste Zeile mit Wert > 0)
     const classDataArray = getClassDataArray(className);
     if (!classDataArray) return 0;
 
     const subIdForSlots = data.classForm?.subclass ? parseInt(data.classForm.subclass, 10) : 0;
-
-    // Zeile für aktuelles Level finden (bevorzugt Scope mit Slot-Werten)
-    let levelRow = classDataArray.find(r =>
-        r.level === charLevel
-        && (r.subclassCategoryNumber === 0 || r.subclassCategoryNumber === subIdForSlots)
-        && (parseInt(r[`SSpSL${spellLevel}`], 10) || 0) > 0
-    );
-    if (!levelRow) {
-        levelRow = classDataArray.find(r =>
-            r.level === charLevel
-            && (parseInt(r[`SSpSL${spellLevel}`], 10) || 0) > 0
-        );
-    }
-    if (!levelRow) {
-        levelRow = classDataArray.find(r =>
+    const levelRow = (typeof resolveClassLevelSpellResourceRow === "function")
+        ? resolveClassLevelSpellResourceRow(classDataArray, charLevel, subIdForSlots)
+        : classDataArray.find(r =>
             r.level === charLevel
             && (r.subclassCategoryNumber === 0 || r.subclassCategoryNumber === subIdForSlots)
         );
-    }
-    if (!levelRow) {
-        levelRow = classDataArray.find(r => r.level === charLevel);
-    }
     if (!levelRow) return 0;
 
-    // Spalte auslesen (z.B. "SSpSL1")
     const key = `SSpSL${spellLevel}`;
-    return levelRow[key] || 0;
+    return parseInt(levelRow[key], 10) || 0;
 }
 
 // Helper Keys
@@ -6402,7 +6440,8 @@ function confirmClearData() {
             "size", "appearanceDescription", "story", "deityId", "deityName", 
             "communityName", "communityDesc", "alignment", "personalityTraits", 
             "cantrips", "spellbookSpells", "preparedSpells", "favoredSpells", "languages",
-            "portraitImage", "symbolImage", "customClassRuntime",
+            "portraitImage", "symbolImage", "customClassRuntime", "customSubclassRuntime",
+            "customBackgroundRuntime",
             "dcCharacterPackageId", "dcCharacterPackageCreatedAt"
         ];
 
@@ -6442,7 +6481,8 @@ function exportCharacterJSON() {
         "characterName", "playerName", "class", "background", "species", "lineage", "ancestry", "level", "xp",
         "strengthScore", "dexterityScore", "constitutionScore", "intelligenceScore", "wisdomScore", "charismaScore",
         "classForm", "equipment", "purse", "languages", "cantrips", "spellbookSpells", "preparedSpells", "favoredSpells",
-        "portraitImage", "symbolImage", "currentLanguage", "customClassRuntime",
+        "portraitImage", "symbolImage", "currentLanguage", "customClassRuntime", "customSubclassRuntime",
+        "customBackgroundRuntime",
         "dcCharacterPackageId", "dcCharacterPackageCreatedAt"
     ];
 

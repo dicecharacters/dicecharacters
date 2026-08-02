@@ -170,6 +170,49 @@ const featureHandlers = {
         }
     },
 
+    // --- CUSTOM CLASS/SUBCLASS BUILDER: Ungerüstete Verteidigung (frei wählbares Attribut-Paar) ---
+    // Ersetzt die früheren PreDefined-Einträge "unarmoredDefense" (Barbar) / "unarmoredDefenseLabel" (Mönch);
+    // beide PHB-Handler bleiben unverändert bestehen.
+    "customUnarmoredDefense": (charData, stats, feat) => {
+
+        // 1. Prüfen: Trägt der Charakter Rüstung ODER einen Schild? (wie Mönch: jedes ausgerüstete Teil deaktiviert)
+        let hasArmorOrShield = false;
+
+        if (charData.equipment && Array.isArray(charData.equipment.armor)) {
+            hasArmorOrShield = charData.equipment.armor.some(item => item.equipped === true);
+        }
+
+        if (hasArmorOrShield) return;
+
+        // 2. Gewählte Attribute aus der Merkmalszeile lesen (Label → Score-Feld)
+        const abilityScoreFields = {
+            strengthLabel: 'strength',
+            dexterityLabel: 'dexterity',
+            constitutionLabel: 'constitution',
+            intelligenceLabel: 'intelligence',
+            wisdomLabel: 'wisdom',
+            charismaLabel: 'charisma'
+        };
+
+        const abilities = Array.isArray(feat?.unarmoredDefenseAbilities) ? feat.unarmoredDefenseAbilities : [];
+        if (abilities.length < 2) return;
+
+        const field1 = abilityScoreFields[abilities[0]];
+        const field2 = abilityScoreFields[abilities[1]];
+        if (!field1 || !field2) return;
+
+        const score1 = parseInt(stats[field1]) || 10;
+        const score2 = parseInt(stats[field2]) || 10;
+
+        const newAC = 10 + getAbilityMod(score1) + getAbilityMod(score2);
+
+        // 3. Ergebnis anwenden (nur wenn besser als bisherige Berechnung)
+        if (!stats.computedAC || newAC > stats.computedAC) {
+            stats.computedAC = newAC;
+            stats.acSource = "Unarmored Defense (Custom)";
+        }
+    },
+
     // --- MÖNCH: Unarmored Movement (Speed) ---
     "unarmoredMovementLabel": (charData, stats) => {
         let hasArmorOrShield = false;

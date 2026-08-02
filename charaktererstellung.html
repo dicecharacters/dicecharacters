@@ -223,6 +223,13 @@
     <li><input type="radio" id="scribe" name="background" value="Scribe" onclick="showBackgroundText('scribe'); updateBackgroundDetails('scribe')"><label for="scribe" id="scribeLabel">Schreiber</label></li>
     <li><input type="radio" id="soldier" name="background" value="Soldier" onclick="showBackgroundText('soldier'); updateBackgroundDetails('soldier')"><label for="soldier" id="soldierLabel">Soldat</label></li>
     <li><input type="radio" id="wayfarer" name="background" value="Wayfarer" onclick="showBackgroundText('wayfarer'); updateBackgroundDetails('wayfarer')"><label for="wayfarer" id="wayfarerLabel">Wanderer</label></li>
+                <li id="customBackgroundListItem" class="custom-background-list-item" style="display: none;">
+                    <input type="radio" id="customBackgroundRadio" name="background" value="" onclick="selectCustomBackground()">
+                    <label for="customBackgroundRadio" id="customBackgroundRadioLabel"></label>
+                </li>
+                <li id="addCustomBackgroundListItem" class="add-custom-background-item">
+                    <button type="button" id="addCustomBackgroundBtn" class="add-custom-background-btn" onclick="openCustomBackgroundChooser()" aria-label="+">+</button>
+                </li>
             </ul>
 
             <!-- Container für die Hintergrundbeschreibung -->
@@ -346,8 +353,12 @@
 <div id="step5" class="step" style="display: none;">
     <h2 id="step5Title">Schritt 5: Stufe wählen</h2>
     <p id="step5Description">Wähle eine Stufe (1-20):</p>
-    <label for="level" id="levelLabel">Stufe:</label>
-    <input type="number" id="level" name="level" min="1" max="20" oninput="updateLevelInfo()">
+    <label for="level" id="levelLabel3">STUFE</label>
+    <div class="level-input-row" id="levelInputRow">
+        <div class="level-input-anchor" id="levelInputAnchor">
+            <input type="number" id="level" name="level" min="1" max="20" oninput="updateLevelInfo()">
+        </div>
+    </div>
     
     <!-- Dynamische Anzeige der Levelinfo -->
     <h3 id="classFeaturesTitle">Klassenmerkmale <span class="info-icon" onclick="toggleInfoBox('infoBoxStep5')">?</span></h3>
@@ -395,6 +406,9 @@
                 <h3 id="subclassTitle">Unterklasse</h3>
                 <div id="subclassOptions">
                     <!-- Radio-Buttons für Subclasses werden dynamisch basierend auf der gewählten Klasse hinzugefügt -->
+                </div>
+                <div id="addCustomSubclassWrap" class="add-custom-subclass-wrap" aria-hidden="true">
+                    <button type="button" id="addCustomSubclassBtn" class="add-custom-subclass-btn" onclick="openCustomSubclassChooser()" aria-label="+">+</button>
                 </div>
                 
                 <!-- Dynamische Inhalte für Subklassen -->
@@ -833,6 +847,79 @@
         </div>
     </div>
 
+    <!-- Custom Subclass Modal (Standalone UC) -->
+    <div id="customSubclassOverlay" class="modal-overlay custom-class-overlay" style="display: none;">
+        <div class="custom-class-modal" onclick="event.stopPropagation()">
+            <span class="close-icon" onclick="requestCloseCustomSubclassModal()">&times;</span>
+
+            <div id="customSubclassChooserView">
+                <h3 id="customSubclassModalTitleLabel" class="custom-class-title"></h3>
+                <div class="custom-class-chooser-actions">
+                    <button type="button" id="customSubclassCreateNewBtn" class="custom-class-action-btn" onclick="startCustomSubclassCreate()"></button>
+                    <button type="button" id="customSubclassUploadBtn" class="custom-class-action-btn" onclick="triggerCustomSubclassUpload()"></button>
+                    <input type="file" id="customSubclassFileInput" accept=".json,application/json" style="display: none;" onchange="handleCustomSubclassFile(event)">
+                </div>
+            </div>
+
+            <div id="customSubclassEditorView" style="display: none;">
+                <h3 id="customSubclassEditorTitleLabel" class="custom-class-title"></h3>
+
+                <div class="custom-class-tabs">
+                    <button type="button" class="custom-class-tab active" data-tab="1" id="customSubclassTabFeaturesBtn" onclick="switchCustomSubclassTab(1)"></button>
+                    <button type="button" class="custom-class-tab custom-class-tab--locked" data-tab="2" id="customSubclassTabSpellBtn" onclick="switchCustomSubclassTab(2)" disabled></button>
+                </div>
+
+                <div class="custom-class-tab-panels">
+                    <div id="customSubclassTab1" class="custom-class-tab-panel active">
+                        <div id="customSubclassTab1Content"></div>
+                    </div>
+                    <div id="customSubclassTab2" class="custom-class-tab-panel">
+                        <div id="customSubclassTab2Content"></div>
+                    </div>
+                </div>
+
+                <div class="custom-class-footer">
+                    <button type="button" id="customSubclassSaveBtn" class="custom-class-action-btn" onclick="saveCustomSubclass()"></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="cscLfFloatOverlay" class="cc-lf-float-overlay" style="display: none;"
+             onclick="event.stopPropagation(); closeLfFloat()">
+            <div class="cc-lf-float" onclick="event.stopPropagation()">
+                <span class="close-icon" onclick="event.stopPropagation(); closeLfFloat()" aria-label="×">&times;</span>
+                <h4 id="cscLfFloatTitle" class="cc-lf-float-title"></h4>
+                <p id="cscLfFloatHint" class="cc-lf-float-hint" style="display:none;"></p>
+                <div id="cscLfFloatBody" class="cc-lf-float-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Background Modal (Schritt 2) -->
+    <!-- Bewusst kein onclick auf dem Overlay: Klick außerhalb schließt nicht -->
+    <div id="customBackgroundOverlay" class="modal-overlay custom-class-overlay" style="display: none;">
+        <div class="custom-class-modal" onclick="event.stopPropagation()">
+            <span class="close-icon" onclick="requestCloseCustomBackgroundModal()">&times;</span>
+
+            <div id="customBackgroundChooserView">
+                <h3 id="customBackgroundModalTitleLabel" class="custom-class-title"></h3>
+                <div class="custom-class-chooser-actions">
+                    <button type="button" id="customBackgroundCreateNewBtn" class="custom-class-action-btn" onclick="startCustomBackgroundCreate()"></button>
+                    <button type="button" id="customBackgroundUploadBtn" class="custom-class-action-btn" onclick="triggerCustomBackgroundUpload()"></button>
+                    <input type="file" id="customBackgroundFileInput" accept=".json,application/json" style="display: none;" onchange="handleCustomBackgroundFile(event)">
+                </div>
+            </div>
+
+            <div id="customBackgroundEditorView" style="display: none;">
+                <h3 id="customBackgroundEditorTitleLabel" class="custom-class-title"></h3>
+                <div id="customBackgroundEditorContent"></div>
+                <div class="custom-class-footer">
+                    <button type="button" id="customBackgroundSaveBtn" class="custom-class-action-btn" onclick="saveCustomBackground()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="disclaimerLabel" class="permanent-disclaimer"></div>
 
     <!-- Fixierte Buttons -->
@@ -917,9 +1004,13 @@
     <script src="data/religionData.js"></script>
     <script src="main.js"></script>
     <script src="dcPackage.js"></script>
-    <script src="customFeaturesBuilder.js"></script>
+    <script src="customFeatures/shared.js"></script>
+    <script src="customFeatures/classBuilder.js"></script>
+    <script src="customFeatures/subclassBuilder.js"></script>
+    <script src="customFeatures/backgroundBuilder.js"></script>
 
     <script src="translations/translationsCore.js"></script>
+    <script src="translations/translationsDCPackage.js"></script>
     <script src="translations/translationsCustomFeatures.js"></script>
 
     <script src="translations/translationsBarbarian.js"></script>
