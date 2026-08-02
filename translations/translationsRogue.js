@@ -55,7 +55,7 @@ Object.assign(translations.de, {
 
     // Schurke: Kurzbeschreibung Merkmale
     "sneakAttackShortD": "Du triffst, wenn die Ablenkung deines Gegners am größten ist.",
-    "thievesCantShortD": "Diebessprache und eine weitere Sprache aus dem Untergrund.",
+    "thievesCantShortD": "Diebessprache und eine weitere Sprache deiner Wahl.",
     "cunningActionLabelShortD": "Schnelligkeit und List lassen dich im Kampf flinker handeln.",
     "steadyAimShortD": "Stillstand verschafft dem nächsten Schuss den Vorteil.",
     "cunningStrikeShortD": "Dein Hinterhältiger Angriff trägt raffinierte Zusatztricks.",
@@ -80,7 +80,7 @@ Object.assign(translations.de, {
     "assassinsToolsD": "Erhalte Verkleidungsset, Giftmischerset und Übung damit.",
     "psionicPowerD": "Psi-Energie-Würfel (1 zurück nach kurzer Rast, alle nach langer Rast).<ul><li><b>Psi-gestütztes Geschick:</b> Bei Fehlschlag einer geübten Fertigkeits-/Werkzeugprobe Würfel addieren; nur bei Erfolg verbraucht.</li><li><b>Psychisches Geflüster:</b> Magische Aktion — Telepathie mit bis Übungsbonus sichtbaren Kreaturen; Dauer = Würfelwurf Stunden; Reichweite 1,6 km. Erste Nutzung nach langer Rast ohne Würfelverbrauch.</li></ul>Würfel: [LEVEL_VAL]soulknifeEnergyDiceSize[/LEVEL_VAL] | Anzahl: [LEVEL_VAL]soulknifeEnergyDiceNumber[/LEVEL_VAL]",
     "psychicBladesD": "Bei Angriffsaktion oder Gelegenheitsangriff: Psychische Klinge in freier Hand. Einfache Nahkampfwaffe; 1W6 psychischer Schaden + Attributsmod. des Angriffs; Finesse, Wurfwaffe (18/36 m); Meisterung Plagen (zählt nicht gegen Waffenbeherrschung). Verschwindet nach Treffer/Fehlschlag. Bonusaktion: zweite Klinge (1W4), wenn andere Hand frei.",
-    "fastHandsD": "Bonusaktion eine Option:<ul><li><b>Gegenstand verwenden:</b> Verwenden-Aktion oder magische Aktion für einen magischen Gegenstand.</li><li><b>Fingerfertigkeit:</b> Geschicklichkeit (Fingerfertigkeit) — Schloss/Falle mit Diebeswerkzeug oder Taschendiebstahl.</li></ul>",
+    "fastHandsD": "Bonusaktion eine Option:<ul><li><b>Fingerfertigkeit:</b> Geschicklichkeit (Fingerfertigkeit) — Schloss/Falle mit Diebeswerkzeug oder Taschendiebstahl.</li><li><b>Gegenstand verwenden:</b> Verwenden-Aktion oder magische Aktion für einen magischen Gegenstand.</li></ul>",
     "secondStoryWorkD": "<ul><li><b>Kletterer:</b> Kletterbewegungsrate = Bewegungsrate.</li><li><b>Springer:</b> Sprungweite anhand Geschicklichkeit statt Stärke.</li></ul>",
     "cunningStrikeD": "Bei Schaden durch Hinterhältiger Angriff einen Effekt (Würfel vorher abziehen; SG 8 + GES + ÜB):<ul><li><b>Fällen (1W6):</b> Ziel max. Groß: GES-Rettungswurf oder umgestoßen.</li><li><b>Gift (1W6):</b> KON-Rettungswurf oder 1 Min. vergiftet (Wh. Ende Zug). Braucht Giftmischerausrüstung.</li><li><b>Zurückziehen (1W6):</b> Sofort danach bis halbe Bewegungsrate ohne Gelegenheitsangriffe.</li></ul>",
     "uncannyDodgeD": "Reaktion bei Treffer (Sichtbar): Halbiere den Schaden.",
@@ -160,7 +160,7 @@ Object.assign(translations.en, {
 
     // Rogue: Feature Short Descriptions
     "sneakAttackShortD": "You strike when a foe’s distraction is greatest.",
-    "thievesCantShortD": "Thieves’ Cant and another language from the underground.",
+    "thievesCantShortD": "Thieves’ Cant and one other language of your choice.",
     "cunningActionLabelShortD": "Quick thinking and agility let you act faster in combat.",
     "steadyAimShortD": "Standing still grants Advantage on your next attack.",
     "cunningStrikeShortD": "Your Sneak Attack carries cunning extra tricks.",
@@ -185,7 +185,7 @@ Object.assign(translations.en, {
     "assassinsToolsD": "Gain Disguise Kit, Poisoner's Kit and proficiency.",
     "psionicPowerD": "Psionic Energy Dice (regain 1 on Short Rest, all on Long Rest).<ul><li><b>Psi-Bolstered Knack:</b> On a failed proficient skill/tool check, add a die; expended only if it then succeeds.</li><li><b>Psychic Whispers:</b> Magic action — telepathy with up to PB visible creatures; duration = die roll hours; range 1 mile. First use after a Long Rest expends no die.</li></ul>Dice: [LEVEL_VAL]soulknifeEnergyDiceSize[/LEVEL_VAL] | Amount: [LEVEL_VAL]soulknifeEnergyDiceNumber[/LEVEL_VAL]",
     "psychicBladesD": "When you take the Attack action or make an Opportunity Attack: manifest a Psychic Blade in a free hand. Simple melee; 1d6 Psychic + attack’s ability modifier; Finesse, Thrown (60/120 ft); Mastery Vex (doesn’t count against Weapon Mastery). Vanishes after hit/miss. Bonus Action: second blade (1d4) if other hand free.",
-    "fastHandsD": "Bonus Action, one option:<ul><li><b>Use an Object:</b> Utilize or Magic action to use a magic item.</li><li><b>Sleight of Hand:</b> Dexterity (Sleight of Hand) — lock/trap with Thieves’ Tools, or pick a pocket.</li></ul>",
+    "fastHandsD": "Bonus Action, one option:<ul><li><b>Sleight of Hand:</b> Dexterity (Sleight of Hand) — lock/trap with Thieves’ Tools, or pick a pocket.</li><li><b>Use an Object:</b> Utilize or Magic action to use a magic item.</li></ul>",
     "secondStoryWorkD": "<ul><li><b>Climber:</b> Climb Speed = Speed.</li><li><b>Jumper:</b> Jump distance uses Dexterity instead of Strength.</li></ul>",
     "cunningStrikeD": "When you deal Sneak Attack damage, add one effect (forgo dice before rolling; DC 8 + DEX + PB):<ul><li><b>Trip (1d6):</b> Large or smaller: DEX save or Prone.</li><li><b>Poison (1d6):</b> CON save or Poisoned 1 min (repeat end of turn). Requires Poisoner's Kit.</li><li><b>Withdraw (1d6):</b> Immediately after, move up to half Speed without Opportunity Attacks.</li></ul>",
     "uncannyDodgeD": "Reaction when hit (visible): Halve the damage.",

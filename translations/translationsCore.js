@@ -16,18 +16,18 @@ const translations = {
     "step10Title": "Schritt 10: Gesinnung gewichten",
     "step11Title": "Schritt 11: Aussehen beschreiben",
     "step12Title": "Schritt 12: Namensgebung",
-    "step1Description": "Wähle die Klasse deines Charakters.",
-    "step2Description": "Wähle den Hintergrund deines Charakters.",
-    "step3Description": "Wähle das Volk deines Charakters.",
-    "step4Description": "Bestimme die Schwächen und Stärken deines Charakters.",
-    "step5Description": "Wähle eine Stufe (1-20) für deinen Charakter.",
-    "step6Description": "Wähle Fähigkeiten basierend auf Klasse und Level.",
-    "step7Description": "Wähle die Zauber für deinen Charakter.",
-    "step8Description": "Wähle die Ausrüstung für deinen Charakter.",
-    "step9Description": "Beschreibe die Herkunft und Erlebnisse deines Charakters.",
-    "step10Description": "Bestimme die Persönlichkeit und Gesinnung deines Charakters.",
-    "step11Description": "Beschreibe das Aussehen deines Charakters.",
-    "step12Description": "Überprüfe deine Auswahl und gebe deinem Charakter einen Namen.",
+    "step1Description": "Die Klasse entscheidet über Kampfstil, magische Fähigkeiten und deine Rolle im Abenteuer. Der Pfad, den du hier wählst, bildet die Grundlage für alles Weitere.",
+    "step2Description": "Wer war dein Charakter, bevor die Geschichte begann? Berufung und Lebensumstände prägen den Blick auf die Welt und schenken oft Fertigkeiten, Gold und ein Talent.",
+    "step3Description": "Blut und Kultur sind ein Teil deines Weltbilds. Dein Ursprung ordnet dich in die Gesellschaft ein und entscheidet, wie andere auf dich reagieren.",
+    "step4Description": "Die Basis deiner Fähigkeiten wird über die sechs Attribute abgebildet. Hier entscheidest du, worin dein Charakter glänzt und wo er kämpfen muss.",
+    "step5Description": "Mit jeder Stufe hat dein Charakter mehr von der Welt gesehen. Von Stufe 1 bis 20 wird diese Erfahrung in Merkmalen sichtbar, die neue Fähigkeiten verleihen.",
+    "step6Description": "Mit wachsender Erfahrung eignet sich dein Charakter spezifische Talente und einzigartige Herangehensweisen an. So entsteht ein unverwechselbares Zusammenspiel aus Fertigkeiten, Meisterschaften und Künsten.",
+    "step7Description": "Arkane Formeln, göttliche Bitten oder geheime Pakte: Stelle ein Repertoire aus geübten Tricks und mächtigen Zaubern zusammen, das deinen Weg begleitet.",
+    "step8Description": "Statte dich mit Klinge, Rüstung, Fokus und Reisebedarf aus. Was du bei dir und an dir trägst, entscheidet oft über Sieg und Überleben.",
+    "step9Description": "Woher kommst du, was hast du erlebt? Herkunft und Erlebnisse in ein paar Sätzen reichen, um deinem Charakter eine Seele zu geben.",
+    "step10Description": "Ideale und Gewissen lenken deine Entscheidungen. Lege fest, wofür dein Charakter einsteht und welche Makel ihn ausmachen.",
+    "step11Description": "Was bemerken andere auf den ersten Blick? Ein schneller Eindruck entsteht durch Augenfarbe, Narben und Haltung.",
+    "step12Description": "Alles steht! Gib deinem Charakter einen Namen und tritt die Reise an.",
 
     // Buttons
     "step1Btn": "Schritt 1",
@@ -155,6 +155,12 @@ const translations = {
     "intelligenceLabel": "Intelligenz",
     "wisdomLabel": "Weisheit",
     "charismaLabel": "Charisma",
+    "strengthAbbrLabel": "STÄ",
+    "dexterityAbbrLabel": "GES",
+    "constitutionAbbrLabel": "KON",
+    "intelligenceAbbrLabel": "INT",
+    "wisdomAbbrLabel": "WEI",
+    "charismaAbbrLabel": "CHA",
     "abilityLabel": "Attribut",
     "abilitiesLabel": "Attribute",
     "modifierLabel": "Modifikator",
@@ -202,7 +208,7 @@ const translations = {
     "survivalLabel": "Überlebenskunst",
 
     // Weitere Eigenschaften
-    "heroicInspirationLabel": "Heroische Inspiration",
+    "heroicInspirationLabel": "Heldische Inspiration",
     "passivePerceptionLabel": "Passive Wahrnehmung",
     "initiativeLabel": "Initiative",
     "speedLabel": "Bewegungsrate",
@@ -313,9 +319,9 @@ const translations = {
     "primaryAbilityLabel": "Primär-Attribut",
     "hitPointDieLabel": "Trefferpunktewürfel",
     "hitDiceLabel": "Trefferwürfel",
-    "classFeaturesLabel": "Levelbasierte Merkmale",
+    "classFeaturesLabel": "Stufenbasierte Merkmale",
     "subclassTitle": "Unterklasse",
-    "subclassFeaturesLabel": "Levelbasierte Unterklassenmerkmale",
+    "subclassFeaturesLabel": "Stufenbasierte Unterklassenmerkmale",
     "subclassFeaturesTitle": "Unterklassenmerkmale",
     "spellcasterLabel": "Zauberwirker",
     "spellcastingFocusLabel": "Zauberfokus",
@@ -326,6 +332,7 @@ const translations = {
     // Level
     "levelLabel": "Stufe:",
     "levelLabel2": "Stufe",
+    "levelLabel3": "STUFE",
     "levelAbbr": "St",
     "expansionAtLevelLabel": "Erweiterung auf Stufe",
 
@@ -365,6 +372,8 @@ const translations = {
     "equipmentLabel": "Ausrüstung",
     "equippedLabel": "angelegt",
     "equipmentProvidedLabel": "Gewährte Ausrüstung",
+    "equipmentSourceClassAbbrev": "K",
+    "equipmentSourceBackgroundAbbrev": "H",
     "equipmentOptionsLabel": "Ausrüstungsoptionen",
     "additionalEquipmentTitle": "Ausrüstung hinzufügen & entfernen",
     "addItemButtonLabel": "Hinzufügen",
@@ -418,7 +427,7 @@ const translations = {
     "appendixPageLabel": "Anhang Seite",
     "appendixPage2Label": "Anh. S.",
     "xpLabel": "XP",
-    "heroicInspirationLabel": "Heroische Inspiration",
+    "heroicInspirationLabel": "Heldische Inspiration",
     "passivePerceptionLabel": "Passive Wahrnehmung",
     "initiativeLabel": "Initiative",
     "armorClassLabel": "Rüstungsklasse",
@@ -462,18 +471,18 @@ const translations = {
     "step10Title": "Step 10: Weight alignment",
     "step11Title": "Step 11: Describe appearance",
     "step12Title": "Step 12: Naming",
-    "step1Description": "Choose your character's class.",
-    "step2Description": "Choose your character's background.",
-    "step3Description": "Choose your character's species.",
-    "step4Description": "Determine your character's strengths and weaknesses.",
-    "step5Description": "Choose a level (1-20) for your character.",
-    "step6Description": "Choose abilities based on class and level.",
-    "step7Description": "Choose the spells for your character.",
-    "step8Description": "Choose the euipment for your character.",
-    "step9Description": "Describe your character's origin and experiences.",
-    "step10Description": "Determine your character's personality and alignment.",
-    "step11Description": "Describe your character's appearance.",
-    "step12Description": "Review your choices and give your character a name.",
+    "step1Description": "Your class decides combat style, magical abilities, and your role in the adventure. The path you choose here forms the foundation for everything that follows.",
+    "step2Description": "Who was your character before the story began? Calling and circumstances shape how you see the world and often grant skills, coin, and a feat.",
+    "step3Description": "Blood and culture are part of your worldview. Your origin places you in society and decides how others react to you.",
+    "step4Description": "The basis of your abilities is expressed through the six ability scores. Here you decide where your character shines and where they must struggle.",
+    "step5Description": "With every level, your character has seen more of the world. From level 1 to 20, that experience appears as features that grant new abilities.",
+    "step6Description": "With growing experience, your character picks up specific talents and unique approaches. What emerges is a distinctive interplay of skills, masteries, and arts.",
+    "step7Description": "Arcane formulae, divine petitions, or secret pacts: Assemble a repertoire of practiced tricks and potent spells that will travel with you.",
+    "step8Description": "Equip yourself with blade, armor, focus, and travel gear. What you carry with you and on you often decides victory and survival.",
+    "step9Description": "Where do you come from, and what have you lived through? Origin and experiences in a few sentences are enough to give your character a soul.",
+    "step10Description": "Ideals and conscience guide your decisions. Decide what your character stands for and which flaws define them.",
+    "step11Description": "What do others notice at first glance? A quick impression comes from eye color, scars, and bearing.",
+    "step12Description": "Everything is set! Give your character a name and begin the journey.",
 
     // Buttons
     "step1Btn": "Step 1",
@@ -508,7 +517,7 @@ const translations = {
     // General
     "allLabel": "All",
     "noneLabel": "None",
-    "optionsLabel": "options",
+    "optionsLabel": "Options",
     "infoBoxTraitTitle": "Explanation of Traits",
     "requiredLabel": "Required",
     "spellInfoBoxTitle": "Spell Details",
@@ -601,6 +610,12 @@ const translations = {
     "intelligenceLabel": "Intelligence",
     "wisdomLabel": "Wisdom",
     "charismaLabel": "Charisma",
+    "strengthAbbrLabel": "STR",
+    "dexterityAbbrLabel": "DEX",
+    "constitutionAbbrLabel": "CON",
+    "intelligenceAbbrLabel": "INT",
+    "wisdomAbbrLabel": "WIS",
+    "charismaAbbrLabel": "CHA",
     "abilityLabel": "Ability",
     "abilitiesLabel": "Abilities",
     "modifierLabel": "Modifier",
@@ -772,6 +787,7 @@ const translations = {
     // Level
     "levelLabel": "Level:",
     "levelLabel2": "Level",
+    "levelLabel3": "LEVEL",
     "levelAbbr": "Lvl",
     "expansionAtLevelLabel": "Expansion at level",
 
@@ -794,7 +810,7 @@ const translations = {
     // Damage Types: Energies
     "acidEnergyLabel": "Acid",
     "coldEnergyLabel": "Cold",
-    "fireEnergyLabel": "Firer",
+    "fireEnergyLabel": "Fire",
     "lightningEnergyLabel": "Lightning",
     "thunderEnergyLabel": "Thunder",
 
@@ -811,6 +827,8 @@ const translations = {
     "equipmentLabel": "Equipment",
     "equippedLabel": "equipped",
     "equipmentProvidedLabel": "Provided Equipment",
+    "equipmentSourceClassAbbrev": "C",
+    "equipmentSourceBackgroundAbbrev": "B",
     "equipmentOptionsLabel": "Equipment Options",
     "additionalEquipmentTitle": "Add & delete equipment",
     "addItemButtonLabel": "Add Item",
@@ -969,7 +987,7 @@ function applyTranslations(translations, currentLang) {
     setTextContent('toggleText', elements.pushSymbolLabel);
     setTextContent('classDetailsHeader', elements.classDetails);
     setTextContent('backgroundDetailsHeader', elements.backgroundDetails);
-    setTextContent('levelLabel', elements.levelLabel);
+    setTextContent('levelLabel3', elements.levelLabel3);
     setTextContent('infoBoxTraitTitle', elements.infoBoxTraitTitle);
     setTextContent('infoBoxTraitTitle2', elements.infoBoxTraitTitle);
     setTextContent('rollAttributesBtn', elements.rollAttributesBtnLabel);
@@ -1133,8 +1151,18 @@ function applyTranslations(translations, currentLang) {
 
     const step7DescriptionElement = document.getElementById('step7Description');
     if (step7DescriptionElement && step7DescriptionElement.childNodes.length > 0 && step7DescriptionElement.childNodes[0].nodeType === Node.TEXT_NODE) {
-        const labelText = elements.step7Description || "Wähle die Zauber für deinen Charakter:";
+        const labelText = elements.step7Description || "Arkane Formeln, göttliche Bitten oder geheime Pakte: Stelle ein Repertoire aus geübten Tricks und mächtigen Zaubern zusammen, das deinen Weg begleitet.";
         step7DescriptionElement.childNodes[0].nodeValue = labelText;
+    }
+
+    // Mobile Step-8 source badges (C/B vs K/H)
+    const classEquipLabelEl = document.getElementById('classLabel');
+    if (classEquipLabelEl) {
+        classEquipLabelEl.setAttribute('data-short', elements.equipmentSourceClassAbbrev || (currentLang === 'de' ? 'K' : 'C'));
+    }
+    const bgEquipLabelEl = document.getElementById('backgroundLabel');
+    if (bgEquipLabelEl) {
+        bgEquipLabelEl.setAttribute('data-short', elements.equipmentSourceBackgroundAbbrev || (currentLang === 'de' ? 'H' : 'B'));
     }
 
     const additionalEquipmentTitleElement = document.getElementById('additionalEquipmentTitle');

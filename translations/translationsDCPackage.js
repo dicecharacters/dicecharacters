@@ -1,0 +1,55 @@
+// translationsDCPackage.js
+// Labels für den DiceCharacters-Paket-Import/-Export (dcPackage.js): Datei-/Format-Fehler,
+// Envelope-Typnamen und den generischen Import-Fehler des Custom-Class-Uploads.
+
+Object.assign(translations.de, {
+    "customClassImportErrorLabel": "Die Datei konnte nicht gelesen werden oder ist ungültig.",
+    "dcPackageNotJsonFileLabel": "Bitte eine .json-Datei wählen.",
+    "dcPackageParseErrorLabel": "Die Datei ist kein gültiges JSON.",
+    "dcPackageNotObjectLabel": "Die JSON-Datei hat ein ungültiges Format.",
+    "dcPackageUnknownFormatLabel": "Unbekanntes DiceCharacters-Dateiformat.",
+    "dcPackageWrongTypeLabel": "Falscher Dateityp. Erwartet: {expected}. Gefunden: {found}.",
+    "dcPackageSchemaTooNewLabel": "Diese Datei wurde mit einer neueren App-Version gespeichert und kann hier nicht geladen werden.",
+    "dcPackageInvalidPayloadLabel": "Der Dateiinhalt ist unvollständig oder ungültig.",
+    "dcPackageInvalidCustomClassLabel": "Die Datei ist keine gültige Custom-Klasse (Kernmerkmale fehlen).",
+    "dcPackageInvalidCustomClassRuntimeLabel": "Die Custom-Klassen-Runtime-Daten sind ungültig.",
+    "dcPackageInvalidCharacterSheetLabel": "Die Datei ist kein gültiger Charakterbogen.",
+    "dcPackageInvalidCustomSubclassLabel": "Die Datei ist keine gültige Custom-Unterklasse.",
+    "dcPackageInvalidCustomBackgroundLabel": "Die Datei ist kein gültiger Custom-Hintergrund.",
+    "dcPackageTypeUnknownLabel": "unbekannt",
+    "dcPackageTypeCharacterSheetLabel": "Charakterbogen",
+    "dcPackageTypeCustomClassLabel": "Custom-Klasse",
+    "dcPackageTypeCustomClassRuntimeLabel": "Custom-Klassen-Runtime",
+    "dcPackageTypeCustomBackgroundLabel": "Custom-Hintergrund",
+    "dcPackageTypeCustomSpeciesLabel": "Custom-Volk",
+    "dcPackageTypeCustomSpellLabel": "Custom-Zauber",
+    "dcPackageTypeCustomSpellPackLabel": "Custom-Zauberpaket",
+    "dcPackageTypeCustomFeatLabel": "Custom-Talent",
+    "dcPackageTypeCustomSubclassLabel": "Custom-Unterklasse"
+});
+
+Object.assign(translations.en, {
+    "customClassImportErrorLabel": "The file could not be read or is invalid.",
+    "dcPackageNotJsonFileLabel": "Please choose a .json file.",
+    "dcPackageParseErrorLabel": "The file is not valid JSON.",
+    "dcPackageNotObjectLabel": "The JSON file has an invalid format.",
+    "dcPackageUnknownFormatLabel": "Unknown DiceCharacters file format.",
+    "dcPackageWrongTypeLabel": "Wrong file type. Expected: {expected}. Found: {found}.",
+    "dcPackageSchemaTooNewLabel": "This file was saved with a newer app version and cannot be loaded here.",
+    "dcPackageInvalidPayloadLabel": "The file contents are incomplete or invalid.",
+    "dcPackageInvalidCustomClassLabel": "This file is not a valid custom class (core traits missing).",
+    "dcPackageInvalidCustomClassRuntimeLabel": "The custom class runtime data is invalid.",
+    "dcPackageInvalidCharacterSheetLabel": "This file is not a valid character sheet.",
+    "dcPackageInvalidCustomSubclassLabel": "This file is not a valid custom subclass.",
+    "dcPackageInvalidCustomBackgroundLabel": "The file is not a valid custom background.",
+    "dcPackageTypeUnknownLabel": "unknown",
+    "dcPackageTypeCharacterSheetLabel": "Character sheet",
+    "dcPackageTypeCustomClassLabel": "Custom class",
+    "dcPackageTypeCustomClassRuntimeLabel": "Custom class runtime",
+    "dcPackageTypeCustomBackgroundLabel": "Custom background",
+    "dcPackageTypeCustomSpeciesLabel": "Custom species",
+    "dcPackageTypeCustomSpellLabel": "Custom spell",
+    "dcPackageTypeCustomSpellPackLabel": "Custom spell pack",
+    "dcPackageTypeCustomFeatLabel": "Custom feat",
+    "dcPackageTypeCustomSubclassLabel": "Custom subclass"
+});

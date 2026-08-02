@@ -65,6 +65,7 @@ Object.assign(translations.de, {
     "twoExtraAttacksShortD": "In der Angriffsaktion schlägst du dreimal zu.",
     "studiedAttacksShortD": "Ein Fehlschlag lehrt dich: der nächste Angriff gegen dasselbe Ziel sitzt besser.",
     "threeExtraAttacksShortD": "In der Angriffsaktion schlägst du viermal zu.",
+    "heroicWarriorShortD": "Im Kampf: Beginnst du deinen Zug ohne Heldische Inspiration, erhältst du sie.",
 
     // Maneuver: Namen
     "ambushLabel": "Hinterhalt",
@@ -128,7 +129,7 @@ Object.assign(translations.de, {
     "telekineticAdeptD": "<ul><li><b>Psi-Sprung:</b> Bonusaktion — Flugbewegungsrate = 2× Bewegungsrate bis Zugende. (1×/Rast oder 1 Psi-Energie-Würfel).</li><li><b>Telekinetischer Stoß:</b> Bei Schaden durch Psionischen Schlag: STÄ-RW (SG 8 + INT + Übungsbonus) oder liegend / bis 3 m geschoben.</li></ul>",
     "indomitableD": "Bei gescheitertem Rettungswurf: erneut würfeln mit Bonus = Kämpferstufe; neues Ergebnis gilt.<br>Anwendungen: [LEVEL_VAL]indomitable[/LEVEL_VAL]<br>(zurück nach langer Rast.)",
     "tacticalMasterD": "Bei Angriff mit nutzbarer Meisterschaftseigenschaft: durch Stoßen, Auslaugen oder Verlangsamen ersetzen.",
-    "heroicWarriorShortD": "Im Kampf: Beginnst du deinen Zug ohne Heldische Inspiration, erhältst du sie.",
+    "heroicWarriorD": "Im Kampf: Beginnst du deinen Zug ohne Heldische Inspiration, erhältst du sie.",
     "eldritchStrikeD": "Bei Treffer mit Waffenangriff: Nachteil auf den nächsten Rettungswurf gegen deine Zauber (bis Ende deines nächsten Zugs).",
     "guardedMindD": "Resistenz gegen psychischen Schaden. Beginnst du deinen Zug bezaubert oder verängstigt: 1 Psi-Energie-Würfel (keine Aktion) beendet diese Zustände.",
     "twoExtraAttacksD": "Angriffsaktion: drei Angriffe.",
@@ -208,6 +209,7 @@ Object.assign(translations.en, {
     "twoExtraAttacksShortD": "When you take the Attack action, you strike three times.",
     "studiedAttacksShortD": "A miss teaches you—your next attack against that foe lands truer.",
     "threeExtraAttacksShortD": "When you take the Attack action, you strike four times.",
+    "heroicWarriorShortD": "In combat: if you start your turn without Heroic Inspiration, you gain it.",
 
     // Maneuvers: Names
     "ambushLabel": "Ambush",
@@ -271,7 +273,7 @@ Object.assign(translations.en, {
     "telekineticAdeptD": "<ul><li><b>Psi-Powered Leap:</b> Bonus Action — Fly Speed = 2× Speed until end of turn. (1/Rest or 1 Psionic Energy Die).</li><li><b>Telekinetic Thrust:</b> When Psionic Strike deals damage: STR save (DC 8 + INT + Proficiency Bonus) or Prone / pushed up to 10 ft.</li></ul>",
     "indomitableD": "On a failed save: reroll with a bonus equal to your Fighter level; use the new roll.<br>Uses: [LEVEL_VAL]indomitable[/LEVEL_VAL]<br>(Regain on Long Rest.)",
     "tacticalMasterD": "When you attack with a weapon whose mastery property you can use, replace it with Push, Sap, or Slow for that attack.",
-    "heroicWarriorShortD": "In combat: if you start your turn without Heroic Inspiration, you gain it.",
+    "heroicWarriorD": "In combat: if you start your turn without Heroic Inspiration, you gain it.",
     "eldritchStrikeD": "When you hit a creature with a weapon attack: Disadvantage on its next saving throw against your spells (until the end of your next turn).",
     "guardedMindD": "Resistance to Psychic damage. If you start your turn Charmed or Frightened: spend 1 Psionic Energy Die (no action) to end those conditions.",
     "twoExtraAttacksD": "Attack action: three attacks.",
