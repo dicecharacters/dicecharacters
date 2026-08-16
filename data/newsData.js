@@ -1,6 +1,21 @@
 // newsData.js
 const newsUpdates = [
       {
+        date: "16.08.2026",
+        version: "v1.6",
+        content: `
+            Bugfixing:
+            <ul class="news-list">
+                <li>Charakterbogen: Talente werden beim Zurücksetzen bzw. Leeren des Bogens nun vollständig gelöscht.</li>
+            </ul>
+
+            Optimierungen:
+            <ul class="news-list">
+                <li>Startseite: Links zu "Impressum", "Datenschutz" und "Umgang mit KI" wurden ergänzt.</li>
+            </ul>
+        `
+      },
+      {
         date: "03.08.2026",
         version: "v1.5",
         content: `
