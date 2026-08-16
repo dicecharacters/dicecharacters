@@ -2,7 +2,7 @@
 // Custom Class Builder (customFeatures/classBuilder.js)
 //=======================================================================
 // Custom-Klassen-UI: Kernmerkmale, Stufenmerkmale, Unterklassen (Tab 3),
-// Zauberprogression (Tab 4), Import/Export, Compile.
+// Zauberliste (Tab 4), Zauberprogression (Tab 5), Import/Export, Compile.
 //
 // Flags / Visibility: customFeatures/shared.js (zuerst laden).
 // Standalone-UC:      customFeatures/subclassBuilder.js
@@ -67,7 +67,10 @@ const CUSTOM_CLASS_CONFIG = Object.freeze({
         "intelligenceLabel",
         "wisdomLabel",
         "charismaLabel"
-    ])
+    ]),
+
+    /** Max. Zauber in der eigenen Klassen-Zauberliste (Tab 4) */
+    customSpellListMax: 250
 });
 
 /** Alias → CUSTOM_CLASS_CONFIG (Bestandscode) */
@@ -79,6 +82,7 @@ const CUSTOM_CLASS_DESC_MAX = CUSTOM_CLASS_CONFIG.descMax;
 const CUSTOM_CLASS_EQUIP_MAX_ITEMS = CUSTOM_CLASS_CONFIG.equipMaxItems;
 const CUSTOM_CLASS_AMOUNT_MAX = CUSTOM_CLASS_CONFIG.amountMax;
 const CUSTOM_CLASS_GOLD_MAX = CUSTOM_CLASS_CONFIG.goldMax;
+const CUSTOM_CLASS_SPELL_LIST_MAX = CUSTOM_CLASS_CONFIG.customSpellListMax;
 const LF_SPELLCASTING_ABILITY_LABELS = CUSTOM_CLASS_CONFIG.spellcastingAbilityLabels;
 
 /** Fokus-Optionen ohne Zauberbuch (Unterklassen-Zauberwirken) */
@@ -208,11 +212,290 @@ let registeredCustomClass = {
     verificationCode: null,
     packageCreatedAt: null,
     runtimePackageId: null,
-    runtimeCreatedAt: null
+    runtimeCreatedAt: null,
+    /** Eigene Zauberliste (Tab 4), Runtime für getEffectiveSpellList */
+    customSpellList: null
 };
 
 /** Editor-Zustand inkl. Boilerplates für Tab 2/3 */
 let customClassEditorState = createEmptyCustomClassState();
+
+/** Leerer State für Tab-4-Zauberliste */
+function createEmptyCustomSpellListState() {
+    return {
+        locked: false,
+        selectedSpellIds: [],
+        /** Von früherer Bib-Verknüpfung (Legacy, immer leer halten) */
+        lockedFromSpellPackIds: []
+    };
+}
+
+function cloneCustomSpellListState(src) {
+    const s = src || {};
+    const ids = Array.isArray(s.selectedSpellIds)
+        ? s.selectedSpellIds.map(n => parseInt(n, 10)).filter(Number.isFinite)
+        : [];
+    return {
+        locked: !!s.locked,
+        selectedSpellIds: ids,
+        // Legacy — Bib ist listenunabhängig
+        lockedFromSpellPackIds: []
+    };
+}
+
+/**
+ * Legacy no-op: Bibliotheks-Zauber gehören nicht in Tab 4 (Session-Pool in Schritt 7).
+ */
+function reconcileCustomClassSpellPackLocksFromSession(state) {
+    return false;
+}
+
+/**
+ * Legacy-Felder (lockedFromSpellPackIds) leeren — Bib ist nicht mit Tab 4 verknüpft.
+ */
+function stripSessionLibrarySpellsFromCustomClassTab4(state) {
+    if (!state) return false;
+    const csl = ensureCustomSpellListState(state);
+    const beforeLock = (csl.lockedFromSpellPackIds || []).length;
+    if (!beforeLock) return false;
+    csl.lockedFromSpellPackIds = [];
+    // Auch Auswahl-IDs, die zur Session-Bib gehören, entfernen
+    if (typeof getRegisteredCustomSpellPackSpells === "function") {
+        const pack = getRegisteredCustomSpellPackSpells() || [];
+        const packIds = new Set(
+            pack.map(s => parseInt(s?.ID, 10)).filter(Number.isFinite)
+        );
+        if (packIds.size) {
+            csl.selectedSpellIds = (csl.selectedSpellIds || []).filter(id => !packIds.has(id));
+        }
+    }
+    return true;
+}
+
+function ensureCustomSpellListState(state) {
+    const st = state || customClassEditorState;
+    if (!st.customSpellList) st.customSpellList = createEmptyCustomSpellListState();
+    return st.customSpellList;
+}
+
+function isCustomSpellListTabUnlocked(state) {
+    return hasLfBaseClassSpellcasting(state || customClassEditorState);
+}
+
+function isCustomSpellListLocked(state) {
+    return !!ensureCustomSpellListState(state).locked;
+}
+
+/** Stabiler Checkbox-/classLabel-Slug der Custom Class */
+function getCustomSpellListCheckboxLabel(state) {
+    const st = state || customClassEditorState;
+    if (st.slug) return String(st.slug);
+    if (typeof buildStableSlug === "function") return buildStableSlug(st);
+    return "";
+}
+
+function getCustomSpellListCheckboxDisplayName(state, lang) {
+    const st = state || customClassEditorState;
+    const l = lang || (typeof currentLang !== "undefined" ? currentLang : "de");
+    const other = l === "de" ? "en" : "de";
+    const slug = getCustomSpellListCheckboxLabel(st);
+    const fromNames = (st.names?.[l] || st.names?.[other] || "").trim();
+    if (fromNames) return fromNames;
+    if (slug && typeof translations !== "undefined") {
+        const t = (translations[l] && translations[l][slug])
+            || (translations.de && translations.de[slug]);
+        if (t) return String(t);
+    }
+    return slug || tCC("cfTabSpellListLabel");
+}
+
+/** PHB-Zauberlisten + ggf. Custom-Slug (nur wenn Tab-4-Liste fixiert) */
+function getLfSpellcastingListOptionsForMask() {
+    const lists = getLfSpellcastingClassOptions().slice();
+    if (isCustomSpellListLocked(customClassEditorState)) {
+        const slug = getCustomSpellListCheckboxLabel(customClassEditorState);
+        if (slug && !lists.includes(slug)) lists.push(slug);
+    }
+    return lists;
+}
+
+function getCustomSpellListLabelOverrides() {
+    if (!isCustomSpellListLocked(customClassEditorState)) return {};
+    const slug = getCustomSpellListCheckboxLabel(customClassEditorState);
+    if (!slug) return {};
+    return { [slug]: getCustomSpellListCheckboxDisplayName(customClassEditorState) };
+}
+
+/** Custom-Slug in Basis-Zauberwirken + Progression auto-checken */
+function syncCustomSpellListCheckboxIntoConfigs(state) {
+    const st = state || customClassEditorState;
+    if (!isCustomSpellListLocked(st)) return;
+    const slug = getCustomSpellListCheckboxLabel(st);
+    if (!slug) return;
+
+    const baseSlot = getLfBaseSpellcastingSlot(st);
+    if (baseSlot) {
+        const cfg = baseSlot.payload.optionsConfig || (baseSlot.payload.optionsConfig = {});
+        const labels = Array.isArray(cfg.spellListLabels) ? cfg.spellListLabels.slice() : [];
+        if (!labels.includes(slug)) labels.push(slug);
+        cfg.spellListLabels = labels;
+    }
+
+    const prog = st.spellcastingProgression;
+    if (prog) {
+        const base = Array.isArray(prog.baseSpellListLabels) ? prog.baseSpellListLabels.slice() : [];
+        if (!base.includes(slug)) base.push(slug);
+        prog.baseSpellListLabels = base;
+        Object.keys(prog.userRows || {}).forEach(k => {
+            const row = prog.userRows[k];
+            if (!row) return;
+            const rowLists = Array.isArray(row.spellListLabels) ? row.spellListLabels.slice() : [];
+            if (!rowLists.includes(slug)) rowLists.push(slug);
+            row.spellListLabels = rowLists;
+        });
+    }
+}
+
+/** Custom-Slug aus Masken/Progression entfernen */
+function removeCustomSpellListCheckboxFromConfigs(state) {
+    const st = state || customClassEditorState;
+    const slug = getCustomSpellListCheckboxLabel(st);
+    if (!slug) return;
+    const strip = (arr) => (Array.isArray(arr) ? arr.filter(l => l !== slug) : []);
+
+    const baseSlot = getLfBaseSpellcastingSlot(st);
+    if (baseSlot?.payload?.optionsConfig) {
+        baseSlot.payload.optionsConfig.spellListLabels = strip(
+            baseSlot.payload.optionsConfig.spellListLabels
+        );
+    }
+    (st.subclasses || []).forEach(sc => {
+        (sc.levelFeatures || []).forEach(s => {
+            if (s?.payload?.category === "spellcasting" && s.payload.optionsConfig) {
+                s.payload.optionsConfig.spellListLabels = strip(
+                    s.payload.optionsConfig.spellListLabels
+                );
+            }
+        });
+    });
+    const prog = st.spellcastingProgression;
+    if (prog) {
+        prog.baseSpellListLabels = strip(prog.baseSpellListLabels);
+        Object.keys(prog.userRows || {}).forEach(k => {
+            const row = prog.userRows[k];
+            if (row) row.spellListLabels = strip(row.spellListLabels);
+        });
+    }
+}
+
+function resetCustomSpellListState(state) {
+    const st = state || customClassEditorState;
+    removeCustomSpellListCheckboxFromConfigs(st);
+    st.customSpellList = createEmptyCustomSpellListState();
+}
+
+/**
+ * Warnung beim Entfernen von Basis-Zauberwirken, wenn Tab-4-Auswahl existiert.
+ * @returns {boolean} true = fortfahren
+ */
+function confirmRemoveBaseSpellcastingClearsCustomSpellList(slot) {
+    if (isLfSubclassFeatureSlot(slot)) return true;
+    const csl = ensureCustomSpellListState(customClassEditorState);
+    if (!csl.locked && !(csl.selectedSpellIds || []).length) return true;
+    return confirm(tCC("ccCustomSpellListRemoveSpellcastingWarnLabel"));
+}
+
+function lockCustomSpellList() {
+    const csl = ensureCustomSpellListState(customClassEditorState);
+    if (!isCustomSpellListTabUnlocked(customClassEditorState)) return;
+    if (!csl.selectedSpellIds.length) {
+        alert(tCC("ccCustomSpellListMinOneAlertLabel"));
+        return;
+    }
+    const max = CUSTOM_CLASS_SPELL_LIST_MAX || 250;
+    if (csl.selectedSpellIds.length > max) {
+        csl.selectedSpellIds = csl.selectedSpellIds.slice(0, max);
+    }
+    csl.lockedFromSpellPackIds = [];
+    csl.locked = true;
+    // Slug sicherstellen (Name aus Tab 1)
+    if (!customClassEditorState.slug) {
+        customClassEditorState.slug = buildStableSlug(customClassEditorState);
+    }
+    syncCustomSpellListCheckboxIntoConfigs(customClassEditorState);
+    renderCustomClassTab4();
+}
+
+function unlockCustomSpellList() {
+    const csl = ensureCustomSpellListState(customClassEditorState);
+    removeCustomSpellListCheckboxFromConfigs(customClassEditorState);
+    csl.locked = false;
+    renderCustomClassTab4();
+}
+
+/**
+ * Effektive spellList-View:
+ * 1) Basis = globale spellList
+ * 2) Append aller Pack-Zauber (registeredCustomSpellPack / Sheet-Runtime)
+ * 3) Custom-Slug virtuell in classLabel der gewählten Tab-4-Zauber
+ * Mutiert niemals die globale spellList.
+ */
+function getEffectiveSpellList() {
+    const base = (typeof spellList !== "undefined" && Array.isArray(spellList)) ? spellList : [];
+
+    // Pack-Zauber anhängen (ohne die Basis zu mutieren)
+    let list = base;
+    const packSpells = (typeof getRegisteredCustomSpellPackSpells === "function")
+        ? getRegisteredCustomSpellPackSpells()
+        : (typeof registeredCustomSpellPack !== "undefined"
+            && Array.isArray(registeredCustomSpellPack?.spells)
+            ? registeredCustomSpellPack.spells
+            : null);
+    const sheetPackSpells = (typeof sheetCustomSpellPackRuntime !== "undefined"
+        && Array.isArray(sheetCustomSpellPackRuntime?.spells))
+        ? sheetCustomSpellPackRuntime.spells
+        : null;
+    const extra = (packSpells && packSpells.length)
+        ? packSpells
+        : (sheetPackSpells && sheetPackSpells.length ? sheetPackSpells : null);
+    if (extra && extra.length) {
+        const seen = new Set(base.map(s => s.ID));
+        const append = [];
+        extra.forEach(s => {
+            if (!s || seen.has(s.ID)) return;
+            seen.add(s.ID);
+            append.push(s);
+        });
+        if (append.length) list = base.concat(append);
+    }
+
+    let slug = null;
+    let ids = null;
+
+    if (typeof registeredCustomClass !== "undefined"
+        && registeredCustomClass?.translationLabel
+        && registeredCustomClass.customSpellList?.locked) {
+        slug = registeredCustomClass.translationLabel;
+        ids = registeredCustomClass.customSpellList.selectedSpellIds;
+    } else if (typeof sheetCustomClassRuntime !== "undefined"
+        && sheetCustomClassRuntime?.slug
+        && sheetCustomClassRuntime.customSpellList?.locked) {
+        slug = sheetCustomClassRuntime.slug;
+        ids = sheetCustomClassRuntime.customSpellList.selectedSpellIds;
+    }
+
+    if (!slug || !Array.isArray(ids) || !ids.length) return list;
+
+    const idSet = new Set(ids.map(n => parseInt(n, 10)).filter(Number.isFinite));
+    return list.map(spell => {
+        if (!idSet.has(spell.ID)) return spell;
+        const labels = Array.isArray(spell.classLabel)
+            ? spell.classLabel.slice()
+            : (spell.classLabel ? [spell.classLabel] : []);
+        if (labels.includes(slug)) return spell;
+        return { ...spell, classLabel: labels.concat(slug) };
+    });
+}
 
 function createEmptyCustomClassState() {
     const active = typeof currentLang !== "undefined" ? currentLang : "de";
@@ -243,7 +526,9 @@ function createEmptyCustomClassState() {
         subclasses: [],
         /** Klassenweite Parameter (Einfach → Frei), über Stufen wiederverwendbar */
         parameterRegistry: [],
-        /** Tab 4: Zauberprogression (1 Zeile/Stufe; Standard = Wizard-Vorlage) */
+        /** Tab 4: eigene Zauberliste (IDs + Feststell-Status) */
+        customSpellList: createEmptyCustomSpellListState(),
+        /** Tab 5: Zauberprogression (1 Zeile/Stufe; Standard = Wizard-Vorlage) */
         spellcastingProgression: {
             unlocked: false,
             startLevel: null,
@@ -256,7 +541,9 @@ function createEmptyCustomClassState() {
         /** DC-Package: stabile Paket-ID (über Speichern/Re-Import) */
         packageId: null,
         packageCreatedAt: null,
-        verificationCode: null
+        verificationCode: null,
+        /** packageId der Session-Zauberbibliothek (Legacy, ungenutzt) */
+        linkedSpellPackPackageId: null
     };
 }
 
@@ -473,9 +760,69 @@ function handleCustomClassFile(event) {
                 alert(result.message || tCC("customClassImportErrorLabel", "Invalid file."));
                 return;
             }
-            customClassEditorState = hydrateEditorStateFromExport(result.payload, result.envelope);
-            customClassPendingImportSnapshot = true;
-            showCustomClassEditor();
+
+            const applyClassImport = (payload, envelope) => {
+                customClassEditorState = hydrateEditorStateFromExport(payload, envelope);
+                customClassPendingImportSnapshot = true;
+                if (typeof markDcPackageUserLoaded === "function") {
+                    markDcPackageUserLoaded(
+                        (typeof DC_PACKAGE_TYPE !== "undefined")
+                            ? DC_PACKAGE_TYPE.CUSTOM_CLASS
+                            : "customClass"
+                    );
+                }
+                showCustomClassEditor();
+                if (typeof notifyDcPackageDependencyPossiblyResolved === "function") {
+                    notifyDcPackageDependencyPossiblyResolved();
+                }
+            };
+
+            // Dependency-Kette: Klasse nur registrieren, Editor nicht öffnen
+            if (typeof isDcPackageDependencyResolutionUpload === "function"
+                && isDcPackageDependencyResolutionUpload(result.detectedType)) {
+                const match = (typeof validateUploadedDcPackageAgainstPendingDependency === "function")
+                    ? validateUploadedDcPackageAgainstPendingDependency(
+                        result.detectedType,
+                        result.envelope,
+                        result.payload
+                    )
+                    : { ok: true };
+                if (!match.ok) {
+                    alert(match.message || tCC("customClassImportErrorLabel", "Invalid file."));
+                    if (typeof promptNextDcPackageDependencyUpload === "function") {
+                        promptNextDcPackageDependencyUpload();
+                    }
+                    return;
+                }
+                const wrapped = (result.envelope && result.payload)
+                    ? { dc: result.envelope, payload: result.payload }
+                    : result.payload;
+                registerCustomClassInRuntime(wrapped);
+                if (typeof markDcPackageUserLoaded === "function") {
+                    markDcPackageUserLoaded(
+                        (typeof DC_PACKAGE_TYPE !== "undefined")
+                            ? DC_PACKAGE_TYPE.CUSTOM_CLASS
+                            : "customClass"
+                    );
+                }
+                if (typeof notifyDcPackageDependencyPossiblyResolved === "function") {
+                    notifyDcPackageDependencyPossiblyResolved();
+                }
+                return;
+            }
+
+            if (typeof beginDcPackageImportWithDependencies === "function") {
+                beginDcPackageImportWithDependencies({
+                    envelope: result.envelope,
+                    payload: result.payload,
+                    detectedType: result.detectedType,
+                    onApply: applyClassImport,
+                    onCancel: () => {}
+                });
+                return;
+            }
+
+            applyClassImport(result.payload, result.envelope);
         } catch (err) {
             console.error(err);
             alert(tCC("customClassImportErrorLabel", "Invalid file."));
@@ -510,19 +857,27 @@ function showCustomClassEditor() {
 }
 
 function switchCustomClassTab(tabNumber) {
-    if (tabNumber === 4 && !customClassEditorState.spellcastingProgression?.unlocked) {
+    const editor = document.getElementById("customClassEditorView");
+    if (!editor) return;
+
+    // Tab 4: eigene Zauberliste – nur bei Basisklassen-Zauberwirken
+    if (tabNumber === 4 && !isCustomSpellListTabUnlocked(customClassEditorState)) {
+        return;
+    }
+    // Tab 5: Zauberprogression – unveränderte Freigabe
+    if (tabNumber === 5 && !customClassEditorState.spellcastingProgression?.unlocked) {
         return;
     }
 
     const previousTab = (() => {
-        const active = document.querySelector(".custom-class-tab.active");
+        const active = editor.querySelector(".custom-class-tab.active");
         return active ? Number(active.dataset.tab) : 1;
     })();
 
-    document.querySelectorAll(".custom-class-tab").forEach(btn => {
+    editor.querySelectorAll(".custom-class-tab").forEach(btn => {
         btn.classList.toggle("active", Number(btn.dataset.tab) === tabNumber);
     });
-    document.querySelectorAll(".custom-class-tab-panel").forEach((panel, index) => {
+    editor.querySelectorAll(".custom-class-tab-panel").forEach((panel, index) => {
         panel.classList.toggle("active", index + 1 === tabNumber);
     });
 
@@ -538,8 +893,9 @@ function applyCustomClassModalTranslations() {
         customClassTabCoreBtn: "customClassTabCoreLabel",
         customClassTabLevelsBtn: "customClassTabLevelsLabel",
         customClassTabSubclassBtn: "customClassTabSubclassLabel",
+        customClassTabSpellListBtn: "cfTabSpellListLabel",
         customClassTabSpellcastingBtn: "cfTabSpellcastingLabel",
-        customClassTab4HintLabel: "customClassTab4HintLabel",
+        customClassTab5HintLabel: "customClassTab5HintLabel",
         customClassSaveBtn: "cfSaveLabel",
         addCustomClassBtn: "addCustomClassLabel"
     };
@@ -554,7 +910,8 @@ function applyCustomClassModalTranslations() {
         }
         el.textContent = tCC(map[id]);
     });
-    updateCustomClassTab4Ui();
+    updateCustomClassTabSpellListUi();
+    updateCustomClassTabSpellProgUi();
 }
 
 //=======================================================================
@@ -1151,6 +1508,7 @@ function collectCustomClassFormState() {
     }));
     const prog = customClassEditorState.spellcastingProgression || {};
     state.spellcastingProgression = cloneSpellcastingProgression(prog);
+    state.customSpellList = cloneCustomSpellListState(customClassEditorState.customSpellList);
 
     // Namen/Beschreibungen: vorhandene Werte behalten, DOM überschreibt verfügbare Sprachen
     state.names = {
@@ -2948,6 +3306,7 @@ function compileCustomSubclassList(state, slug, translationsBag) {
             subclassCategoryNumber: n,
             translationLabel: labelKey,
             subclassD: descKey,
+            isCustom: true,
             // Mit der Custom-Klasse mitexportierte UCs
             source: (typeof CUSTOM_CONTENT_SOURCE !== "undefined"
                 ? CUSTOM_CONTENT_SOURCE.slice()
@@ -4408,6 +4767,7 @@ function buildExportPayload(state, slug, id) {
             useDie: normalizeLfParameterValueMode(p).useDie
         })),
         spellcastingProgression: cloneSpellcastingProgression(state.spellcastingProgression),
+        customSpellList: cloneCustomSpellListState(state.customSpellList),
         // Laufzeit-Arrays (Charaktererstellung / später Charakterbogen)
         compiledClassData: compiled.compiledClassData,
         compiledSubclassList: compiled.compiledSubclassList,
@@ -4436,7 +4796,7 @@ function buildExportPayload(state, slug, id) {
 
 function formatCustomClassDate(date) {
     const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-    const d = date.getDate();
+    const d = String(date.getDate()).padStart(2, "0");
     const mon = months[date.getMonth()];
     const year = date.getFullYear();
     return `${d}${mon}${year}`;
@@ -4487,6 +4847,32 @@ function getCustomClassExportSnapshotString(exportData) {
     return JSON.stringify(exportData);
 }
 
+/**
+ * Vor dem Speichern: ohne Zauberwirken Tab-4-Auswahl der Klasse leeren.
+ * Mutiert die Zauberbibliothek nicht (Bibliothek = Blatt).
+ * @returns {boolean} false = Speichern abbrechen
+ */
+function confirmAndSyncSpellPackLinksOnClassSave(state, newSlug) {
+    if (isCustomSpellListTabUnlocked(state)) {
+        stripSessionLibrarySpellsFromCustomClassTab4(state);
+        return true;
+    }
+
+    const selected = (state?.customSpellList?.selectedSpellIds || []).length;
+    if (!selected) return true;
+
+    if (!confirm(tCC(
+        "ccSpellPackUnlinkOnSaveWarnLabel",
+        "Ohne gültiges Zauberwirken wird die eigene Zauberliste (Tab 4) geleert. Die Zauberbibliothek bleibt unverändert. Trotzdem speichern?"
+    ))) {
+        return false;
+    }
+    if (state) {
+        state.customSpellList = createEmptyCustomSpellListState();
+    }
+    return true;
+}
+
 function saveCustomClass() {
     // Tab1 / Tab3 einsammeln; levelFeatures liegen bereits im Editor-State
     syncSubclassBoxesFromDom();
@@ -4500,14 +4886,21 @@ function saveCustomClass() {
     state.spellcastingProgression = cloneSpellcastingProgression(
         customClassEditorState.spellcastingProgression
     );
+    state.customSpellList = cloneCustomSpellListState(customClassEditorState.customSpellList);
+    stripSessionLibrarySpellsFromCustomClassTab4(state);
     ensureCustomClassLevelFeatureSlots(state);
     ensureCustomClassSubclasses(state);
+    if (state.customSpellList?.locked) {
+        syncCustomSpellListCheckboxIntoConfigs(state);
+    }
     if (!validateCustomClassState(state)) return;
 
     const slug = buildStableSlug(state);
     const id = state.id || nextCustomClassId();
     state.slug = slug;
     state.id = id;
+
+    if (!confirmAndSyncSpellPackLinksOnClassSave(state, slug)) return;
 
     const payload = buildExportPayload(state, slug, id);
     const currentSnapshot = getCustomClassExportSnapshotString(payload);
@@ -4522,6 +4915,13 @@ function saveCustomClass() {
 
     // In Laufzeit übernehmen
     registerCustomClassInRuntime(payload);
+    if (typeof markDcPackageUserLoaded === "function") {
+        markDcPackageUserLoaded(
+            (typeof DC_PACKAGE_TYPE !== "undefined")
+                ? DC_PACKAGE_TYPE.CUSTOM_CLASS
+                : "customClass"
+        );
+    }
 
     customClassEditorState = state;
     closeCustomClassModal();
@@ -4561,6 +4961,7 @@ function unregisterPreviousCustomClass() {
     registeredCustomClass.packageCreatedAt = null;
     registeredCustomClass.runtimePackageId = null;
     registeredCustomClass.runtimeCreatedAt = null;
+    registeredCustomClass.customSpellList = null;
 }
 
 function clearClassSelectionUI() {
@@ -4657,9 +5058,14 @@ function registerCustomClassInRuntime(rawPackage) {
         compiledSubclassSpellAbilityList: Array.isArray(payload.compiledSubclassSpellAbilityList)
             ? payload.compiledSubclassSpellAbilityList
             : [],
+        customSpellList: cloneCustomSpellListState(
+            payload.customSpellList || customClassEditorState?.customSpellList
+        ),
         packageId,
         verificationCode,
-        packageCreatedAt: envelope?.createdAt || customClassEditorState?.packageCreatedAt || null
+        packageCreatedAt: envelope?.createdAt || customClassEditorState?.packageCreatedAt || null,
+        // Legacy-Feld — Bib ist listenunabhängig, keine Class↔Bib-Verknüpfung
+        linkedSpellPackPackageId: null
     };
 
     // Text-Div für showClassText
@@ -4679,6 +5085,11 @@ function registerCustomClassInRuntime(rawPackage) {
         strong.textContent = translations[currentLang][`${slug}Label`] || translations[currentLang][slug] || slug;
     }
     if (listItem) listItem.style.display = "";
+
+    const marker = document.getElementById("customClassContentMarker");
+    if (typeof setCustomContentMarkerVisible === "function") {
+        setCustomContentMarkerVisible(marker, true);
+    }
 
     refreshCustomClassUI();
 }
@@ -4737,7 +5148,8 @@ function buildPersistedCustomClassRuntime() {
         compiledSubclassSpellsList: JSON.parse(JSON.stringify(registeredCustomClass.compiledSubclassSpellsList || [])),
         compiledSubclassSpellAbilityList: JSON.parse(JSON.stringify(
             registeredCustomClass.compiledSubclassSpellAbilityList || []
-        ))
+        )),
+        customSpellList: cloneCustomSpellListState(registeredCustomClass.customSpellList)
     };
 }
 
@@ -4831,6 +5243,8 @@ function hydrateEditorStateFromExport(data, envelope) {
             || (typeof buildDcVerificationCode === "function"
                 ? buildDcVerificationCode(DC_PACKAGE_TYPE.CUSTOM_CLASS, envelope.packageId)
                 : null);
+        // Legacy Class→Bib-Deps ignorieren — Bib ist listenunabhängig
+        state.linkedSpellPackPackageId = null;
     } else if (data.packageId) {
         state.packageId = data.packageId;
         state.packageCreatedAt = data.packageCreatedAt || null;
@@ -4860,6 +5274,28 @@ function hydrateEditorStateFromExport(data, envelope) {
     }
     if (data.spellcastingProgression) {
         state.spellcastingProgression = cloneSpellcastingProgression(data.spellcastingProgression);
+    }
+    if (data.customSpellList) {
+        state.customSpellList = cloneCustomSpellListState(data.customSpellList);
+        // Legacy Bib-Locks verwerfen; Bib ist listenunabhängig
+        state.customSpellList.lockedFromSpellPackIds = [];
+        // Ungültige IDs gegen aktuelle spellList verwerfen (ohne Bib-IDs in Tab 4)
+        const valid = new Set();
+        if (typeof spellList !== "undefined" && Array.isArray(spellList)) {
+            spellList.forEach(s => {
+                if (s && s.ID != null && !s.isCustom) valid.add(s.ID);
+            });
+        }
+        if (valid.size) {
+            state.customSpellList.selectedSpellIds = state.customSpellList.selectedSpellIds
+                .filter(id => valid.has(id));
+            if (!state.customSpellList.selectedSpellIds.length) {
+                state.customSpellList.locked = false;
+            }
+        }
+        if (state.customSpellList.locked) {
+            syncCustomSpellListCheckboxIntoConfigs(state);
+        }
     }
     ensureAvailableLanguages(state);
 
@@ -4916,6 +5352,9 @@ function refreshCustomClassUI() {
 
     if (!slug) {
         if (listItem) listItem.style.display = "none";
+        if (typeof setCustomContentMarkerVisible === "function") {
+            setCustomContentMarkerVisible(document.getElementById("customClassContentMarker"), false);
+        }
         return;
     }
 
@@ -4923,6 +5362,10 @@ function refreshCustomClassUI() {
     if (label) {
         const strong = label.querySelector("strong") || label;
         strong.textContent = translations[currentLang][`${slug}Label`] || translations[currentLang][slug] || slug;
+    }
+
+    if (typeof setCustomContentMarkerVisible === "function") {
+        setCustomContentMarkerVisible(document.getElementById("customClassContentMarker"), true);
     }
 
     ensureCustomClassTextNode(slug);
@@ -5746,6 +6189,7 @@ function hasLfSubclassSpellsFeaturesInSpellcastingScope(slot) {
  * @returns {boolean} true = fortfahren / entfernen erlaubt
  */
 function confirmRemoveSpellcastingClearsSubclassSpells(slot) {
+    if (!confirmRemoveBaseSpellcastingClearsCustomSpellList(slot)) return false;
     if (!hasLfSubclassSpellsFeaturesInSpellcastingScope(slot)) return true;
     const msg = tCC(
         "ccLfRemoveSpellcastingClearsSubclassSpellsConfirmLabel",
@@ -7644,7 +8088,7 @@ function rerenderActiveSpellProgOwner() {
         if (typeof renderCustomSubclassTab2 === "function") renderCustomSubclassTab2();
         return;
     }
-    renderCustomClassTab4();
+    renderCustomClassTab5();
     if (document.getElementById("customClassTab3")?.classList.contains("active")) {
         renderCustomClassTab3();
     }
@@ -7721,7 +8165,8 @@ function syncSpellcastingProgressionFromSlots(slots) {
             baseSpellListLabels: [],
             userRows: prog.userRows || {}
         };
-        updateCustomClassTab4Ui();
+        updateCustomClassTabSpellProgUi();
+        updateCustomClassTabSpellListUi();
         return;
     }
 
@@ -7748,7 +8193,8 @@ function syncSpellcastingProgressionFromSlots(slots) {
     });
 
     customClassEditorState.spellcastingProgression = prog;
-    updateCustomClassTab4Ui();
+    updateCustomClassTabSpellProgUi();
+    updateCustomClassTabSpellListUi();
 }
 
 function pruneParameterRegistry(slots) {
@@ -9397,7 +9843,10 @@ function onLfFeatureTypeChange(slotId, typeValue) {
         syncClassTraitsFromTab2Slots(slots);
         applySubclassSiblingLocks(slots);
         syncSpellcastingProgressionFromSlots(slots);
-        if (removingSpellcasting) clearLfSubclassSpellsInSpellcastingScope(slot);
+        if (removingSpellcasting) {
+            clearLfSubclassSpellsInSpellcastingScope(slot);
+            if (!isSubclass) resetCustomSpellListState(customClassEditorState);
+        }
         pruneParameterRegistry(slots);
         refreshLfFreeSubclassFeatureOrdinals(slots);
         renderCustomClassTab2();
@@ -9597,6 +10046,7 @@ function onLfCategoryChange(slotId, categoryValue) {
     if (type === "simple" && (nextCat === "spellcasting" || prevCat === "spellcasting")) {
         if (prevCat === "spellcasting" && nextCat !== "spellcasting") {
             clearLfSubclassSpellsInSpellcastingScope(slot, isSubclass ? slots : null);
+            if (!isSubclass) resetCustomSpellListState(customClassEditorState);
         } else {
             const minLvl = getLfSubclassSpellsPrerequisiteLevel(slot);
             if (minLvl != null) {
@@ -9791,6 +10241,13 @@ function getLfGearIconHtml() {
 /** Hinweis „Auswahl (min. X)“ */
 function formatLfPickMinHint(min) {
     return String(tCC("ccLfPickMinHintLabel") || "").replace(/\{n\}/g, String(min));
+}
+
+/** Hinweis „Auswahl (min. X)“ ohne Max (Zauberwirken-Listen) */
+function formatLfPickMinOnlyHint(min) {
+    return String(tCC("ccLfPickMinOnlyHintLabel") || "")
+        .replace(/\{min\}/g, String(min))
+        .replace(/\{n\}/g, String(min));
 }
 
 /** Hinweis „Optionsauswahl (min. X)“ (Merkmaltyp Optionen) */
@@ -11122,7 +11579,9 @@ function buildLfCheckboxGridHtml(listId, items, selectedSet, max = null, display
             const disabled = isLocked || (atMax && !isChecked) ? "disabled" : "";
             const lockedAttr = isLocked ? ' data-locked="1"' : "";
             const labelCls = (isLocked || (atMax && !isChecked)) ? " class=\"cc-lf-check-disabled\"" : "";
-            let text = tCC(label);
+            let text = (displayOpts.labelOverrides && displayOpts.labelOverrides[label] != null)
+                ? String(displayOpts.labelOverrides[label])
+                : tCC(label);
             if (uppercase) text = String(text).toLocaleUpperCase(lang);
             // Zauberlisten (Klassen) erhalten in allen Masken ihre definierte Schriftfarbe
             const colorCls = getSpellListColorClass(label);
@@ -11466,7 +11925,8 @@ function buildLfFloatOptionsBody(slot) {
 
     if (type === "simple" && cat === "spellcasting") {
         const selected = new Set(cfg.spellListLabels || []);
-        const lists = getLfSpellcastingClassOptions();
+        const lists = getLfSpellcastingListOptionsForMask();
+        const labelOverrides = getCustomSpellListLabelOverrides();
         const spec = getLfSimpleCategorySpec("spellcasting");
         const pickMin = spec?.pickMin || 1;
         const pickMax = spec?.pickMax || 2;
@@ -11480,6 +11940,11 @@ function buildLfFloatOptionsBody(slot) {
             const checked = focusSelected.has(label) ? "checked" : "";
             return `<label><input type="checkbox" name="ccLfSpellFocus" value="${label}" ${checked}> ${formatLfSpellcastingFocusOptionLabel(label)}</label>`;
         }).join("");
+        const isBaseClass = !isLfSubclassFeatureSlot(slot)
+            && !(typeof isCustomSubclassEditorActive === "function" && isCustomSubclassEditorActive());
+        const customListBtn = isBaseClass
+            ? `<button type="button" class="cc-lf-custom-spell-list-btn" onclick="goToCustomClassSpellListTab()">${tCC("ccLfCustomSpellListBtnLabel")}</button>`
+            : "";
         return `
             ${buildLfControlRowHtml(
                 `<label class="cc-lf-float-label" for="ccLfSpellAbility">${tCC("spellcastingAbilityLabel")}</label>`,
@@ -11495,8 +11960,11 @@ function buildLfFloatOptionsBody(slot) {
             </div>
             <div class="cc-lf-param-value-block">
                 ${buildLfOptionsGearHeadingHtml("ccLfSpellListsHeadingLabel")}
-                <p class="cc-lf-float-hint cc-lf-float-hint--after-filter">${formatLfPickRangeHint(pickMin, pickMax)}</p>
-                ${buildLfCheckboxGridHtml("ccLfSimpleSpellList", lists, selected, pickMax)}
+                <p class="cc-lf-float-hint cc-lf-float-hint--after-filter">${formatLfPickMinOnlyHint(pickMin)}</p>
+                ${buildLfCheckboxGridHtml("ccLfSimpleSpellList", lists, selected, pickMax, {
+                    labelOverrides
+                })}
+                ${customListBtn}
             </div>
         `;
     }
@@ -11755,7 +12223,7 @@ function buildLfSpellcraftGetPreparedMaskHtml(slot, cfg) {
         return `
             <div class="cc-lf-sc-level-block" data-level="${lvl}">
                 <div class="cc-lf-float-field-label">${tCC(lvl)}</div>
-                <p class="cc-lf-float-hint">${formatLfMinOptionsHint(1)}</p>
+                <p class="cc-lf-float-hint">${formatLfPickMinHint(1)}</p>
                 ${dropdowns}
             </div>
         `;
@@ -13827,11 +14295,13 @@ function onCustomClassTabChange(tabNumber, previousTab) {
         const prevSub = customClassEditorState.subclasses;
         const prevParams = ensureParameterRegistry(customClassEditorState).slice();
         const prevProg = { ...(customClassEditorState.spellcastingProgression || {}) };
+        const prevCsl = cloneCustomSpellListState(customClassEditorState.customSpellList);
         customClassEditorState = collectCustomClassFormState();
         customClassEditorState.levelFeatures = prevLf;
         customClassEditorState.subclasses = prevSub;
         customClassEditorState.parameterRegistry = prevParams;
         customClassEditorState.spellcastingProgression = prevProg;
+        customClassEditorState.customSpellList = prevCsl;
         // Tab1 → Tab2 Sync für Werkzeuge & Zauberwirken
         ensureCustomClassLevelFeatureSlots(customClassEditorState);
         syncTab2SpellcastingFromTab1();
@@ -13846,7 +14316,10 @@ function onCustomClassTabChange(tabNumber, previousTab) {
         closeLfFloat();
         renderCustomClassTab3();
     } else if (tabNumber === 4) {
+        closeLfFloat();
         renderCustomClassTab4();
+    } else if (tabNumber === 5) {
+        renderCustomClassTab5();
     } else {
         closeLfFloat();
     }
@@ -14102,7 +14575,23 @@ function renderCustomClassTab3() {
 }
 
 /** Tab 4: freigeschaltet durch Einfach→Zauberwirken (Tab 2 oder Tab 3) */
-function updateCustomClassTab4Ui() {
+/** Tab 4: eigene Zauberliste – nur Basisklassen-Zauberwirken */
+function updateCustomClassTabSpellListUi() {
+    const btn = document.getElementById("customClassTabSpellListBtn");
+    if (!btn) return;
+    const unlocked = isCustomSpellListTabUnlocked(customClassEditorState);
+    btn.disabled = !unlocked;
+    btn.classList.toggle("custom-class-tab--locked", !unlocked);
+    btn.title = unlocked
+        ? tCC("cfTabSpellListLabel")
+        : tCC("cfSpellListTabLockedHintLabel");
+    if (!unlocked && btn.classList.contains("active")) {
+        switchCustomClassTab(2);
+    }
+}
+
+/** Tab 5: Zauberprogression – Freigabe unverändert (Basis oder UC) */
+function updateCustomClassTabSpellProgUi() {
     const btn = document.getElementById("customClassTabSpellcastingBtn");
     if (!btn) return;
     const unlocked = !!customClassEditorState.spellcastingProgression?.unlocked;
@@ -14122,12 +14611,12 @@ function onCcSpellProgModeChange(mode) {
     const next = mode === "user" ? "user" : "standard";
     if (prog.mode === next) return;
     if (!confirmLfSubclassSpellsResetForTab4Change()) {
-        renderCustomClassTab4();
+        renderCustomClassTab5();
         return;
     }
     prog.mode = next;
     if (prog.mode === "user") ensureSpellProgUserRowsInitialized(prog);
-    renderCustomClassTab4();
+    renderCustomClassTab5();
     // Tab-3-Chips (Zauberanzahl) aktualisieren falls sichtbar
     if (document.getElementById("customClassTab3")?.classList.contains("active")) {
         renderCustomClassTab3();
@@ -14186,7 +14675,12 @@ function openCcSpellListFloat(level, event) {
     ccSpellListFloatLevel = level;
     const row = getActiveSpellProgRow(level);
     const selected = new Set(row?.spellListLabels || prog.baseSpellListLabels || []);
-    const allLists = getLfSpellcastingClassOptions();
+    const allLists = (typeof isCustomSubclassEditorActive === "function" && isCustomSubclassEditorActive())
+        ? getLfSpellcastingClassOptions()
+        : getLfSpellcastingListOptionsForMask();
+    const labelOverrides = (typeof isCustomSubclassEditorActive === "function" && isCustomSubclassEditorActive())
+        ? {}
+        : getCustomSpellListLabelOverrides();
     const isEntry = level === prog.startLevel;
     const prevRow = level > prog.startLevel ? getActiveSpellProgRow(level - 1) : null;
     const required = new Set(isEntry ? [] : (prevRow?.spellListLabels || prog.baseSpellListLabels || []));
@@ -14206,9 +14700,10 @@ function openCcSpellListFloat(level, event) {
         const disabled = mustKeep || (cscActive && !cscEditable) ? "disabled" : "";
         const cls = mustKeep || (cscActive && !cscEditable) ? " class=\"cc-lf-check-disabled\"" : "";
         const colorCls = getSpellListColorClass(label);
+        const display = labelOverrides[label] != null ? labelOverrides[label] : tCC(label);
         const textHtml = colorCls
-            ? `<span class="${colorCls}">${escapeLfHtml(tCC(label))}</span>`
-            : escapeLfHtml(tCC(label));
+            ? `<span class="${colorCls}">${escapeLfHtml(display)}</span>`
+            : escapeLfHtml(display);
         return `<label${cls}><input type="checkbox" value="${label}" ${checked} ${disabled}
             onchange="onCcSpellListFloatChange()"> ${textHtml}</label>`;
     }).join("");
@@ -14423,8 +14918,8 @@ function buildCcSpellProgTableMarkup(prog, opts) {
         </div>`;
 }
 
-function renderCustomClassTab4() {
-    const container = document.getElementById("customClassTab4Content");
+function renderCustomClassTab5() {
+    const container = document.getElementById("customClassTab5Content");
     if (!container) return;
 
     syncSpellcastingProgressionFromSlots();
@@ -14439,7 +14934,7 @@ function renderCustomClassTab4() {
 
     container.innerHTML = `
         <div class="cc-spell-prog-toolbar">
-            <p class="custom-class-hint cc-lf-intro">${tCC("customClassTab4HintLabel")}</p>
+            <p class="custom-class-hint cc-lf-intro" id="customClassTab5HintLabel">${tCC("customClassTab5HintLabel")}</p>
             <label class="cc-spell-prog-mode">
                 <span>${tCC("cfSpellProgModeLabel")}</span>
                 <select class="dropdown" onchange="onCcSpellProgModeChange(this.value)">
@@ -14454,6 +14949,253 @@ function renderCustomClassTab4() {
         </div>
         ${buildCcSpellProgTableMarkup(prog, { editable })}
     `;
+}
+
+//=======================================================================
+// Tab 4 – Eigene Zauberliste
+//=======================================================================
+
+/** Filter-State nur UI (nicht exportiert) */
+let ccCustomSpellListFilters = { level: "", school: "", classList: "" };
+
+function goToCustomClassSpellListTab() {
+    closeLfFloat();
+    if (!isCustomSpellListTabUnlocked(customClassEditorState)) {
+        updateCustomClassTabSpellListUi();
+        return;
+    }
+    switchCustomClassTab(4);
+}
+
+function getCcCustomSpellListOrderedLevels() {
+    return [
+        "cantripLabel", "1stLevelLabel", "2ndLevelLabel", "3rdLevelLabel", "4thLevelLabel",
+        "5thLevelLabel", "6thLevelLabel", "7thLevelLabel", "8thLevelLabel", "9thLevelLabel"
+    ];
+}
+
+function getCcCustomSpellListFilteredSpells() {
+    const all = (typeof getEffectiveSpellList === "function")
+        ? getEffectiveSpellList()
+        : ((typeof spellList !== "undefined" && Array.isArray(spellList)) ? spellList : []);
+    const f = ccCustomSpellListFilters || {};
+    return all.filter(spell => {
+        // Bibliotheks-Zauber nur in Schritt 7 (Session-Pool), nicht in Tab 4
+        if (typeof isSpellFromSessionLibrary === "function" && isSpellFromSessionLibrary(spell)) {
+            return false;
+        }
+        if (f.level && spell.spellLevel !== f.level) return false;
+        if (f.school && spell.spellSchool !== f.school) return false;
+        if (f.classList) {
+            const labels = Array.isArray(spell.classLabel)
+                ? spell.classLabel
+                : (spell.classLabel ? [spell.classLabel] : []);
+            if (!labels.includes(f.classList)) return false;
+        }
+        return true;
+    });
+}
+
+function onCcCustomSpellListFilterChange() {
+    const levelEl = document.getElementById("ccCslFilterLevel");
+    const schoolEl = document.getElementById("ccCslFilterSchool");
+    const listEl = document.getElementById("ccCslFilterClassList");
+    ccCustomSpellListFilters = {
+        level: levelEl?.value || "",
+        school: schoolEl?.value || "",
+        classList: listEl?.value || ""
+    };
+    // Auswahl nicht zurücksetzen – nur Liste neu zeichnen
+    renderCustomClassTab4SpellBody();
+}
+
+function toggleCcCustomSpellListSpell(spellId) {
+    const csl = ensureCustomSpellListState(customClassEditorState);
+    if (csl.locked) return;
+    const id = parseInt(spellId, 10);
+    if (!Number.isFinite(id)) return;
+    const max = CUSTOM_CLASS_SPELL_LIST_MAX || 250;
+    const idx = csl.selectedSpellIds.indexOf(id);
+    if (idx >= 0) {
+        csl.selectedSpellIds.splice(idx, 1);
+    } else {
+        if (csl.selectedSpellIds.length >= max) return;
+        csl.selectedSpellIds.push(id);
+    }
+    renderCustomClassTab4SpellBody();
+    updateCcCustomSpellListCounter();
+}
+
+function resetCcCustomSpellListSelection() {
+    const csl = ensureCustomSpellListState(customClassEditorState);
+    if (csl.locked) return;
+    if (!csl.selectedSpellIds.length) return;
+    if (!confirm(tCC("ccCustomSpellListResetConfirmLabel"))) return;
+    csl.selectedSpellIds = [];
+    csl.lockedFromSpellPackIds = [];
+    renderCustomClassTab4SpellBody();
+    updateCcCustomSpellListCounter();
+}
+
+function updateCcCustomSpellListCounter() {
+    const el = document.getElementById("ccCslCounter");
+    if (!el) return;
+    const csl = ensureCustomSpellListState(customClassEditorState);
+    const n = (csl.selectedSpellIds || []).length;
+    const max = CUSTOM_CLASS_SPELL_LIST_MAX || 250;
+    el.textContent = `${n}/${max}`;
+}
+
+/**
+ * Rest-Auswahl zu einer Spell-ID aus Tab 4 entfernen (z. B. Zauber in Bib gelöscht).
+ * Keine Bib↔Listen-Verknüpfung.
+ */
+function syncCustomSpellsIntoClassSpellList(spell, options) {
+    if (!spell || typeof customClassEditorState === "undefined" || !customClassEditorState) return;
+    if (!options?.forceUnlink) return;
+    if (!isCustomSpellListTabUnlocked(customClassEditorState)) return;
+    const slug = typeof getCustomSpellListCheckboxLabel === "function"
+        ? getCustomSpellListCheckboxLabel(customClassEditorState)
+        : (customClassEditorState.slug || null);
+    if (!slug) return;
+
+    const csl = ensureCustomSpellListState(customClassEditorState);
+    const id = parseInt(spell.ID, 10);
+    if (!Number.isFinite(id)) return;
+
+    csl.lockedFromSpellPackIds = (csl.lockedFromSpellPackIds || []).filter(x => x !== id);
+    csl.selectedSpellIds = (csl.selectedSpellIds || []).filter(x => x !== id);
+
+    if (registeredCustomClass?.translationLabel === slug) {
+        registeredCustomClass.customSpellList = cloneCustomSpellListState(csl);
+    }
+
+    if (document.getElementById("ccCslSpellBody")) {
+        renderCustomClassTab4SpellBody();
+        updateCcCustomSpellListCounter();
+    }
+}
+
+function buildCcCustomSpellListFilterHtml() {
+    const f = ccCustomSpellListFilters || {};
+    const levels = getCcCustomSpellListOrderedLevels();
+    const schools = typeof getLfSpellSchoolLabels === "function"
+        ? getLfSpellSchoolLabels()
+        : [];
+    const classLists = getLfSpellcastingClassOptions();
+    const allOpt = `<option value="">${tCC("allLabel")}</option>`;
+    const levelOpts = levels.map(l =>
+        `<option value="${l}" ${f.level === l ? "selected" : ""}>${tCC(l)}</option>`
+    ).join("");
+    const schoolOpts = schools.map(s =>
+        `<option value="${s}" ${f.school === s ? "selected" : ""}>${tCC(s)}</option>`
+    ).join("");
+    const listOpts = classLists.map(c =>
+        `<option value="${c}" ${f.classList === c ? "selected" : ""}>${tCC(c)}</option>`
+    ).join("");
+    return `
+        <div class="cc-csl-filters">
+            <label class="cc-csl-filter">
+                <span class="cc-csl-filter-label">${escapeLfHtml(tCC("spellLevelLabel"))}${getLfFilterIconHtml()}</span>
+                <select id="ccCslFilterLevel" class="dropdown" onchange="onCcCustomSpellListFilterChange()">
+                    ${allOpt}${levelOpts}
+                </select>
+            </label>
+            <label class="cc-csl-filter">
+                <span class="cc-csl-filter-label">${escapeLfHtml(tCC("ccCustomSpellListSchoolFilterLabel"))}${getLfFilterIconHtml()}</span>
+                <select id="ccCslFilterSchool" class="dropdown" onchange="onCcCustomSpellListFilterChange()">
+                    ${allOpt}${schoolOpts}
+                </select>
+            </label>
+            <label class="cc-csl-filter">
+                <span class="cc-csl-filter-label">${escapeLfHtml(tCC("spellListLabel"))}${getLfFilterIconHtml()}</span>
+                <select id="ccCslFilterClassList" class="dropdown" onchange="onCcCustomSpellListFilterChange()">
+                    ${allOpt}${listOpts}
+                </select>
+            </label>
+        </div>
+    `;
+}
+
+function renderCustomClassTab4SpellBody() {
+    const body = document.getElementById("ccCslSpellBody");
+    if (!body) return;
+    stripSessionLibrarySpellsFromCustomClassTab4(customClassEditorState);
+    const csl = ensureCustomSpellListState(customClassEditorState);
+    const selected = new Set(csl.selectedSpellIds);
+    const locked = !!csl.locked;
+    const spells = getCcCustomSpellListFilteredSpells();
+    const byLevel = {};
+    spells.forEach(spell => {
+        if (!byLevel[spell.spellLevel]) byLevel[spell.spellLevel] = [];
+        byLevel[spell.spellLevel].push(spell);
+    });
+    const lang = typeof currentLang !== "undefined" ? currentLang : "de";
+    const ordered = getCcCustomSpellListOrderedLevels();
+    let html = "";
+    ordered.forEach(level => {
+        const group = byLevel[level];
+        if (!group || !group.length) return;
+        group.sort((a, b) =>
+            (tCC(a.translationLabel) || a.translationLabel)
+                .localeCompare(tCC(b.translationLabel) || b.translationLabel, lang)
+        );
+        html += `<h4>${tCC(level)}</h4><ul class="master-spell-ul cc-csl-spell-ul">`;
+        group.forEach(spell => {
+            const isSel = selected.has(spell.ID);
+            const cls = [
+                locked ? "" : "clickable",
+                isSel ? "selected-choice" : ""
+            ].filter(Boolean).join(" ");
+            const click = locked
+                ? ""
+                : ` onclick="toggleCcCustomSpellListSpell(${spell.ID})"`;
+            html += `<li class="${cls}" data-spell-id="${spell.ID}"${click}>
+                <span class="spell-name">${escapeLfHtml(tCC(spell.translationLabel) || spell.translationLabel)}</span>
+            </li>`;
+        });
+        html += "</ul>";
+    });
+    body.innerHTML = html || `<p class="custom-class-hint">${tCC("ccCustomSpellListEmptyFilterHintLabel")}</p>`;
+    body.classList.toggle("cc-csl-spell-body--locked", locked);
+}
+
+function renderCustomClassTab4() {
+    const container = document.getElementById("customClassTab4Content");
+    if (!container) return;
+    updateCustomClassTabSpellListUi();
+
+    if (!isCustomSpellListTabUnlocked(customClassEditorState)) {
+        container.innerHTML = `<p class="custom-class-hint">${tCC("cfSpellListTabLockedHintLabel")}</p>`;
+        return;
+    }
+
+    const csl = ensureCustomSpellListState(customClassEditorState);
+    const locked = !!csl.locked;
+    const max = CUSTOM_CLASS_SPELL_LIST_MAX || 250;
+    const n = csl.selectedSpellIds.length;
+    const lockBtn = locked
+        ? `<button type="button" class="cc-csl-action-btn cc-csl-action-btn--edit"
+            onclick="unlockCustomSpellList()">${tCC("ccCustomSpellListEditLabel")} <span aria-hidden="true">✎</span></button>`
+        : `<button type="button" class="cc-csl-action-btn cc-csl-action-btn--lock"
+            onclick="lockCustomSpellList()">${tCC("ccCustomSpellListLockLabel")} <span aria-hidden="true">🔒</span></button>`;
+
+    container.innerHTML = `
+        <p class="custom-class-hint cc-lf-intro">${tCC("customClassTabSpellListHintLabel")}</p>
+        <div class="cc-csl-toolbar">
+            ${buildCcCustomSpellListFilterHtml()}
+            <div class="cc-csl-toolbar-actions">
+                <button type="button" class="cc-csl-reset-btn" title="${tCC("ccCustomSpellListResetTitleLabel")}"
+                    onclick="resetCcCustomSpellListSelection()" ${locked ? "disabled" : ""}>
+                    <img src="images/reset.png" alt="">
+                </button>
+                ${lockBtn}
+                <span id="ccCslCounter" class="cc-csl-counter">${n}/${max}</span>
+            </div>
+        </div>
+        <div id="ccCslSpellBody" class="cc-csl-spell-body${locked ? " cc-csl-spell-body--locked" : ""}"></div>
+    `;
+    renderCustomClassTab4SpellBody();
 }
 
 function notifyCustomClassTab1ToolsChanged() {

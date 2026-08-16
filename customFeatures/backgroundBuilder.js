@@ -978,13 +978,21 @@ function getCbgDateStamp() {
     }
     const d = new Date();
     const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-    return `${d.getDate()}${months[d.getMonth()]}${d.getFullYear()}`;
+    return `${String(d.getDate()).padStart(2, "0")}${months[d.getMonth()]}${d.getFullYear()}`;
 }
 
 function buildCustomBackgroundFilename(state) {
-    const slug = buildCbgStableSlug(state);
+    // Wie Custom-Klasse: Prefix + Anzeigename (ohne internes custom_bg_-Slug)
+    const active = (typeof getActiveUiLang === "function")
+        ? getActiveUiLang()
+        : (typeof currentLang !== "undefined" ? currentLang : "de");
+    const other = active === "de" ? "en" : "de";
+    const raw = state?.names?.[active] || state?.names?.[other] || "background";
+    const nameSlug = (typeof slugifyClassName === "function")
+        ? slugifyClassName(raw)
+        : String(raw).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "background";
     const prefix = CBG_CONFIG.filenamePrefix || "custom_background";
-    return `${prefix}_${slug}_${getCbgDateStamp()}.json`;
+    return `${prefix}_${nameSlug}_${getCbgDateStamp()}.json`;
 }
 
 function buildCompiledBackgroundListEntry(state, slug) {
@@ -1265,7 +1273,13 @@ function refreshCustomBackgroundListItemUI() {
     const listItem = document.getElementById("customBackgroundListItem");
     const radio = document.getElementById("customBackgroundRadio");
     const label = document.getElementById("customBackgroundRadioLabel");
-    if (!slug || !listItem || !radio) return;
+    const marker = document.getElementById("customBackgroundContentMarker");
+    if (!slug || !listItem || !radio) {
+        if (typeof setCustomContentMarkerVisible === "function") {
+            setCustomContentMarkerVisible(marker, false);
+        }
+        return;
+    }
 
     radio.value = slug;
     radio.checked = false;
@@ -1274,6 +1288,9 @@ function refreshCustomBackgroundListItemUI() {
         label.textContent = (translations?.[lang]?.[slug]) || slug;
     }
     listItem.style.display = "";
+    if (typeof setCustomContentMarkerVisible === "function") {
+        setCustomContentMarkerVisible(marker, true);
+    }
     ensureCustomBackgroundTextNode(slug);
 }
 

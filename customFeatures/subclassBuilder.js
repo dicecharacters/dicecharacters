@@ -1462,10 +1462,15 @@ function refreshCreatorSubclassOptionsRadios(opts) {
         const label = (typeof translations !== "undefined" && translations[lang]
             && translations[lang][subclass.translationLabel])
             || subclass.translationLabel;
-        const isCustom = subclass.isCustom
-            || Number(subclass.subclassCategoryNumber) === CUSTOM_SUBCLASS_CATEGORY_NUMBER;
+        const isCustom = (typeof isCustomContentSubclass === "function")
+            ? isCustomContentSubclass(subclass, className)
+            : (subclass.isCustom
+                || Number(subclass.subclassCategoryNumber) === CUSTOM_SUBCLASS_CATEGORY_NUMBER);
+        const markerHtml = isCustom && typeof getCustomContentMarkerHtml === "function"
+            ? getCustomContentMarkerHtml()
+            : "";
         return `<label${isCustom ? ' class="cc-custom-subclass-option"' : ""}>
-            <input type="radio" name="subclass" value="${subclass.subclassCategoryNumber}"${isCustom ? ' data-custom-subclass="1"' : ""}> ${label}
+            <input type="radio" name="subclass" value="${subclass.subclassCategoryNumber}"${isCustom ? ' data-custom-subclass="1"' : ""}> ${label}${markerHtml}
         </label>`;
     }).join("");
 
@@ -1545,6 +1550,25 @@ function getRegisteredCustomSubclassBundle(className) {
         return null;
     }
     return registeredCustomSubclass;
+}
+
+/**
+ * true = Charakter hat die geladene Standalone-Custom-UC tatsächlich gewählt
+ * (nicht nur in der Session geladen). finishCharacter → Runtime für den Bogen.
+ */
+function characterUsesRegisteredCustomSubclass(character) {
+    if (!character?.class) return false;
+    const bundle = getRegisteredCustomSubclassBundle(character.class);
+    if (!bundle) return false;
+    const selected = parseInt(character.classForm?.subclass, 10);
+    if (!Number.isFinite(selected) || selected <= 0) return false;
+    const fromEntry = bundle.compiledSubclassListEntry?.subclassCategoryNumber;
+    const customNum = (fromEntry != null && Number.isFinite(Number(fromEntry)))
+        ? Number(fromEntry)
+        : (Number.isFinite(Number(bundle.subclassCategoryNumber))
+            ? Number(bundle.subclassCategoryNumber)
+            : CUSTOM_SUBCLASS_CATEGORY_NUMBER);
+    return selected === customNum;
 }
 
 function mergeRegisteredCustomSubclassIntoClassData(className, classData) {

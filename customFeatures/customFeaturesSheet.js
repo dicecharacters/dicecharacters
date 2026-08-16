@@ -9,8 +9,8 @@
 //   2. Custom Subclass
 //   3. Custom Background
 //   4. Custom Species (geplant)
-//   5. Custom Feats (geplant)
-//   6. Custom Spells (geplant)
+//   5. Custom Feat Library (Talentbibliothek / techn. customFeatPack)
+//   6. Custom Spell Library (Zauberbibliothek / techn. customSpellPack)
 //
 // Aufgaben: LocalStorage-/Import-Pakete hydratisieren und ClassData /
 // Listen / Übersetzungen für den Bogen bereitstellen – ohne PHB-Pfade
@@ -21,6 +21,59 @@
 //=======================================================================
 // 0. Shared: Hydration-Einstieg
 //=======================================================================
+
+//=======================================================================
+// Custom-Inhalt-Marker (Bogen-Kopfzeile)
+// Flag + SVG + paint/set: customFeatures/shared.js (CUSTOM_FEATURE_FLAGS.customContentMarker)
+//=======================================================================
+
+/** Kopfzeile: Marker neben Klassenname. */
+function updateSheetCustomClassMarker(className) {
+    const marker = document.getElementById("classCustomContentMarker");
+    const show = typeof isSheetCustomClassSlug === "function"
+        && isSheetCustomClassSlug(className);
+    if (typeof setCustomContentMarkerVisible === "function") {
+        setCustomContentMarkerVisible(marker, show);
+    } else if (marker) {
+        marker.hidden = !show;
+    }
+}
+
+/** Kopfzeile: Marker neben Hintergrund. */
+function updateSheetCustomBackgroundMarker(backgroundName) {
+    const marker = document.getElementById("backgroundCustomContentMarker");
+    const show = typeof isSheetCustomBackgroundSlug === "function"
+        && isSheetCustomBackgroundSlug(backgroundName);
+    if (typeof setCustomContentMarkerVisible === "function") {
+        setCustomContentMarkerVisible(marker, show);
+    } else if (marker) {
+        marker.hidden = !show;
+    }
+}
+
+/** Kopfzeile: Marker neben Unterklasse (nur Standalone-Custom-UC). */
+function updateSheetCustomSubclassMarker(className, subclassCategoryNumber) {
+    const marker = document.getElementById("subclassCustomContentMarker");
+    let show = false;
+    if (subclassCategoryNumber != null && Number.isFinite(Number(subclassCategoryNumber))) {
+        const entry = (typeof getSheetStandaloneCustomSubclassEntry === "function")
+            ? getSheetStandaloneCustomSubclassEntry(className)
+            : null;
+        if (entry && Number(entry.subclassCategoryNumber) === Number(subclassCategoryNumber)) {
+            show = true;
+        } else if (typeof getSheetCustomSubclassCategoryNumber === "function"
+            && Number(subclassCategoryNumber) === Number(getSheetCustomSubclassCategoryNumber())
+            && typeof getSheetCustomSubclassRuntime === "function"
+            && getSheetCustomSubclassRuntime()) {
+            show = true;
+        }
+    }
+    if (typeof setCustomContentMarkerVisible === "function") {
+        setCustomContentMarkerVisible(marker, show);
+    } else if (marker) {
+        marker.hidden = !show;
+    }
+}
 
 /** Fokus-Liste aus CoreTraits normalisieren (Bogen + Ersteller) */
 function normalizeSpellcastingFocusList(focus) {
@@ -55,10 +108,10 @@ function hydrateAllCustomFeaturesSheetFromStorage() {
     if (hydrateCustomClassRuntimeFromStorage()) any = true;
     if (hydrateCustomSubclassRuntimeFromStorage()) any = true;
     if (hydrateCustomBackgroundRuntimeFromStorage()) any = true;
+    if (hydrateCustomSpellPackRuntimeFromStorage()) any = true;
+    if (hydrateCustomFeatPackRuntimeFromStorage()) any = true;
     // Platzhalter für spätere Pakete:
     // if (hydrateCustomSpeciesRuntimeFromStorage()) any = true;
-    // if (hydrateCustomFeatsRuntimeFromStorage()) any = true;
-    // if (hydrateCustomSpellRuntimeFromStorage()) any = true;
     return any;
 }
 
@@ -245,18 +298,59 @@ function getSheetEffectiveSubclassList(className) {
 }
 
 /**
+ * customClass-Export → Runtime-Form für Bogen-Hydrate.
+ */
+function coerceSheetCustomClassRuntimePayload(payload) {
+    if (!payload || typeof payload !== "object") return null;
+    if (payload.type === "customClassRuntime" && payload.slug) return payload;
+    if (payload.type === "customClass" && payload.coreTraits) {
+        const slug = payload.slug || payload.coreTraits.translationLabel;
+        if (!slug) return null;
+        return {
+            version: payload.version || 1,
+            type: "customClassRuntime",
+            slug: String(slug),
+            coreTraits: payload.coreTraits,
+            translations: payload.translations || { de: {}, en: {} },
+            compiledClassData: Array.isArray(payload.compiledClassData)
+                ? payload.compiledClassData
+                : [],
+            compiledSubclassList: Array.isArray(payload.compiledSubclassList)
+                ? payload.compiledSubclassList
+                : [],
+            compiledMagicSkillsList: Array.isArray(payload.compiledMagicSkillsList)
+                ? payload.compiledMagicSkillsList
+                : [],
+            compiledSubclassSpellsList: Array.isArray(payload.compiledSubclassSpellsList)
+                ? payload.compiledSubclassSpellsList
+                : [],
+            compiledSubclassSpellAbilityList: Array.isArray(payload.compiledSubclassSpellAbilityList)
+                ? payload.compiledSubclassSpellAbilityList
+                : [],
+            customSpellList: payload.customSpellList || null
+        };
+    }
+    return null;
+}
+
+/**
  * Runtime aus LocalStorage (oder Objekt) hydratisieren.
  * Idempotent: vorherige Custom-Core-Traits werden ersetzt.
  * Akzeptiert Envelope ({ dc, payload }) oder Legacy flat customClassRuntime.
+ * Auch customClass-Pakete (Builder-Export) werden in Runtime-Form gebracht.
  */
 function hydrateCustomClassRuntime(raw) {
     let payload = raw;
     let envelope = null;
     if (typeof normalizeDcPackageInput === "function") {
         const norm = normalizeDcPackageInput(raw);
-        if (norm.ok && norm.detectedType === (typeof DC_PACKAGE_TYPE !== "undefined"
+        const classType = (typeof DC_PACKAGE_TYPE !== "undefined")
+            ? DC_PACKAGE_TYPE.CUSTOM_CLASS
+            : "customClass";
+        const runtimeType = (typeof DC_PACKAGE_TYPE !== "undefined")
             ? DC_PACKAGE_TYPE.CUSTOM_CLASS_RUNTIME
-            : "customClassRuntime")) {
+            : "customClassRuntime";
+        if (norm.ok && (norm.detectedType === runtimeType || norm.detectedType === classType)) {
             payload = norm.payload;
             envelope = norm.envelope;
         } else if (norm.ok && raw?.dc) {
@@ -266,6 +360,7 @@ function hydrateCustomClassRuntime(raw) {
         }
     }
 
+    payload = coerceSheetCustomClassRuntimePayload(payload);
     if (!payload || payload.type !== "customClassRuntime" || !payload.slug) {
         sheetCustomClassRuntime = null;
         return false;
@@ -321,6 +416,9 @@ function hydrateCustomClassRuntime(raw) {
         compiledSubclassSpellAbilityList: Array.isArray(payload.compiledSubclassSpellAbilityList)
             ? payload.compiledSubclassSpellAbilityList
             : [],
+        customSpellList: (typeof cloneCustomSpellListState === "function")
+            ? cloneCustomSpellListState(payload.customSpellList)
+            : (payload.customSpellList || null),
         packageId: envelope?.packageId || null,
         verificationCode: envelope?.verificationCode || null,
         sourceClassPackageId: classDep?.packageId || null
@@ -582,25 +680,218 @@ function hydrateCustomBackgroundRuntimeFromStorage() {
 }
 
 //=======================================================================
+// 6. Custom Spell Library (Zauberbibliothek)
+//=======================================================================
+
+const CUSTOM_SPELL_PACK_SHEET_LS_KEY = "customSpellPackRuntime";
+
+/** Hydratisierte Custom-Spell-Pack-Runtime (null = keines) */
+let sheetCustomSpellPackRuntime = null;
+
+function getSheetCustomSpellPackRuntime() {
+    return sheetCustomSpellPackRuntime;
+}
+
+function getSheetCustomSpellPackSpells() {
+    return Array.isArray(sheetCustomSpellPackRuntime?.spells)
+        ? sheetCustomSpellPackRuntime.spells
+        : [];
+}
+
+/** Zauber per ID: PHB-spellList zuerst, dann hydratisiertes Custom-Pack. */
+function findSheetSpellById(spellId) {
+    if (spellId == null) return null;
+    const want = spellId;
+    const wantNum = Number(spellId);
+    const match = (s) => s && (s.ID === want || s.ID === wantNum
+        || Number(s.ID) === wantNum);
+
+    if (typeof spellList !== "undefined" && Array.isArray(spellList)) {
+        const fromList = spellList.find(match);
+        if (fromList) return fromList;
+    }
+    const pack = getSheetCustomSpellPackSpells();
+    return pack.find(match) || null;
+}
+
+/**
+ * Translations + Pack-Zauber für getEffectiveSpellList (Bogen).
+ */
+function hydrateCustomSpellPackRuntime(raw) {
+    let payload = raw;
+    let envelope = null;
+    if (typeof normalizeDcPackageInput === "function") {
+        const norm = normalizeDcPackageInput(raw);
+        if (norm.ok && norm.detectedType === (typeof DC_PACKAGE_TYPE !== "undefined"
+            ? DC_PACKAGE_TYPE.CUSTOM_SPELL_PACK
+            : "customSpellPack")) {
+            payload = norm.payload;
+            envelope = norm.envelope;
+        } else if (norm.ok && raw?.dc) {
+            sheetCustomSpellPackRuntime = null;
+            return false;
+        }
+    }
+
+    if (!payload
+        || (payload.type !== "customSpellPack" && payload.type !== "customSpellPackRuntime")
+        || !Array.isArray(payload.spells)) {
+        sheetCustomSpellPackRuntime = null;
+        return false;
+    }
+
+    if (payload.translations?.de && typeof translations !== "undefined") {
+        Object.assign(translations.de, payload.translations.de);
+    }
+    if (payload.translations?.en && typeof translations !== "undefined") {
+        Object.assign(translations.en, payload.translations.en);
+    }
+
+    const spells = payload.spells.map(s => Object.assign({}, s, { isCustom: true }));
+
+    // Bogen nutzt spellList.find – Custom-Zauber hier einhängen (wie Background-List).
+    if (typeof spellList !== "undefined" && Array.isArray(spellList)) {
+        for (let i = spellList.length - 1; i >= 0; i--) {
+            const e = spellList[i];
+            if (e && e.isCustom) spellList.splice(i, 1);
+        }
+        spells.forEach(s => spellList.push(s));
+    }
+
+    sheetCustomSpellPackRuntime = {
+        spells,
+        translations: payload.translations || { de: {}, en: {} },
+        packageId: envelope?.packageId || payload.packageId || null,
+        nextId: payload.nextId || null,
+        availableLanguages: Array.isArray(payload.availableLanguages)
+            ? payload.availableLanguages.slice()
+            : [],
+        envelope: envelope || null
+    };
+
+    return true;
+}
+
+function hydrateCustomSpellPackRuntimeFromStorage() {
+    const raw = localStorage.getItem(CUSTOM_SPELL_PACK_SHEET_LS_KEY);
+    if (!raw) {
+        sheetCustomSpellPackRuntime = null;
+        return false;
+    }
+    try {
+        return hydrateCustomSpellPackRuntime(JSON.parse(raw));
+    } catch (e) {
+        console.warn("customSpellPackRuntime ungültig:", e);
+        sheetCustomSpellPackRuntime = null;
+        return false;
+    }
+}
+
+//=======================================================================
+// 5. Custom Feat Library (Talentbibliothek)
+//=======================================================================
+
+const CUSTOM_FEAT_PACK_SHEET_LS_KEY = "customFeatPackRuntime";
+
+/** Hydratisierte Custom-Feat-Pack-Runtime (null = keines) */
+let sheetCustomFeatPackRuntime = null;
+
+function getSheetCustomFeatPackRuntime() {
+    return sheetCustomFeatPackRuntime;
+}
+
+function getSheetCustomFeatPackFeats() {
+    return Array.isArray(sheetCustomFeatPackRuntime?.feats)
+        ? sheetCustomFeatPackRuntime.feats
+        : [];
+}
+
+/**
+ * Translations + Pack-Talente für featList / magicFeatsList (Bogen).
+ */
+function hydrateCustomFeatPackRuntime(raw) {
+    let payload = raw;
+    let envelope = null;
+    if (typeof normalizeDcPackageInput === "function") {
+        const norm = normalizeDcPackageInput(raw);
+        if (norm.ok && norm.detectedType === (typeof DC_PACKAGE_TYPE !== "undefined"
+            ? DC_PACKAGE_TYPE.CUSTOM_FEAT_PACK
+            : "customFeatPack")) {
+            payload = norm.payload;
+            envelope = norm.envelope;
+        } else if (norm.ok && raw?.dc) {
+            sheetCustomFeatPackRuntime = null;
+            return false;
+        }
+    }
+
+    if (!payload
+        || (payload.type !== "customFeatPack" && payload.type !== "customFeatPackRuntime")
+        || !Array.isArray(payload.feats)) {
+        sheetCustomFeatPackRuntime = null;
+        return false;
+    }
+
+    if (payload.translations?.de && typeof translations !== "undefined") {
+        Object.assign(translations.de, payload.translations.de);
+    }
+    if (payload.translations?.en && typeof translations !== "undefined") {
+        Object.assign(translations.en, payload.translations.en);
+    }
+
+    const feats = payload.feats.map(f => Object.assign({}, f, { isCustom: true }));
+    const magicFeats = (Array.isArray(payload.magicFeats) ? payload.magicFeats : [])
+        .map(m => Object.assign({}, m, { isCustom: true }));
+
+    if (typeof featList !== "undefined" && Array.isArray(featList)) {
+        for (let i = featList.length - 1; i >= 0; i--) {
+            const e = featList[i];
+            if (e && e.isCustom) featList.splice(i, 1);
+        }
+        feats.forEach(f => featList.push(f));
+    }
+    if (typeof magicFeatsList !== "undefined" && Array.isArray(magicFeatsList)) {
+        for (let i = magicFeatsList.length - 1; i >= 0; i--) {
+            const e = magicFeatsList[i];
+            if (e && e.isCustom) magicFeatsList.splice(i, 1);
+        }
+        magicFeats.forEach(m => magicFeatsList.push(m));
+    }
+
+    sheetCustomFeatPackRuntime = {
+        feats,
+        magicFeats,
+        translations: payload.translations || { de: {}, en: {} },
+        packageId: envelope?.packageId || payload.packageId || null,
+        nextId: payload.nextId || null,
+        availableLanguages: Array.isArray(payload.availableLanguages)
+            ? payload.availableLanguages.slice()
+            : [],
+        envelope: envelope || null
+    };
+
+    return true;
+}
+
+function hydrateCustomFeatPackRuntimeFromStorage() {
+    const raw = localStorage.getItem(CUSTOM_FEAT_PACK_SHEET_LS_KEY);
+    if (!raw) {
+        sheetCustomFeatPackRuntime = null;
+        return false;
+    }
+    try {
+        return hydrateCustomFeatPackRuntime(JSON.parse(raw));
+    } catch (e) {
+        console.warn("customFeatPackRuntime ungültig:", e);
+        sheetCustomFeatPackRuntime = null;
+        return false;
+    }
+}
+
+//=======================================================================
 // 4. Custom Species (geplant)
 //=======================================================================
 // let sheetCustomSpeciesRuntime = null;
 // function hydrateCustomSpeciesRuntime(payload) { … }
 // function hydrateCustomSpeciesRuntimeFromStorage() { … }
 // function getSheetCustomSpeciesData(…) { … }
-
-//=======================================================================
-// 5. Custom Feats (geplant)
-//=======================================================================
-// let sheetCustomFeatsRuntime = null;
-// function hydrateCustomFeatsRuntime(payload) { … }
-// function hydrateCustomFeatsRuntimeFromStorage() { … }
-// function getSheetCustomFeatData(…) { … }
-
-//=======================================================================
-// 6. Custom Spells (geplant)
-//=======================================================================
-// let sheetCustomSpellRuntime = null;
-// function hydrateCustomSpellRuntime(payload) { … }
-// function hydrateCustomSpellRuntimeFromStorage() { … }
-// function getSheetCustomSpellData(…) { … }
