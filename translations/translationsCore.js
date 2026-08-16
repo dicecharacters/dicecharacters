@@ -3,7 +3,8 @@
 const translations = {
     de: {
     // Schritt-Titel
-    "pageTitle": "DnD Charakter Erstellen",
+    "pageTitle": "D&D 5.5e Charakter erstellen | DiceCharacters",
+    "sheetPageTitle": "D&D 5.5e Charakterbogen | DiceCharacters",
     "step1Title": "Schritt 1: Klasse wählen",
     "step2Title": "Schritt 2: Hintergrund wählen",
     "step3Title": "Schritt 3: Volk wählen",
@@ -26,7 +27,7 @@ const translations = {
     "step8Description": "Statte dich mit Klinge, Rüstung, Fokus und Reisebedarf aus. Was du bei dir und an dir trägst, entscheidet oft über Sieg und Überleben.",
     "step9Description": "Woher kommst du, was hast du erlebt? Herkunft und Erlebnisse in ein paar Sätzen reichen, um deinem Charakter eine Seele zu geben.",
     "step10Description": "Ideale und Gewissen lenken deine Entscheidungen. Lege fest, wofür dein Charakter einsteht und welche Makel ihn ausmachen.",
-    "step11Description": "Was bemerken andere auf den ersten Blick? Ein schneller Eindruck entsteht durch Augenfarbe, Narben und Haltung.",
+    "step11Description": "Was bemerken Andere auf den ersten Blick? Ein schneller Eindruck entsteht durch Augenfarbe, Narben und Haltung.",
     "step12Description": "Alles steht! Gib deinem Charakter einen Namen und tritt die Reise an.",
 
     // Buttons
@@ -458,7 +459,8 @@ const translations = {
 
     en: {
     // Schritt-Titel
-    "pageTitle": "Create DnD Character",
+    "pageTitle": "D&D 5.5e Character Creator | DiceCharacters",
+    "sheetPageTitle": "D&D 5.5e Character Sheet | DiceCharacters",
     "step1Title": "Step 1: Choose Class",
     "step2Title": "Step 2: Choose Background",
     "step3Title": "Step 3: Choose Species",
