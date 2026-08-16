@@ -2686,6 +2686,32 @@ function populateExpertiseOptions() {
         expertise8Select.innerHTML = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>` + skillOptions;
     }
 
+    // Custom-Talente / weitere Expertise-Dropdowns (expertise9+, data-cff-expertise-pool)
+    const pleaseOpt = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>`;
+    document.querySelectorAll('select[id^="expertise"]').forEach(select => {
+        const m = /^expertise(\d+)$/.exec(select.id);
+        if (!m) return;
+        const n = parseInt(m[1], 10);
+        if (n >= 1 && n <= 8) return; // bereits oben befüllt
+        let ids = selectedSkills.slice();
+        const poolRaw = select.getAttribute("data-cff-expertise-pool") || select.dataset.cffExpertisePool || "";
+        if (poolRaw) {
+            const allowed = new Set(poolRaw.split(",").map(s => String(s.trim())).filter(Boolean));
+            ids = ids.filter(skillId => allowed.has(String(skillId)));
+        }
+        const opts = ids.map(skillId => {
+            const skill = skillList.find(s => s.skillCategoryNumber == skillId);
+            return skill
+                ? `<option value="${skill.skillCategoryNumber}">${translations[currentLang][skill.translationLabel] || skill.translationLabel}</option>`
+                : "";
+        }).join("");
+        const previousValue = select.value;
+        select.innerHTML = pleaseOpt + opts;
+        if (previousValue && select.querySelector(`option[value="${previousValue}"]`)) {
+            select.value = previousValue;
+        }
+    });
+
     restoreExpertiseSelections(); // Wiederherstellen der temporären Auswahlen
 
     document.querySelectorAll('select[name^="expertise"]').forEach(select => {
@@ -2749,7 +2775,7 @@ function populateAbilityImprovementOptions(classData, currentLevel) {
         }
     });
 
-    // Zeige den gesamten Abschnitt nur an, wenn es für das Level etwas anzuzeigen gibt
+    // Zeige den gesamten Abschnitt nur an, wenn für das Level ein Talent wählbar ist
     section.style.display = hasContentToShow ? 'block' : 'none';
 }
 
@@ -2772,6 +2798,11 @@ function createFeatOptions(currentLevel, allowedCategories = [], selectedFeatLab
         }
 
         const featName = elements[feat.translationLabel] || feat.translationLabel;
+        const customSuffix = (typeof isCustomContentFeat === "function" && isCustomContentFeat(feat)
+            && typeof getCustomContentSelectPrefix === "function")
+            ? String(getCustomContentSelectPrefix() || "").trim()
+            : "";
+        const featDisplayName = customSuffix ? `${featName} ${customSuffix}` : featName;
         const isLevelSufficient = currentLevel >= feat.prerequisite_Level;
 
         let hasRequiredFeature = true;
@@ -2798,7 +2829,7 @@ function createFeatOptions(currentLevel, allowedCategories = [], selectedFeatLab
         const isSelected = selectedFeatLabel === feat.translationLabel;
         const isDisabled = !(isLevelSufficient && hasRequiredFeature);
 
-        return `<option value="${feat.ID}"${isSelected ? ' selected' : ''}${isDisabled ? ' disabled' : ''}>${featName}</option>`;
+        return `<option value="${feat.ID}"${isSelected ? ' selected' : ''}${isDisabled ? ' disabled' : ''}>${featDisplayName}</option>`;
     }).join('');
 
     // 3. WICHTIG: Die Validierung EINMAL am Ende triggern, nicht im Loop
@@ -3496,9 +3527,15 @@ function populateClassFormOptions(className) {
     // Subklassen-Optionen anzeigen
     subclassOptionsDiv.innerHTML = subclassList.map(subclass => {
         const label = translations[currentLang][subclass.translationLabel] || subclass.translationLabel;
+        const isCustom = (typeof isCustomContentSubclass === "function")
+            ? isCustomContentSubclass(subclass, className)
+            : !!subclass.isCustom;
+        const markerHtml = isCustom && typeof getCustomContentMarkerHtml === "function"
+            ? getCustomContentMarkerHtml()
+            : "";
         return `
-            <label>
-                <input type="radio" name="subclass" value="${subclass.subclassCategoryNumber}"> ${label}
+            <label${isCustom ? ' class="cc-custom-subclass-option"' : ""}>
+                <input type="radio" name="subclass" value="${subclass.subclassCategoryNumber}"${isCustom ? ' data-custom-subclass="1"' : ""}> ${label}${markerHtml}
             </label>
         `;
     }).join('');
@@ -4796,6 +4833,10 @@ function updateFeatDynamicContent(featID, featLevel, selectElement) {
         featContentDiv.innerHTML += `<ul class="granted-proficiency-list">${grantedList}</ul>`;
     }
 
+    if (feat.isCustom && typeof applyCustomFeatDynamicContent === "function") {
+        applyCustomFeatDynamicContent(feat, featLevel, featContentDiv, elements);
+    }
+
     if (feat.translationLabel === "musicianLabel") {
         createSelectionDropdowns(featContentDiv, null, elements.instrumentLabel, 3, 10, "instrument");
         selectElement.parentNode.insertBefore(featContentDiv, selectElement.nextSibling);
@@ -5410,6 +5451,9 @@ function updateSkills() {
     if (typeof appendGrantedCustomClassSkillIds === "function") {
         appendGrantedCustomClassSkillIds(selectedSkills);
     }
+    if (typeof appendGrantedCustomFeatSkillIds === "function") {
+        appendGrantedCustomFeatSkillIds(selectedSkills);
+    }
 
    // Deaktiviere die bereits ausgewählten skills
     const isSmallScreen = window.innerWidth < 1000; // Jetzt ab Tablet-Größe
@@ -5584,9 +5628,15 @@ function saveClassForm() {
     if (typeof appendGrantedCustomClassSkillIds === "function") {
         appendGrantedCustomClassSkillIds(selectedSkills);
     }
+    if (typeof appendGrantedCustomFeatSkillIds === "function") {
+        appendGrantedCustomFeatSkillIds(selectedSkills);
+    }
     // Einfach→Rettungswürfe (Custom Class): gewährte Attribute ohne Dropdown ergänzen
     if (typeof appendGrantedCustomClassSavingThrowIds === "function") {
         appendGrantedCustomClassSavingThrowIds(selectedAttributes);
+    }
+    if (typeof appendGrantedCustomFeatSavingThrowIds === "function") {
+        appendGrantedCustomFeatSavingThrowIds(selectedAttributes);
     }
 
     const selectedSubclass = document.querySelector('input[name="subclass"]:checked')?.value || null;
@@ -5628,6 +5678,11 @@ function saveClassForm() {
     // Custom Class: konkrete toolLabel-Einträge ohne Schritt-6-Auswahl hart übernehmen
     if (typeof appendFixedCustomClassToolProficiencies === "function") {
         appendFixedCustomClassToolProficiencies(selectedTools);
+    }
+    if (typeof appendCustomFeatToolProficiencies === "function") {
+        appendCustomFeatToolProficiencies(selectedTools, selectedInstruments, selectedGames);
+    } else if (typeof appendGrantedCustomFeatToolIds === "function") {
+        appendGrantedCustomFeatToolIds(selectedTools);
     }
 
 // --- Spezifische Ausrüstungswahl (für Schritt 8) ---Barde/Mönch/Custom---
@@ -5809,6 +5864,11 @@ function saveSpells() {
     const finalPrepared = new Map(); // Speichert { spellId => sourceInfo }
     const finalFavored = new Map();  // Speichert { spellId => sourceInfo }
 
+    // Custom-Pack-Zauber inkl. (nicht nur PHB-spellList)
+    const runtimeSpellList = (typeof getEffectiveSpellList === "function")
+        ? getEffectiveSpellList()
+        : spellList;
+
     // Hilfsfunktion zur Erstellung des Source-Objekts
     const createSourceInfo = (feature) => {
         let sourceInfo = { type: 'Klasse', name: 'unbekannt' };
@@ -5836,7 +5896,7 @@ function saveSpells() {
     };
 
     grantedSpellSources.forEach((feature, spellId) => {
-        const spellData = spellList.find(s => s.ID === spellId);
+        const spellData = runtimeSpellList.find(s => s.ID === spellId);
         if (!spellData) return;
 
         // Quelle generieren via Hilfsfunktion
@@ -5861,7 +5921,7 @@ function saveSpells() {
         const feature = applicableMagicFeatures.find(f => f.ID == featureId);
         if (feature) {
             spellChoicesByFeature[featureId].forEach(spellId => {
-                const spellData = spellList.find(s => s.ID === spellId);
+                const spellData = runtimeSpellList.find(s => s.ID === spellId);
                 if (!spellData) return;
 
                 // Quelle generieren via Hilfsfunktion
@@ -6285,8 +6345,12 @@ function populateSpells() {
         '2': { title: 'favoredSpellsLabel', features: [], spells: new Set() }
     };
     let allPossibleSpells = new Set();
-    
-    spellList.forEach(spell => {
+    // Custom-Klassen: virtuelle classLabel-Erweiterung ohne Mutation von spellData
+    const runtimeSpellList = (typeof getEffectiveSpellList === "function")
+        ? getEffectiveSpellList()
+        : spellList;
+
+    runtimeSpellList.forEach(spell => {
         const spellClasses = Array.isArray(spell.classLabel) ? spell.classLabel : [spell.classLabel];
         if (spellClasses.includes(character.class.toLowerCase()) && unlockedSpellLevels.has(spell.spellLevel)) { allPossibleSpells.add(spell); }
     });
@@ -6303,9 +6367,9 @@ function populateSpells() {
                     entry.level <= character.level &&
                     (!entry.landCategoryNumber || entry.landCategoryNumber === selectedLandNumber)
                 ).flatMap(entry => entry.preparedSpells);
-                featureSpells.push(...spellList.filter(spell => spellsFromList.includes(spell.translationLabel)));
+                featureSpells.push(...runtimeSpellList.filter(spell => spellsFromList.includes(spell.translationLabel)));
             } else {
-                featureSpells.push(...spellList.filter(spell => sourceList.includes(spell.translationLabel)));
+                featureSpells.push(...runtimeSpellList.filter(spell => sourceList.includes(spell.translationLabel)));
             }
         } else if (feature.chooseNonSpecificSpell_a > 0) {
             let spellSource = feature.chooseNonSpecificSpell_c;
@@ -6319,12 +6383,21 @@ function populateSpells() {
             }
             const levelSource = feature.chooseNonSpecific_sl;
             if (levelSource !== undefined) {
-                featureSpells.push(...spellList.filter(spell => {
-                    const classMatch = !spellSource || spellSource === 0 || [spellSource].flat().some(allowed => (Array.isArray(spell.classLabel) ? spell.classLabel : [spell.classLabel]).includes(allowed));
-                    const levelMatch = !levelSource || levelSource === 0 || [levelSource].flat().includes(spell.spellLevel);
-                    const schoolMatch = !feature.chooseNonSpecificSpell_ss || feature.chooseNonSpecificSpell_ss === 0 || [feature.chooseNonSpecificSpell_ss].flat().includes(spell.spellSchool);
-                    const ritualMatch = !feature.chooseNonSpecificSpell_sf || feature.chooseNonSpecificSpell_sf === 0 || (Array.isArray(spell.spellFocus) ? spell.spellFocus.includes("ritualLabel") : spell.spellFocus === "ritualLabel");
-                    return classMatch && levelMatch && schoolMatch && ritualMatch;
+                featureSpells.push(...runtimeSpellList.filter(spell => {
+                    return (typeof spellPassesStep7FreeChoiceFilters === "function")
+                        ? spellPassesStep7FreeChoiceFilters(spell, {
+                            classSource: spellSource,
+                            levelSource,
+                            schoolSource: feature.chooseNonSpecificSpell_ss,
+                            ritualSource: feature.chooseNonSpecificSpell_sf
+                        })
+                        : (() => {
+                            const classMatch = !spellSource || spellSource === 0 || [spellSource].flat().some(allowed => (Array.isArray(spell.classLabel) ? spell.classLabel : [spell.classLabel]).includes(allowed));
+                            const levelMatch = !levelSource || levelSource === 0 || [levelSource].flat().includes(spell.spellLevel);
+                            const schoolMatch = !feature.chooseNonSpecificSpell_ss || feature.chooseNonSpecificSpell_ss === 0 || [feature.chooseNonSpecificSpell_ss].flat().includes(spell.spellSchool);
+                            const ritualMatch = !feature.chooseNonSpecificSpell_sf || feature.chooseNonSpecificSpell_sf === 0 || (Array.isArray(spell.spellFocus) ? spell.spellFocus.includes("ritualLabel") : spell.spellFocus === "ritualLabel");
+                            return classMatch && levelMatch && schoolMatch && ritualMatch;
+                        })();
                 }));
             }
         }
@@ -6350,6 +6423,16 @@ function populateSpells() {
             }
         });
     });
+
+    // Session-Pool: Zauberbibliothek in die Masterliste (nur Grad, keine Listenbindung).
+    // Nur wenn der Charakter hier überhaupt Zauber wählt.
+    if (allPossibleSpells.size > 0 && typeof getRegisteredCustomSpellPackSpells === "function") {
+        getRegisteredCustomSpellPackSpells().forEach(spell => {
+            if (spell && unlockedSpellLevels.has(spell.spellLevel)) {
+                allPossibleSpells.add(spell);
+            }
+        });
+    }
 
     Object.keys(sections).forEach(type => {
         const allSectionFeatures = allDisplayFeatures.filter(f => (f.chooseType === 3 ? '1' : f.chooseType.toString()) === type);
@@ -6493,7 +6576,10 @@ function populateSpells() {
         // 2. Infobox initialisieren (anzeigen)
         buildSpellInfoUI(); 
 
-        // 3. Zauberliste rendern
+        // 3. Custom Spell „+“ unter den Boxen, dann Masterliste
+        if (typeof insertCustomSpellStep7Button === "function") {
+            insertCustomSpellStep7Button(spellListDiv);
+        }
         const masterSpellListContainer = document.createElement('div');
         masterSpellListContainer.id = 'master-spell-list';
         spellListDiv.appendChild(masterSpellListContainer);
@@ -6515,8 +6601,11 @@ function populateSpells() {
             isSpellInfoBoxActive = false; 
         }
         
-        // 3. SpellList leeren (damit kein doppelter Text erscheint)
+        // 3. SpellList leeren – „+“ für Custom Spells danach wieder einsetzen
         spellListDiv.innerHTML = '';
+        if (typeof insertCustomSpellStep7Button === "function") {
+            insertCustomSpellStep7Button(spellListDiv);
+        }
     }
 
     function isCharacterCaster(classData, subclassId, level) {
@@ -6612,6 +6701,9 @@ function handleSpellClick(spellElement, spellId, feature, sections) {
  */
 function renderFullSpellList(container, spellsToRender = null, sections) {
     if (!container) return;
+    const runtimeSpellList = (typeof getEffectiveSpellList === "function")
+        ? getEffectiveSpellList()
+        : spellList;
 
     if (spellsToRender) {
         container.innerHTML = '';
@@ -6632,13 +6724,18 @@ function renderFullSpellList(container, spellsToRender = null, sections) {
                 sortedSpells.forEach(spell => {
                     const li = document.createElement('li');
                     li.dataset.spellId = spell.ID;
+                    const spellName = translations[currentLang][spell.translationLabel] || spell.translationLabel;
+                    const markerHtml = (typeof isCustomContentSpell === "function" && isCustomContentSpell(spell)
+                        && typeof getCustomContentMarkerHtml === "function")
+                        ? getCustomContentMarkerHtml()
+                        : "";
                     li.innerHTML = `
                         <span class="spell-marker-container">
                             <span class="spell-marker spell-marker-book"></span>
                             <span class="spell-marker spell-marker-flag"></span>
                             <span class="spell-marker spell-marker-present"></span>
                         </span>
-                        <span class="spell-name">${translations[currentLang][spell.translationLabel] || spell.translationLabel}</span>`;
+                        <span class="spell-name">${spellName}${markerHtml}</span>`;
                     ul.appendChild(li);
                 });
                 container.appendChild(ul);
@@ -6650,13 +6747,13 @@ function renderFullSpellList(container, spellsToRender = null, sections) {
     const spellbookSpells = new Set();
     if (characterUsesSpellbook(character)) {
         Object.values(sections).forEach(s => s.spells.forEach(id => {
-            const spell = spellList.find(sp => sp.ID === id);
+            const spell = runtimeSpellList.find(sp => sp.ID === id);
             if(spell && spell.spellLevel !== 'cantripLabel') spellbookSpells.add(id);
         }));
         applicableMagicFeatures.forEach(feature => {
             if ((feature.chooseType === 0 || feature.chooseType === 1 || feature.chooseType === 3) && spellChoicesByFeature[feature.ID]) {
                 spellChoicesByFeature[feature.ID].forEach(spellId => {
-                    const spell = spellList.find(sp => sp.ID === spellId);
+                    const spell = runtimeSpellList.find(sp => sp.ID === spellId);
                     if (spell && spell.spellLevel !== "cantripLabel") spellbookSpells.add(spellId);
                 });
             }
@@ -6665,7 +6762,7 @@ function renderFullSpellList(container, spellsToRender = null, sections) {
 
     container.querySelectorAll('li[data-spell-id]').forEach(li => {
         const spellId = parseInt(li.dataset.spellId, 10);
-        const spellData = spellList.find(s => s.ID === spellId);
+        const spellData = runtimeSpellList.find(s => s.ID === spellId);
         if (!spellData) return;
 
         const bookSpan = li.querySelector('.spell-marker-book');
@@ -6754,9 +6851,15 @@ function renderFullSpellList(container, spellsToRender = null, sections) {
                     } else {
                         const allowedClasses = activeFeature.chooseNonSpecificSpell_c;
                         const spellClasses = Array.isArray(spellData.classLabel) ? spellData.classLabel : [spellData.classLabel];
-                        const isOnAllowedList = allowedClasses.some(allowed => spellClasses.includes(allowed));
+                        const isOnAllowedList = Array.isArray(allowedClasses)
+                            && allowedClasses.some(allowed => spellClasses.includes(allowed));
                         const isFavored = sections['2'].spells.has(spellId);
-                        isChoosable = !isCantrip && (isOnAllowedList || isFavored);
+                        // Bib: nur freigeschalteter Grad — keine Klassenlistenbindung (wie classCantrips)
+                        const unlockedLevels = [activeFeature.chooseNonSpecific_sl].flat();
+                        const isSessionLibrary = typeof isSpellFromSessionLibrary === "function"
+                            && isSpellFromSessionLibrary(spellData)
+                            && unlockedLevels.includes(spellData.spellLevel);
+                        isChoosable = !isCantrip && (isOnAllowedList || isFavored || isSessionLibrary);
                     }
                 } else if (activeFeature.translationLabel.includes("spellMasteryLabel")) {
                     // Spezial-Logik NUR für Zaubermeisterschaft
@@ -6772,7 +6875,6 @@ function renderFullSpellList(container, spellsToRender = null, sections) {
                         [activeFeature.chooseNonSpecific_sl].flat().includes(spellData.spellLevel);
                 } else {
                     // Für alle anderen Merkmale (inkl. "spellcastingLabel")
-                    let standardChecksPassed = false;
                     let classSource = activeFeature.chooseNonSpecificSpell_c;
                     if (activeFeature.sourceFeatLabel === "magicInitiateLabel" && activeFeature.spellListIndex !== undefined) {
                         const spellListChoice = character.classForm?.spellLists?.[activeFeature.spellListIndex];
@@ -6782,13 +6884,20 @@ function renderFullSpellList(container, spellsToRender = null, sections) {
                             if (chosenClass) { classSource = [chosenClass.translationLabel.replace('Label', '')]; }
                         }
                     }
-                    const classMatch = !classSource || classSource === 0 || [classSource].flat().some(allowed => (Array.isArray(spellData.classLabel) ? spellData.classLabel : [spellData.classLabel]).includes(allowed));
-                    const levelMatch = !activeFeature.chooseNonSpecific_sl || [activeFeature.chooseNonSpecific_sl].flat().includes(spellData.spellLevel);
-                    const schoolMatch = !activeFeature.chooseNonSpecificSpell_ss || [activeFeature.chooseNonSpecificSpell_ss].flat().includes(spellData.spellSchool);
-                    const ritualMatch = !activeFeature.chooseNonSpecificSpell_sf || (Array.isArray(spellData.spellFocus) ? spellData.spellFocus.includes("ritualLabel") : spellData.spellFocus === "ritualLabel");
-                    if (classMatch && levelMatch && schoolMatch && ritualMatch) {
-                        standardChecksPassed = true;
-                    }
+                    const standardChecksPassed = (typeof spellPassesStep7FreeChoiceFilters === "function")
+                        ? spellPassesStep7FreeChoiceFilters(spellData, {
+                            classSource,
+                            levelSource: activeFeature.chooseNonSpecific_sl,
+                            schoolSource: activeFeature.chooseNonSpecificSpell_ss,
+                            ritualSource: activeFeature.chooseNonSpecificSpell_sf
+                        })
+                        : (() => {
+                            const classMatch = !classSource || classSource === 0 || [classSource].flat().some(allowed => (Array.isArray(spellData.classLabel) ? spellData.classLabel : [spellData.classLabel]).includes(allowed));
+                            const levelMatch = !activeFeature.chooseNonSpecific_sl || [activeFeature.chooseNonSpecific_sl].flat().includes(spellData.spellLevel);
+                            const schoolMatch = !activeFeature.chooseNonSpecificSpell_ss || [activeFeature.chooseNonSpecificSpell_ss].flat().includes(spellData.spellSchool);
+                            const ritualMatch = !activeFeature.chooseNonSpecificSpell_sf || (Array.isArray(spellData.spellFocus) ? spellData.spellFocus.includes("ritualLabel") : spellData.spellFocus === "ritualLabel");
+                            return classMatch && levelMatch && schoolMatch && ritualMatch;
+                        })();
                     if (standardChecksPassed) {
                         if (activeFeature.chooseType === 0 && isCantrip) { isChoosable = false; }
                         else if (activeFeature.ID === 'classCantrips' && !isCantrip) { isChoosable = false; }
@@ -6921,9 +7030,14 @@ function updateSpellInfoBox() {
     const finalSpellbook = new Set();
     const finalCantrips = new Set();
 
+    // Custom-Pack-Zauber inkl. (nicht nur PHB-spellList)
+    const runtimeSpellList = (typeof getEffectiveSpellList === "function")
+        ? getEffectiveSpellList()
+        : spellList;
+
     // 1. Sammle Daten (Logik beibehalten)
     grantedSpellSources.forEach((feature, spellId) => {
-        const spellData = spellList.find(s => s.ID === spellId);
+        const spellData = runtimeSpellList.find(s => s.ID === spellId);
         if (!spellData) return;
         if (spellData.spellLevel === 'cantripLabel') finalCantrips.add(spellId);
         else {
@@ -6937,7 +7051,7 @@ function updateSpellInfoBox() {
         const feature = applicableMagicFeatures.find(f => f.ID == featureId);
         if (feature) {
             spellChoicesByFeature[featureId].forEach(spellId => {
-                const spellData = spellList.find(s => s.ID === spellId);
+                const spellData = runtimeSpellList.find(s => s.ID === spellId);
                 if (!spellData) return;
                 if (spellData.spellLevel === 'cantripLabel') finalCantrips.add(spellId);
                 else {
@@ -6960,12 +7074,13 @@ function updateSpellInfoBox() {
     finalCantrips.forEach(id => spellsToShowIds.add(id));
 
     // 2. Mapping für die Render-Funktion
-    const mappedSpells = spellList
+    const mappedSpells = runtimeSpellList
         .filter(s => spellsToShowIds.has(s.ID))
         .sort((a,b) => (a.spellLevel.localeCompare(b.spellLevel)) || (translations[currentLang][a.translationLabel] || '').localeCompare(translations[currentLang][b.translationLabel] || ''))
         .map(s => ({
             name: translations[currentLang][s.translationLabel] || s.translationLabel,
-            description: translations[currentLang][s.spellDLabel] || 'Keine Beschreibung.'
+            description: translations[currentLang][s.spellDLabel] || 'Keine Beschreibung.',
+            isCustom: (typeof isCustomContentSpell === "function") ? isCustomContentSpell(s) : !!s.isCustom
         }));
 
     renderSpecialInfoBoxContent('spell-info-box-container', mappedSpells);
@@ -8979,7 +9094,10 @@ function processGrantedItems() {
     const addedMaterials = new Set(); // Um Duplikate zu vermeiden
 
     allSpellIds.forEach(spellId => {
-        const spell = spellList.find(s => s.ID === spellId);
+        const runtimeSpellList = (typeof getEffectiveSpellList === "function")
+            ? getEffectiveSpellList()
+            : spellList;
+        const spell = runtimeSpellList.find(s => s.ID === spellId);
         
         // Hat der Zauber Materialien?
         if (spell && spell.spellMaterial) {
@@ -9947,9 +10065,9 @@ function finishCharacter() {
         persistCustomClassRuntimeToLocalStorage();
     }
 
-    // Custom-Unterklasse (Standalone) für den Charakterbogen
-    if (typeof getRegisteredCustomSubclassBundle === "function"
-        && getRegisteredCustomSubclassBundle(character.class)
+    // Custom-Unterklasse (Standalone) nur wenn Slot wirklich gewählt
+    if (typeof characterUsesRegisteredCustomSubclass === "function"
+        && characterUsesRegisteredCustomSubclass(character)
         && typeof persistCustomSubclassRuntimeToLocalStorage === "function") {
         persistCustomSubclassRuntimeToLocalStorage();
     }
@@ -9959,6 +10077,20 @@ function finishCharacter() {
         && isRegisteredCustomBackgroundSlug(character.background)
         && typeof persistCustomBackgroundRuntimeToLocalStorage === "function") {
         persistCustomBackgroundRuntimeToLocalStorage();
+    }
+
+    // Custom-Spell-Pack (gewählte Custom-Zauber) für Bogen Seite 5 / Anhang
+    if (typeof characterUsesRegisteredCustomSpellPack === "function"
+        && characterUsesRegisteredCustomSpellPack(character)
+        && typeof persistCustomSpellPackRuntimeToLocalStorage === "function") {
+        persistCustomSpellPackRuntimeToLocalStorage();
+    }
+
+    // Custom-Talentbibliothek (gewählte Custom-Talente) für den Bogen
+    if (typeof characterUsesRegisteredCustomFeatPack === "function"
+        && characterUsesRegisteredCustomFeatPack(character)
+        && typeof persistCustomFeatPackRuntimeToLocalStorage === "function") {
+        persistCustomFeatPackRuntimeToLocalStorage();
     }
 
     // Weiterleitung
@@ -10125,10 +10257,12 @@ function updateFeatInfoBox() {
 
     const mappedFeats = Array.from(selectedFeatIds).map(featId => {
         const feat = featList.find(f => f.ID === featId);
-        const descKey = feat.translationLabel.replace("Label", "DLabel");
+        const descKey = feat.featDLabel
+            || (feat.translationLabel ? feat.translationLabel.replace("Label", "DLabel") : "");
         return {
             name: translations[currentLang][feat.translationLabel] || feat.translationLabel,
-            description: translations[currentLang][descKey] || 'Keine Beschreibung.'
+            description: (descKey && translations[currentLang][descKey]) || 'Keine Beschreibung.',
+            isCustom: (typeof isCustomContentFeat === "function") ? isCustomContentFeat(feat) : !!feat.isCustom
         };
     });
 
@@ -10154,7 +10288,11 @@ function renderSpecialInfoBoxContent(containerId, items) {
 
         const nameDiv = document.createElement('div');
         nameDiv.className = 'info-spell-name';
-        nameDiv.textContent = item.name;
+        if (item.isCustom && typeof getCustomContentMarkerHtml === "function") {
+            nameDiv.innerHTML = `${item.name}${getCustomContentMarkerHtml()}`;
+        } else {
+            nameDiv.textContent = item.name;
+        }
 
         const descDiv = document.createElement('div');
         descDiv.className = 'info-spell-description';

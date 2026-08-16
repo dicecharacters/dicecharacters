@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">DnD Charakter Erstellen</title>
+    <title id="pageTitle">D&amp;D 5.5e Charakter erstellen | DiceCharacters</title>
+    <link rel="icon" type="image/webp" href="images/dcLogo_C.webp">
     <link rel="stylesheet" href="css/style.css">
 
     <script defer src="https://cloud.umami.is/script.js" data-website-id="69f61406-c360-48a7-9559-13da14ddd7cb"></script>
@@ -160,6 +161,7 @@
                 <li id="customClassListItem" class="custom-class-list-item" style="display: none;">
                     <input type="radio" id="customClassRadio" name="class" value="" onclick="selectCustomClass()">
                     <label for="customClassRadio" id="customClassRadioLabel"><strong></strong></label>
+                    <span id="customClassContentMarker" class="custom-content-marker" hidden></span>
                 </li>
                 <li id="addCustomClassListItem" class="add-custom-class-item">
                     <button type="button" id="addCustomClassBtn" class="add-custom-class-btn" onclick="openCustomClassChooser()" aria-label="+">+</button>
@@ -226,6 +228,7 @@
                 <li id="customBackgroundListItem" class="custom-background-list-item" style="display: none;">
                     <input type="radio" id="customBackgroundRadio" name="background" value="" onclick="selectCustomBackground()">
                     <label for="customBackgroundRadio" id="customBackgroundRadioLabel"></label>
+                    <span id="customBackgroundContentMarker" class="custom-content-marker" hidden></span>
                 </li>
                 <li id="addCustomBackgroundListItem" class="add-custom-background-item">
                     <button type="button" id="addCustomBackgroundBtn" class="add-custom-background-btn" onclick="openCustomBackgroundChooser()" aria-label="+">+</button>
@@ -431,6 +434,9 @@
               
         <div id="abilityImprovementOptionsContainer">
             </div>
+        <div id="addCustomFeatWrap" class="add-custom-feat-wrap" aria-hidden="true">
+            <button type="button" id="addCustomFeatBtn" class="add-custom-feat-btn" onclick="openCustomFeatChooser()" aria-label="+">+</button>
+        </div>
     </div>
 
     <div id="feat-info-box-container" class="spell-info-box-container" style="display: none;">
@@ -811,7 +817,8 @@
                     <button type="button" class="custom-class-tab active" data-tab="1" id="customClassTabCoreBtn" onclick="switchCustomClassTab(1)"></button>
                     <button type="button" class="custom-class-tab" data-tab="2" id="customClassTabLevelsBtn" onclick="switchCustomClassTab(2)"></button>
                     <button type="button" class="custom-class-tab" data-tab="3" id="customClassTabSubclassBtn" onclick="switchCustomClassTab(3)"></button>
-                    <button type="button" class="custom-class-tab custom-class-tab--locked" data-tab="4" id="customClassTabSpellcastingBtn" onclick="switchCustomClassTab(4)" disabled></button>
+                    <button type="button" class="custom-class-tab custom-class-tab--locked" data-tab="4" id="customClassTabSpellListBtn" onclick="switchCustomClassTab(4)" disabled></button>
+                    <button type="button" class="custom-class-tab custom-class-tab--locked" data-tab="5" id="customClassTabSpellcastingBtn" onclick="switchCustomClassTab(5)" disabled></button>
                 </div>
 
                 <div class="custom-class-tab-panels">
@@ -826,6 +833,9 @@
                     </div>
                     <div id="customClassTab4" class="custom-class-tab-panel">
                         <div id="customClassTab4Content"></div>
+                    </div>
+                    <div id="customClassTab5" class="custom-class-tab-panel">
+                        <div id="customClassTab5Content"></div>
                     </div>
                 </div>
 
@@ -920,6 +930,94 @@
         </div>
     </div>
 
+    <!-- Custom Spell Modal (Schritt 7) -->
+    <!-- Bewusst kein onclick auf dem Overlay: Klick außerhalb schließt nicht -->
+    <div id="customSpellOverlay" class="modal-overlay custom-class-overlay" style="display: none;">
+        <div class="custom-class-modal" onclick="event.stopPropagation()">
+            <span class="close-icon" onclick="requestCloseCustomSpellModal()">&times;</span>
+
+            <div id="customSpellChooserView">
+                <h3 id="customSpellModalTitleLabel" class="custom-class-title"></h3>
+                <div class="custom-class-chooser-actions">
+                    <button type="button" id="customSpellCreateNewBtn" class="custom-class-action-btn" onclick="startCustomSpellCreate()"></button>
+                    <button type="button" id="customSpellUploadBtn" class="custom-class-action-btn" onclick="triggerCustomSpellUpload()"></button>
+                    <input type="file" id="customSpellFileInput" accept=".json,application/json" style="display: none;" onchange="handleCustomSpellFile(event)">
+                </div>
+            </div>
+
+            <div id="customSpellEditorView" style="display: none;">
+                <h3 id="customSpellEditorTitleLabel" class="custom-class-title"></h3>
+
+                <div class="custom-class-tabs">
+                    <button type="button" class="custom-class-tab active" data-tab="1" id="customSpellTabOverviewBtn" onclick="switchCustomSpellTab(1)"></button>
+                    <button type="button" class="custom-class-tab" data-tab="2" id="customSpellTabDetailsBtn" onclick="switchCustomSpellTab(2)"></button>
+                </div>
+
+                <div class="custom-class-tab-panels">
+                    <div id="customSpellTab1" class="custom-class-tab-panel active">
+                        <div id="customSpellTab1Content"></div>
+                    </div>
+                    <div id="customSpellTab2" class="custom-class-tab-panel">
+                        <div id="customSpellTab2Content"></div>
+                    </div>
+                </div>
+
+                <div class="custom-class-footer">
+                    <button type="button" id="customSpellFinishBtn" class="custom-class-action-btn" onclick="finishCustomSpellPack()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Feat Modal (Schritt 6) -->
+    <!-- Bewusst kein onclick auf dem Overlay: Klick außerhalb schließt nicht -->
+    <div id="customFeatOverlay" class="modal-overlay custom-class-overlay" style="display: none;">
+        <div class="custom-class-modal" onclick="event.stopPropagation()">
+            <span class="close-icon" onclick="requestCloseCustomFeatModal()">&times;</span>
+
+            <div id="customFeatChooserView">
+                <h3 id="customFeatModalTitleLabel" class="custom-class-title"></h3>
+                <div class="custom-class-chooser-actions">
+                    <button type="button" id="customFeatCreateNewBtn" class="custom-class-action-btn" onclick="startCustomFeatCreate()"></button>
+                    <button type="button" id="customFeatUploadBtn" class="custom-class-action-btn" onclick="triggerCustomFeatUpload()"></button>
+                    <input type="file" id="customFeatFileInput" accept=".json,application/json" style="display: none;" onchange="handleCustomFeatFile(event)">
+                </div>
+            </div>
+
+            <div id="customFeatEditorView" style="display: none;">
+                <h3 id="customFeatEditorTitleLabel" class="custom-class-title"></h3>
+
+                <div class="custom-class-tabs">
+                    <button type="button" class="custom-class-tab active" data-tab="1" id="customFeatTabOverviewBtn" onclick="switchCustomFeatTab(1)"></button>
+                    <button type="button" class="custom-class-tab" data-tab="2" id="customFeatTabDetailsBtn" onclick="switchCustomFeatTab(2)"></button>
+                </div>
+
+                <div class="custom-class-tab-panels">
+                    <div id="customFeatTab1" class="custom-class-tab-panel active">
+                        <div id="customFeatTab1Content"></div>
+                    </div>
+                    <div id="customFeatTab2" class="custom-class-tab-panel">
+                        <div id="customFeatTab2Content"></div>
+                    </div>
+                </div>
+
+                <div class="custom-class-footer">
+                    <button type="button" id="customFeatFinishBtn" class="custom-class-action-btn" onclick="finishCustomFeatPack()"></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="cffLfFloatOverlay" class="cc-lf-float-overlay" style="display: none;"
+             onclick="event.stopPropagation(); closeCffLfFloat()">
+            <div class="cc-lf-float" onclick="event.stopPropagation()">
+                <span class="close-icon" onclick="event.stopPropagation(); closeCffLfFloat()" aria-label="×">&times;</span>
+                <h4 id="cffLfFloatTitle" class="cc-lf-float-title"></h4>
+                <p id="cffLfFloatHint" class="cc-lf-float-hint" style="display:none;"></p>
+                <div id="cffLfFloatBody" class="cc-lf-float-body"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="disclaimerLabel" class="permanent-disclaimer"></div>
 
     <!-- Fixierte Buttons -->
@@ -1008,6 +1106,8 @@
     <script src="customFeatures/classBuilder.js"></script>
     <script src="customFeatures/subclassBuilder.js"></script>
     <script src="customFeatures/backgroundBuilder.js"></script>
+    <script src="customFeatures/spellBuilder.js"></script>
+    <script src="customFeatures/featBuilder.js"></script>
 
     <script src="translations/translationsCore.js"></script>
     <script src="translations/translationsDCPackage.js"></script>

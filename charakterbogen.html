@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>D&D Charakterbogen</title>
+    <title id="sheetPageTitle">D&amp;D 5.5e Charakterbogen | DiceCharacters</title>
+    <link rel="icon" type="image/webp" href="images/dcLogo_C.webp">
     <link rel="stylesheet" href="css/sheet_style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
 
@@ -59,6 +60,7 @@
     <script src="data/imageData.js"></script>
     <script src="featureHandlers.js"></script>
     <script src="dcPackage.js"></script>
+    <script src="customFeatures/shared.js"></script>
     <script src="customFeatures/customFeaturesSheet.js"></script>
 </head>
 <body>
@@ -118,15 +120,24 @@
                 <div class="header">
                     <div class="field-group">
                         <label id="classLabel" for="class">Klasse</label>
-                        <input type="text" id="class" name="class" placeholder="Klasse" readonly>
+                        <div class="field-value-row">
+                            <input type="text" id="class" name="class" placeholder="Klasse" readonly>
+                            <span id="classCustomContentMarker" class="custom-content-marker" hidden></span>
+                        </div>
                     </div>
                     <div class="field-group">
                         <label id="backgroundLabel" for="background">Hintergrund</label>
-                        <input type="text" id="background" name="background" placeholder="Hintergrund" readonly>
+                        <div class="field-value-row">
+                            <input type="text" id="background" name="background" placeholder="Hintergrund" readonly>
+                            <span id="backgroundCustomContentMarker" class="custom-content-marker" hidden></span>
+                        </div>
                     </div>
                     <div class="field-group">
                         <label id="subclassLabel" for="subclass">Unterklasse</label>
-                        <input type="text" id="subclass" name="subclass" placeholder="Unterklasse" readonly>
+                        <div class="field-value-row">
+                            <input type="text" id="subclass" name="subclass" placeholder="Unterklasse" readonly>
+                            <span id="subclassCustomContentMarker" class="custom-content-marker" hidden></span>
+                        </div>
                     </div>
                     <div class="field-group">
                         <label id="speciesLabel" for="species">Volk</label>
@@ -1362,6 +1373,15 @@ function processHeader(data) {
     setVal("background", tBg);
     setVal("subclass", characterSubclass);
     setVal("species", speciesDisplay);
+    if (typeof updateSheetCustomClassMarker === "function") {
+        updateSheetCustomClassMarker(basic.class);
+    }
+    if (typeof updateSheetCustomBackgroundMarker === "function") {
+        updateSheetCustomBackgroundMarker(basic.background);
+    }
+    if (typeof updateSheetCustomSubclassMarker === "function") {
+        updateSheetCustomSubclassMarker(basic.class, subclassCategoryNumber);
+    }
 
     // Name auf alle Folgeseiten synchronisieren
     document.querySelectorAll('.sync-char-name').forEach(input => {
@@ -3615,14 +3635,21 @@ function getCustomFreeChoiceListHTML(data, familyId) {
     const className = data?.basic?.class;
     const classData = (typeof getClassDataArray === "function") ? getClassDataArray(className) : null;
     const optMap = new Map();
-    (classData || []).forEach(row => {
-        (row.freeChoiceOptions || []).forEach(opt => {
-            if (!opt || opt.value == null) return;
-            const v = String(opt.value);
-            if (familyId && !v.startsWith(`${familyId}__`)) return;
-            optMap.set(v, opt);
+    const collectOpts = (rows) => {
+        (rows || []).forEach(row => {
+            (row.freeChoiceOptions || []).forEach(opt => {
+                if (!opt || opt.value == null) return;
+                const v = String(opt.value);
+                if (familyId && !v.startsWith(`${familyId}__`)) return;
+                optMap.set(v, opt);
+            });
         });
-    });
+    };
+    collectOpts(classData || []);
+    // Custom-Talente (Talentbibliothek) speichern freeChoiceOptions am Feat
+    if (typeof featList !== "undefined" && Array.isArray(featList)) {
+        collectOpts(featList.filter(f => f && f.isCustom && f.freeChoiceOptions));
+    }
 
     const filtered = familyId
         ? vals.filter(v => String(v).startsWith(`${familyId}__`))
@@ -4008,6 +4035,17 @@ function processFeats(data) {
                 title += `<span class="auto-marker" title="${autoText}">⚙</span>`;
             }
 
+            // Custom-Talent-Marker (nicht bei EXPERT_CHECK / MASTERY_CHECK – die nutzen Expertise-/Meisterschafts-Anzeige)
+            const sheetFlag = featData.characterSheet;
+            const isExpertOrMasteryFlag = typeof sheetFlag === "string"
+                && (sheetFlag.includes("EXPERT_CHECK") || sheetFlag.includes("MASTERY_CHECK"));
+            if (!isExpertOrMasteryFlag
+                && typeof isCustomContentFeat === "function"
+                && isCustomContentFeat(featData)
+                && typeof getCustomContentMarkerHtml === "function") {
+                title += getCustomContentMarkerHtml();
+            }
+
             let descKey = featData.featD_sheet; 
             if (!descKey || descKey === 0) descKey = featData.featDLabel;
 
@@ -4141,6 +4179,13 @@ function resolveSingleValue(keyPath, val) {
 
 // 3. Helper: Listen auflösen ([CHOICE_LIST]) - Typ A & Typ B
 function getFeatChoiceListHTML(path, data) {
+    const raw = String(path || "").trim();
+    // Custom Freiwahlen (Talent/Klasse): classForm.freeChoices oder classForm.freeChoices:familyId
+    if (/^classForm\.freeChoices(?::|$)/i.test(raw)) {
+        const familyId = raw.includes(":") ? raw.split(":").slice(1).join(":").trim() : "";
+        return getCustomFreeChoiceListHTML(data, familyId);
+    }
+
     // --- TYP B: SPEZIFISCHE ZAUBER-QUELLE ---
     if (path.includes('source.name')) {
         return getFeatSpellListBySourceHTML(path, data);
@@ -4219,8 +4264,10 @@ function getFeatSpellListBySourceHTML(path, data) {
 
     let html = "<ul class='compact-list'>";
     uniqueEntries.forEach(entry => {
-        if (typeof spellList !== 'undefined') {
-            const spell = spellList.find(s => s.ID === entry.spellId);
+        if (typeof spellList !== 'undefined' || typeof findSheetSpellById === "function") {
+            const spell = (typeof findSheetSpellById === "function")
+                ? findSheetSpellById(entry.spellId)
+                : spellList.find(s => s.ID === entry.spellId);
             if (spell) {
                 // Name des Zaubers übersetzen
                 const name = (translations[currentLanguage] && translations[currentLanguage][spell.translationLabel]) 
@@ -4248,7 +4295,11 @@ function getFeatSpellListBySourceHTML(path, data) {
                 }
 
                 // Name nun in fett und danach der Zusatz (z.B. "Kältestrahl (Druide)")
-                html += `<li><b>${name}</b>${classSuffix}</li>`;
+                const markerHtml = (typeof isCustomContentSpell === "function" && isCustomContentSpell(spell)
+                    && typeof getCustomContentMarkerHtml === "function")
+                    ? getCustomContentMarkerHtml()
+                    : "";
+                html += `<li><b>${name}</b>${markerHtml}${classSuffix}</li>`;
             }
         }
     });
@@ -4722,8 +4773,10 @@ function parseSpeciesTraitDescription(text, data) {
 
             let listHtml = "<ul class='compact-list'>";
             uniqueSpellIds.forEach(id => {
-                if (typeof spellList !== 'undefined') {
-                    const spell = spellList.find(s => s.ID === id);
+                if (typeof spellList !== 'undefined' || typeof findSheetSpellById === "function") {
+                    const spell = (typeof findSheetSpellById === "function")
+                        ? findSheetSpellById(id)
+                        : spellList.find(s => s.ID === id);
                     if (spell) {
                         const name = (translations[currentLanguage] && translations[currentLanguage][spell.translationLabel]) 
                                      ? translations[currentLanguage][spell.translationLabel] 
@@ -4881,7 +4934,9 @@ function processSpellsPage(data) {
     const addSpellToList = (list, type) => {
         if (!list) return;
         list.forEach(entry => {
-            const spellObj = spellList.find(s => s.ID === entry.spellId);
+            const spellObj = (typeof findSheetSpellById === "function")
+                ? findSheetSpellById(entry.spellId)
+                : spellList.find(s => s.ID === entry.spellId);
             if (spellObj) {
                 allSpells.push({ spell: spellObj, source: entry.source, type: type });
             }
@@ -5001,7 +5056,7 @@ function fillSpellRow(tr, entry, data, level) {
         appPage = window.spellAppendixPages[spell.ID];
     }
 
-    // HTML einfügen
+    // HTML einfügen (kein Custom-Marker in der Zaubertabelle – verhindert Spaltenverschiebung)
     tr.innerHTML = `
         <td><input type="text" class="spell-input" value="${name}"></td>
         <td><input type="text" class="spell-input center-text" value="${abilityName}"></td>
@@ -5234,7 +5289,9 @@ function processSpellbookPage(data) {
         const spellId = parseInt(entry, 10) || (entry.spellId ? parseInt(entry.spellId, 10) : null);
         if(!spellId) return;
 
-        const spellData = spellList.find(s => s.ID === spellId);
+        const spellData = (typeof findSheetSpellById === "function")
+            ? findSheetSpellById(spellId)
+            : spellList.find(s => s.ID === spellId);
         if(!spellData) return;
 
         // Welcher Grad? (Zahl extrahieren aus "1stLevelLabel")
@@ -5378,7 +5435,9 @@ function buildAppendix() {
     // 2. Zauberdaten holen und sortieren (Cantrips -> Level 9)
     let spellsToRender = [];
     spellIds.forEach(id => {
-        const s = spellList.find(x => x.ID === id);
+        const s = (typeof findSheetSpellById === "function")
+            ? findSheetSpellById(id)
+            : spellList.find(x => x.ID === id);
         if (s) spellsToRender.push(s);
     });
 
@@ -5444,6 +5503,10 @@ function buildAppendix() {
     spellsToRender.forEach(spell => {
         // --- A. Daten aufbereiten ---
         const name = t[spell.translationLabel] || spell.translationLabel;
+        const nameMarkerHtml = (typeof isCustomContentSpell === "function" && isCustomContentSpell(spell)
+            && typeof getCustomContentMarkerHtml === "function")
+            ? getCustomContentMarkerHtml()
+            : "";
         const level = t[spell.spellLevel] || spell.spellLevel;
         const school = t[spell.spellSchool] || spell.spellSchool;
         const time = t[spell.castingTime] ? `${spell.castingTimeValue} ${t[spell.castingTime]}` : spell.castingTime;
@@ -5502,7 +5565,7 @@ function buildAppendix() {
         boxDiv.className = `spell-desc-box box-h${boxSizeClass} ${textClass}`;
         boxDiv.innerHTML = `
             <div class="sd-header">
-                <span class="sd-title">${name}</span>
+                <span class="sd-title">${name}${nameMarkerHtml}</span>
                 <span class="sd-subtitle">${level}, ${school}</span>
             </div>
             <div class="sd-meta">
@@ -5936,7 +5999,7 @@ function generateSafeFilename() {
 
 // 3. MODUS 1: Nativer Browser-Druck (Der neue Goldstandard)
 function printPDFNatively() {
-    const originalTitle = document.title; // "D&D Charakterbogen" speichern
+    const originalTitle = document.title; // Aktuellen Tab-Titel merken (Übersetzung)
     const printFilename = generateSafeFilename();
 
     // Genialer Trick: Wir ändern den Titel der Website kurz in den gewünschten Dateinamen.
@@ -6143,6 +6206,7 @@ function applyTranslations() {
     const elements = translations[currentLanguage];
     if (!elements) return;
 
+    setTextContent('sheetPageTitle', elements.sheetPageTitle);
     setTextContent('generateSpellDescLabel', elements.generateSpellDesc || 'Anhang generieren');
     setTextContent('characterNameLabel', elements.characterNameLabel || 'Charaktername');
     setTextContent('backgroundLabel', elements.backgroundLabel);
@@ -6432,6 +6496,7 @@ function confirmClearData() {
     // Bestätigungs-Dialog des Browsers
     if (confirm(warningText)) {
         // Liste der Keys, die zum Charakter gehören
+        // Alle Charakter-Keys aus dem Ersteller-Save (main.js) + Bogen-Extras
         const keysToRemove = [
             "characterName", "playerName", "class", "background", "species", "lineage", "ancestry", 
             "level", "xp", "strengthScore", "dexterityScore", "constitutionScore",
@@ -6441,8 +6506,13 @@ function confirmClearData() {
             "communityName", "communityDesc", "alignment", "personalityTraits", 
             "cantrips", "spellbookSpells", "preparedSpells", "favoredSpells", "languages",
             "portraitImage", "symbolImage", "customClassRuntime", "customSubclassRuntime",
-            "customBackgroundRuntime",
-            "dcCharacterPackageId", "dcCharacterPackageCreatedAt"
+            "customBackgroundRuntime", "customSpellPackRuntime", "customFeatPackRuntime",
+            "dcCharacterPackageId", "dcCharacterPackageCreatedAt",
+            // Talente & Hintergrund-/Völker-Nebenwerte (fehlten zuvor → Talente blieben auf S. 3)
+            "feat_background", "feat_species",
+            "tool_background", "instrument_background", "game_background",
+            "spellcastingAbility_species", "spellcastingAbility_talent",
+            "import_overrides"
         ];
 
         // Nur Charakter-relevante Daten löschen (Sprache & Bilder bleiben evtl. zur Bequemlichkeit)
@@ -6481,8 +6551,9 @@ function exportCharacterJSON() {
         "characterName", "playerName", "class", "background", "species", "lineage", "ancestry", "level", "xp",
         "strengthScore", "dexterityScore", "constitutionScore", "intelligenceScore", "wisdomScore", "charismaScore",
         "classForm", "equipment", "purse", "languages", "cantrips", "spellbookSpells", "preparedSpells", "favoredSpells",
+        "feat_background", "feat_species",
         "portraitImage", "symbolImage", "currentLanguage", "customClassRuntime", "customSubclassRuntime",
-        "customBackgroundRuntime",
+        "customBackgroundRuntime", "customSpellPackRuntime", "customFeatPackRuntime",
         "dcCharacterPackageId", "dcCharacterPackageCreatedAt"
     ];
 
@@ -6692,7 +6763,42 @@ function importCharacterJSON(event) {
                 alert(result.message || alertMessageForDcPackageError("unknownFormat"));
                 return;
             }
-            applyCharacterSheetImport(result.payload, result.envelope || null);
+
+            const applySheet = (payload, envelope) => {
+                applyCharacterSheetImport(payload, envelope || null);
+            };
+
+            // Alle verknüpften Custom-Typen erneut per Modal nachfordern
+            // (LS-/Embed allein erfüllt Import-Deps nicht; Base-Scan fängt fehlende Runtime ab)
+            const fromEnvelope = Array.isArray(result.envelope?.dependencies)
+                ? result.envelope.dependencies
+                : [];
+            const fromBase = (typeof buildCharacterSheetDependencies === "function")
+                ? buildCharacterSheetDependencies(result.payload?.base || {})
+                : [];
+            const byType = new Map();
+            fromBase.forEach(d => {
+                if (d && d.packageType) byType.set(d.packageType, d);
+            });
+            // Envelope gewinnt bei gleichem Typ (explizite packageId)
+            fromEnvelope.forEach(d => {
+                if (d && d.packageType) byType.set(d.packageType, d);
+            });
+            const requiredDeps = Array.from(byType.values())
+                .filter(d => d && d.required !== false);
+
+            if (!requiredDeps.length || typeof beginDcPackageImportWithDependencies !== "function") {
+                applySheet(result.payload, result.envelope || null);
+                return;
+            }
+
+            beginDcPackageImportWithDependencies({
+                envelope: result.envelope || null,
+                payload: result.payload,
+                detectedType: DC_PACKAGE_TYPE.CHARACTER_SHEET,
+                requiredDeps,
+                onApply: applySheet
+            });
         } catch (err) {
             console.error("Fehler beim Import:", err);
             alert(alertMessageForDcPackageError("invalidCharacterSheet"));
