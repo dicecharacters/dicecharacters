@@ -3987,6 +3987,49 @@ textarea::placeholder,
    Custom Class Builder Modal
    ======================================================================= */
 
+/* Custom-Inhalt-Marker (Kreis mit Plus) rechts neben der Bezeichnung */
+.custom-content-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35em;
+    height: 1.35em;
+    margin-left: 0.4em;
+    flex-shrink: 0;
+    color: #e8d8b5;
+    vertical-align: middle;
+    line-height: 0;
+}
+
+.custom-content-marker[hidden] {
+    display: none !important;
+}
+
+.custom-content-marker svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+#customClassListItem,
+#customBackgroundListItem {
+    flex-wrap: nowrap;
+}
+
+.cc-custom-subclass-option {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.15em;
+}
+
+.spell-name .custom-content-marker,
+.info-spell-name .custom-content-marker {
+    margin-left: 0.3em;
+    width: 1.05em;
+    height: 1.05em;
+}
+
 .add-custom-class-item {
     display: none !important;
     align-items: center;
@@ -4088,6 +4131,610 @@ textarea::placeholder,
 
 .add-custom-background-btn:hover {
     background: rgba(232, 216, 181, 0.15);
+}
+
+/* Custom Spell „+“ in Schritt 7 (zwischen Boxen und Masterliste).
+   Kein Extra-Margin: Abstände der bestehenden Schritt-7-Layout belassen.
+   Gleicher Breakpoint wie Class/Subclass/Background: ab 768px + Feature-Flag. */
+.add-custom-spell-wrap {
+    display: none !important;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 0;
+    padding: 0;
+    line-height: 0;
+}
+
+@media screen and (min-width: 768px) {
+    #addCustomSpellWrap.add-custom-spell-wrap.cc-feature-enabled {
+        display: flex !important;
+    }
+
+    /* Button-Höhe (~28px) vom Masterlisten-Abstand abziehen, Layout-Gap bleibt ≈ gleich */
+    #spellList:has(#addCustomSpellWrap.cc-feature-enabled) #master-spell-list {
+        margin-top: 0;
+    }
+}
+
+.add-custom-spell-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #e8d8b5;
+    background: transparent;
+    color: #e8d8b5;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-custom-spell-btn:hover {
+    background: rgba(232, 216, 181, 0.15);
+}
+
+/* Custom Feat „+“ unten links in Verbesserungen und Talente (Schritt 6) */
+.add-custom-feat-wrap {
+    display: none !important;
+    margin-top: 14px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+@media screen and (min-width: 768px) {
+    #addCustomFeatWrap.add-custom-feat-wrap.cc-feature-enabled {
+        display: flex !important;
+    }
+}
+
+.add-custom-feat-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #e8d8b5;
+    background: transparent;
+    color: #e8d8b5;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-custom-feat-btn:hover {
+    background: rgba(232, 216, 181, 0.15);
+}
+
+.cff-pack-banner {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    opacity: 0.9;
+    text-align: center;
+}
+
+.cff-overview-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0 0 0.5rem;
+}
+
+.cff-pack-counter {
+    margin: 0;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.cff-prereq-grid,
+.cff-attr-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    margin: 0.35rem 0 0.65rem;
+}
+
+#customFeatTab2Content .cff-section-title--prereq {
+    color: #a65d5d;
+}
+
+#customFeatTab2Content .cff-section-title--benefit {
+    color: #5d8a5d;
+}
+
+/* Mehrfachauswahl: Checkbox + Label vertikal zentriert */
+#customFeatTab2Content label.cff-inline-check-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0;
+    cursor: pointer;
+    line-height: 1.2;
+}
+
+#customFeatTab2Content label.cff-inline-check-label input[type="checkbox"] {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+#customFeatTab2Content .cc-lf-table {
+    min-width: 520px;
+}
+
+#customFeatTab2Content .cc-lf-header,
+#customFeatTab2Content .cc-lf-row {
+    grid-template-columns: minmax(94px, 1.02fr) minmax(120px, 1.3fr) 136px 84px;
+}
+
+#customFeatTab2Content .custom-class-field input[type="number"] {
+    max-width: 120px;
+}
+
+/* Grenzwert: gleiche Maße aktiv (number) und entwertet („-“, text) */
+#customFeatTab2Content #cffPrereqAttrValue,
+#customFeatTab2Content input.cff-prereq-attr-value {
+    width: 120px !important;
+    max-width: 120px !important;
+    min-width: 120px;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    box-sizing: border-box !important;
+    margin-top: 5px !important;
+    margin-bottom: 0 !important;
+    padding: 8px !important;
+    line-height: 20px !important;
+    font-size: inherit !important;
+    text-align: center !important;
+}
+
+#customFeatTab2Content #cffCategory,
+#customFeatTab2Content .cff-category-select {
+    width: 40% !important;
+    max-width: 40%;
+}
+
+/* Abstand zwischen DE/EN-Blöcken behalten; nur letzter Block ohne Extra-Margin */
+#customFeatTab2Content .custom-class-field > .custom-class-lang-block:last-child {
+    margin-bottom: 0;
+}
+
+#customFeatTab2Content .custom-class-lang-block > .custom-class-field:first-child {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+}
+
+#customFeatTab2Content .custom-class-field > .custom-class-field:last-child {
+    margin-bottom: 0;
+}
+
+.cff-tab2-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 1rem;
+}
+
+#customFeatEditorView.cff-tab2-active .custom-class-footer {
+    display: none;
+}
+
+.csp-pack-counter {
+    margin: 0;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.csp-overview-filters {
+    position: relative;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 0.65rem;
+}
+
+.csp-overview-counter,
+.csp-overview-add {
+    position: absolute;
+    bottom: 0;
+    height: 36px;
+    display: flex;
+    align-items: center;
+}
+
+.csp-overview-counter {
+    left: 0;
+}
+
+.csp-overview-add {
+    right: 0;
+}
+
+.csp-overview-filter {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    flex: 0 1 9rem;
+    min-width: 0;
+    max-width: 10rem;
+    gap: 4px;
+    color: #e8d8b5;
+    font-size: 0.85rem;
+}
+
+.csp-overview-filter-label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.25rem;
+    gap: 6px;
+    font-weight: bold;
+    line-height: 1.25rem;
+}
+
+#customSpellTab1Content .csp-overview-filter select,
+#customSpellTab1Content .csp-overview-filter select.dropdown,
+#customFeatTab1Content .csp-overview-filter select,
+#customFeatTab1Content .csp-overview-filter select.dropdown {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    font-size: 16px !important;
+    line-height: 34px !important;
+    box-sizing: border-box !important;
+}
+
+.csp-overview-filter--search {
+    flex: 2 1 12rem;
+    max-width: 20rem;
+}
+
+.csp-overview-search-wrap {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 36px;
+}
+
+.csp-overview-search-icon {
+    position: absolute;
+    left: 0.55rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0.95rem;
+    height: 0.95rem;
+    color: #e8d8b5;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.csp-overview-search-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+#customSpellTab1Content .csp-overview-search-input,
+#customSpellTab1Content input.csp-overview-search-input[type="text"],
+#customFeatTab1Content .csp-overview-search-input,
+#customFeatTab1Content input.csp-overview-search-input[type="text"] {
+    width: 100% !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    margin: 0 !important;
+    padding: 0 8px 0 1.85rem !important;
+    font-size: 16px !important;
+    line-height: 34px !important;
+    box-sizing: border-box !important;
+    text-align: left !important;
+    background-color: #2e2e33 !important;
+    border: 1px solid #8b5e34 !important;
+    color: #e8d8b5;
+    border-radius: 5px;
+}
+
+#customSpellTab1Content .csp-overview-search-input:focus,
+#customSpellTab1Content input.csp-overview-search-input[type="text"]:focus,
+#customFeatTab1Content .csp-overview-search-input:focus,
+#customFeatTab1Content input.csp-overview-search-input[type="text"]:focus {
+    outline: none;
+    border-color: #8b5e34;
+    box-shadow: none;
+}
+
+.csp-add-spell-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.csp-overview-scroll {
+    overflow-x: auto;
+    max-height: min(55vh, 520px);
+    overflow-y: auto;
+}
+
+.csp-overview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.csp-overview-table th,
+.csp-overview-table td {
+    border-bottom: 1px solid rgba(232, 216, 181, 0.25);
+    padding: 0.35rem 0.4rem;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.csp-overview-table th {
+    color: #e8d8b5;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    background: #2f2f35;
+    z-index: 1;
+}
+
+.csp-overview-table .csp-col-num {
+    width: 2.25rem;
+    text-align: left;
+    color: rgba(232, 216, 181, 0.85);
+}
+
+.csp-overview-table .csp-col-level {
+    text-align: center;
+}
+
+.csp-overview-table .csp-col-components {
+    letter-spacing: 0.02em;
+}
+
+.csp-overview-empty {
+    text-align: center;
+    opacity: 0.75;
+    font-style: italic;
+    white-space: normal !important;
+}
+
+.csp-col-actions {
+    width: 4.5rem;
+}
+
+.csp-action-btns {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.csp-edit-btn,
+.csp-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid #e8d8b5;
+    color: #e8d8b5;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+}
+
+.csp-edit-btn:hover,
+.csp-delete-btn:hover {
+    background: rgba(232, 216, 181, 0.15);
+}
+
+.csp-delete-btn {
+    border-color: rgba(224, 82, 82, 0.85);
+    color: #e05252;
+    font-weight: 700;
+}
+
+.csp-delete-btn:hover {
+    background: rgba(224, 82, 82, 0.18);
+}
+
+.csp-overview-table .csp-col-flag {
+    text-align: center;
+}
+
+.csp-list-initial {
+    font-weight: 700;
+    margin-right: 0.15rem;
+}
+
+.csp-broken-link {
+    color: #e05252;
+    font-weight: 700;
+    margin-left: 0.25rem;
+}
+
+.csp-num-input {
+    width: 5.5rem;
+    margin-top: 0;
+    flex-shrink: 0;
+}
+
+/*
+ * Dropdown + Werte-Input:
+ * feste gemeinsame Pixel-Höhe (globale .dropdown / .custom-class-field padding sonst ungleich)
+ * Zeile horizontal mittig
+ */
+#customSpellTab2Content .csp-field-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+#customSpellTab2Content select.csp-field-select.dropdown,
+#customSpellTab2Content select.csp-field-select {
+    width: 26% !important;
+    max-width: 26% !important;
+    flex: 0 0 auto;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    margin: 0 auto !important;
+    padding: 0 8px !important;
+    line-height: 34px !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+}
+
+#customSpellTab2Content .custom-class-field > select.csp-field-select {
+    display: block;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+#customSpellTab2Content .csp-field-row select.csp-field-select {
+    margin: 0 !important;
+}
+
+#customSpellTab2Content .csp-field-row input.csp-num-input[type="number"],
+#customSpellTab2Content .custom-class-field .csp-field-row input.csp-num-input[type="number"] {
+    width: 5.5rem !important;
+    max-width: 5.5rem !important;
+    flex: 0 0 5.5rem;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    line-height: 36px !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+}
+
+#customSpellTab2Content .csp-field-row input.csp-num-input[type="number"]::-webkit-inner-spin-button,
+#customSpellTab2Content .csp-field-row input.csp-num-input[type="number"]::-webkit-outer-spin-button {
+    height: 36px !important;
+    width: 18px !important;
+    margin: 0 !important;
+    background-position: center center !important;
+    background-size: 14px 18px !important;
+    opacity: 0.6;
+}
+
+/* Komponenten: Checkboxen horizontal mittig */
+#customSpellTab2Content .csp-comp-grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem 1.25rem;
+}
+
+/* Konzentration / Ritual: horizontal mittig */
+#customSpellTab2Content .csp-focus-grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem 1.25rem;
+}
+
+.csp-check-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: 0;
+}
+
+/* Material: Label + Input nebeneinander; Abstand zum Sektionsende −70 % */
+#customSpellTab2Content .csp-material-wrap {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 8px;
+    margin-bottom: 4px;
+    padding-bottom: 0;
+}
+
+#customSpellTab2Content .csp-material-wrap.is-visible {
+    display: flex;
+}
+
+#customSpellTab2Content .csp-material-wrap > label {
+    display: inline-block;
+    margin: 0 !important;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+#customSpellTab2Content .csp-material-wrap .csp-material-input,
+#customSpellTab2Content .custom-class-field .csp-material-wrap input.csp-material-input[type="text"] {
+    width: 40% !important;
+    max-width: 40% !important;
+    margin: 0 !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    min-height: 0 !important;
+    line-height: 1.2 !important;
+    box-sizing: border-box !important;
+}
+
+/* Komponenten-Sektion: unterer Abstand reduziert, aber nicht zu knapp */
+#customSpellTab2Content .custom-class-field:has(.csp-material-wrap.is-visible) {
+    margin-bottom: 10px;
+    padding-bottom: 2px;
+}
+
+.csp-class-mode-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.csp-custom-class-list {
+    font-weight: 600;
+}
+
+/* Divider zwischen Zauberliste und Leeren/Hinzufügen */
+.csp-tab2-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 12px;
+    border-top: 1px solid rgba(232, 216, 181, 0.35);
+}
+
+/* Auf Reiter Details: Pack-Footer ausblenden (sonst Linie unter den Buttons) */
+#customSpellEditorView.csp-tab2-active .custom-class-footer {
+    display: none;
 }
 
 .custom-class-overlay {
@@ -4237,6 +4884,7 @@ textarea::placeholder,
 }
 
 .custom-class-field input[type="text"],
+.custom-class-field input[type="number"],
 .custom-class-field textarea,
 .custom-class-field select,
 .custom-class-equip-row select,
@@ -5653,7 +6301,7 @@ button.cc-sc-remove-btn:hover {
     margin-top: 8px;
 }
 
-/* Tab 4 – Zauberprogression */
+/* Tab 5 – Zauberprogression */
 .cc-spell-prog-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -5837,3 +6485,228 @@ button.cc-sc-remove-btn:hover {
 .cc-spell-list-color--paladin { color: #c9a24a; }
 .cc-spell-list-color--ranger { color: #a08055; }
 .cc-spell-list-color--sorcerer { color: #bd6a63; }
+
+/* Tab 4 – Eigene Zauberliste */
+.cc-csl-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 12px 14px;
+    margin-bottom: 12px;
+}
+
+.cc-csl-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+}
+
+.cc-csl-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #e8d8b5;
+    font-size: 0.85rem;
+}
+
+.cc-csl-filter-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: bold;
+}
+
+.cc-csl-filter select {
+    min-width: 9rem;
+    margin: 0;
+}
+
+.cc-csl-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 0;
+}
+
+.cc-csl-counter {
+    color: #e8d8b5;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+    min-width: 3.5rem;
+    text-align: right;
+}
+
+.cc-csl-action-btn {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 36px;
+    border: 1px solid rgba(232, 216, 181, 0.35);
+    border-radius: 4px;
+    padding: 0 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+}
+
+.cc-csl-action-btn--lock {
+    background: #8eb4c9;
+}
+
+.cc-csl-action-btn--edit {
+    background: #3d5a73;
+    color: #e8d8b5;
+}
+
+.cc-csl-action-btn:hover {
+    filter: brightness(1.08);
+}
+
+/* Reset: gleiche Höhe wie Festlegen/Bearbeiten */
+.cc-csl-reset-btn {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    width: 36px;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: 1px solid rgba(232, 216, 181, 0.35);
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.cc-csl-reset-btn img {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+.cc-csl-reset-btn:hover:not(:disabled) img {
+    filter: drop-shadow(0 0 3px #fce181);
+}
+
+.cc-csl-reset-btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.cc-csl-spell-body {
+    max-height: 52vh;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* Locked: Auswahl gesperrt, Scrollbar bleibt bedienbar */
+.cc-csl-spell-body--locked {
+    opacity: 0.72;
+}
+
+.cc-csl-spell-body--locked .cc-csl-spell-ul li {
+    cursor: default;
+}
+
+.cc-csl-spell-ul {
+    margin-bottom: 12px;
+}
+
+.cc-lf-custom-spell-list-btn {
+    margin-top: 10px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid rgba(232, 216, 181, 0.4);
+    background: #8eb4c9;
+    color: #1a1a1a;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.cc-lf-custom-spell-list-btn:hover {
+    filter: brightness(1.08);
+}
+
+/* ========================================================================
+   Verknüpfte Dateien hochladen (Dependency-Modal)
+   ======================================================================== */
+.dc-linked-files-overlay {
+    z-index: 1000001;
+    align-items: center;
+}
+
+.dc-linked-files-hint {
+    margin: 0 0 16px;
+    opacity: 0.85;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+.dc-linked-files-buttons {
+    max-width: 320px;
+}
+
+.dc-dep-file-btn {
+    /* Kupfer wie Standard-Action-Buttons – Hintergrund bleibt auch nach Upload */
+    background: transparent;
+    border-color: #e8d8b5;
+    color: #e8d8b5;
+}
+
+.dc-dep-file-btn:hover {
+    background: rgba(232, 216, 181, 0.12);
+}
+
+.dc-dep-file-btn.is-fulfilled {
+    background: transparent;
+    border-color: #e8d8b5;
+    color: #81c784; /* nur Aufschrift grün */
+}
+
+.dc-dep-file-btn.is-fulfilled:hover {
+    background: rgba(232, 216, 181, 0.12);
+    color: #a5d6a7;
+}
+
+.dc-linked-files-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+#dcPackageLinkedFilesConfirmBtn:disabled,
+#dcPackageLinkedFilesConfirmBtn.dc-linked-files-confirm--disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: rgba(80, 80, 80, 0.35);
+    border-color: rgba(160, 160, 160, 0.45);
+    color: rgba(232, 216, 181, 0.55);
+    pointer-events: none;
+}
+
+#dcPackageLinkedFilesConfirmBtn.dc-linked-files-confirm--ready {
+    opacity: 1;
+    cursor: pointer;
+    background: transparent;
+    border-color: #e8d8b5;
+    color: #e8d8b5;
+    pointer-events: auto;
+}
+
+#dcPackageLinkedFilesConfirmBtn.dc-linked-files-confirm--ready:hover {
+    background: rgba(232, 216, 181, 0.12);
+}
+
+/* Spell-Chooser: Create bleibt immer aktiv (Bibliothek = Blatt) */
+#customSpellCreateNewBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: rgba(80, 80, 80, 0.35);
+    border-color: rgba(160, 160, 160, 0.45);
+    color: rgba(232, 216, 181, 0.55);
+}
+

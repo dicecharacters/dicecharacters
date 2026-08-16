@@ -257,9 +257,20 @@ body {
     60% {transform: translateY(-5px);}
 }
 
-/* Cards & Titles */
-.info-section, .contact-section { padding: 80px 20px; display: flex; justify-content: center; }
-.info-card, .contact-card {
+/* Cards & Titles — alle drei Blöcke teilen dieselben Maße */
+.info-section,
+.news-section,
+.contact-section {
+    padding: 80px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.info-card,
+.news-card,
+.contact-card {
+    box-sizing: border-box;
+    min-width: 0; /* Flex-Kinder dürfen nicht durch Inhalt breiter werden als max-width */
     background: var(--glass);
     border: 1px solid var(--gold);
     border-radius: 12px;
@@ -278,6 +289,40 @@ h2 {
 }
 
 p { line-height: 1.6; font-size: 1.1rem; margin-bottom: 25px; text-align: justify; }
+
+/* Aufzählung in der Universum-Karte — kupferfarbene D20-Icons */
+.universe-card-list {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.universe-card-list li {
+    position: relative;
+    margin-bottom: 12px;
+    padding-left: 1.7em;
+    line-height: 1.5;
+    font-size: 1.1rem;
+    text-align: left;
+    color: var(--text-light);
+}
+
+.universe-card-list li:last-child {
+    margin-bottom: 0;
+}
+
+.universe-card-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.22em;
+    width: 0.95em;
+    height: 0.95em;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='none' stroke='%238b5e34' stroke-width='28' d='M256 16 L463.8 136 L463.8 376 L256 496 L48.2 376 L48.2 136 Z M256 96 L394.5 336 L117.5 336 Z M256 96 L256 16 M256 96 L463.8 136 M256 96 L48.2 136 M394.5 336 L463.8 136 M394.5 336 L463.8 376 M394.5 336 L256 496 M117.5 336 L256 496 M117.5 336 L48.2 376 M117.5 336 L48.2 136'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
 
 .divider {
     height: 1px;
@@ -354,6 +399,7 @@ textarea { height: 200px; resize: vertical; }
     border-radius: 4px;
     font-weight: bold;
     font-family: inherit;
+    font-size: 1.3rem;
     cursor: pointer;
     transition: background 0.3s;
 }
@@ -375,30 +421,15 @@ textarea { height: 200px; resize: vertical; }
     padding: 15px;
 }
 
-/* --- News & Updates Sektion --- */
-.news-section { 
-    padding: 80px 20px; /* Identisch mit .info-section */
-    display: flex; 
-    justify-content: center; 
-}
-
-.news-card {
-    /* Exakt die gleichen Werte wie .info-card und .contact-card */
-    background: var(--glass);
-    border: 1px solid var(--gold);
-    border-radius: 12px;
-    padding: 50px;
-    max-width: 550px; /* Hier an .info-card angepasst (vorher 800px) */
-    width: 100%;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-}
-
-/* Der Container für die Scroll-Logik */
+/* --- News & Updates: nur Innenleben, Kartenmaß kommt von der gemeinsamen Card-Regel --- */
 .news-container {
-    max-height: 300px; 
-    overflow-y: scroll; 
-    padding-right: 15px;
-    margin-top: 20px;
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+    max-height: 300px;
+    overflow-x: hidden;
+    overflow-y: auto; /* Scrollbar nur bei Bedarf — sonst wird die Karte auf Android breiter */
+    margin-top: 0; /* Abstand kommt vom Divider unter der Überschrift */
 }
 
 /* --- Scrollbar Styling (Dauerhaft Gold) --- */
@@ -432,6 +463,9 @@ textarea { height: 200px; resize: vertical; }
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
     margin-bottom: 8px;
 }
 
@@ -447,6 +481,15 @@ textarea { height: 200px; resize: vertical; }
     padding: 2px 10px;
     border-radius: 5px;
     font-size: 0.85rem;
+}
+
+.news-content,
+.news-content p,
+.news-list,
+.news-list li {
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
 }
 
 .news-content p {
@@ -480,28 +523,17 @@ textarea { height: 200px; resize: vertical; }
    MOBILE ANPASSUNGEN (index.html)
    ======================================================================= */
 
-/* --- Mobile Anpassung für News --- */
-@media (max-width: 768px) {
-    .news-card {
-        padding: 30px 20px !important; /* Identisch mit mobilem info-card Padding */
-    }
-}
-
-/* Responsive */
+/* Responsive — ein Breakpoint, alle drei Karten gleich */
 @media (max-width: 768px) {
     #floatingLang { top: auto; bottom: 20px; flex-direction: row; right: auto; left: 50%; transform: translateX(-50%); }
     .hero-content h1 { font-size: 2.8rem; }
-}
 
-@media (max-width: 768px) {
     /* 1. Zweites Info-Textfeld ausblenden (für besseren Lesefluss) */
     #aboutText2 {
         display: none !important;
     }
 
     /* 2. Platzhalter-Styling für Kontaktformular (Betreff & Nachricht) */
-    /* Verhindert zu große/kleine Schrift im Vergleich zum Tipp-Text */
-    
     #subjectInput::placeholder, 
     #messageInput::placeholder {
         font-size: 1.1rem !important;
@@ -510,7 +542,6 @@ textarea { height: 200px; resize: vertical; }
         font-family: 'Garamond', serif !important;
     }
 
-    /* Vendor-Prefixes für mobile Safari & Chrome (iOS/Android) */
     #subjectInput::-webkit-input-placeholder,
     #messageInput::-webkit-input-placeholder {
         font-size: 1.1rem !important;
@@ -523,9 +554,11 @@ textarea { height: 200px; resize: vertical; }
         opacity: 0.5 !important;
     }
 
-    /* 3. Padding der Cards auf Mobile etwas reduzieren */
-    .info-card, .contact-card {
-        padding: 30px 20px !important;
+    /* 3. Padding aller Karten identisch */
+    .info-card,
+    .news-card,
+    .contact-card {
+        padding: 30px 20px;
     }
 
     /* 4. Hero Subtitle Abstände optimieren */
@@ -563,4 +596,100 @@ textarea { height: 200px; resize: vertical; }
     .hero-logo {
         width: 280px;     /* Schmaler auf dem Handy */
     }
+}
+
+/* SEO-H1 unsichtbar, Logo bleibt das sichtbare Zeichen */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Rechtliche Seiten: gleiche Kartenbreite wie Info/News/Kontakt */
+.legal-card h1 {
+    color: var(--gold);
+    margin-top: 0;
+    font-size: 1.8rem;
+    text-align: center;
+}
+
+.legal-card h2 {
+    font-size: 1.2rem;
+    text-align: left;
+    margin: 28px 0 10px;
+}
+
+.legal-card p,
+.legal-dl {
+    text-align: left;
+}
+
+.legal-dl {
+    margin: 0 0 20px;
+}
+
+.legal-dl dt {
+    color: var(--gold);
+    font-weight: bold;
+    margin-top: 14px;
+}
+
+.legal-dl dd {
+    margin: 4px 0 0;
+}
+
+/* Zurück-Link im Gold der Landingpage */
+.legal-back {
+    display: block;
+    text-align: center;
+    margin-top: 28px;
+    text-decoration: none;
+    color: var(--gold);
+}
+
+.legal-back:hover {
+    color: #e8b84a;
+    text-decoration: underline;
+}
+
+/* Gedecktes Blau nur für E-Mail-Links, nicht für Footer oder Zurück */
+.legal-card a[href^="mailto"],
+.legal-dl a[href^="mailto"] {
+    color: #6d8aa3;
+}
+
+.legal-card a[href^="mailto"]:hover,
+.legal-dl a[href^="mailto"]:hover {
+    color: #8aa6bc;
+    text-decoration: underline;
+}
+
+/* Schlichter Footer — einziger sichtbarer Phase-0-Zusatz auf der Startseite */
+.site-footer {
+    padding: 24px 20px 40px;
+    text-align: center;
+}
+
+.site-footer nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+}
+
+.site-footer a {
+    color: var(--gold);
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.site-footer a:hover {
+    color: #e8b84a;
+    text-decoration: underline;
 }
