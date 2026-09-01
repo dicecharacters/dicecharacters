@@ -145,6 +145,7 @@ const translations = {
     "selectSpeciesAlert": "Bitte wähle ein Volk aus.",
     "selectClassAlert": "Bitte wähle eine Klasse aus.",
     "levelRangeAlert": "Bitte wähle eine Stufe zwischen 1 und 20.",
+    "levelDownResetStep6ConfirmLabel": "Stufe absenken setzt die Spezialisierung in Schritt 6 zurück. Fortfahren?",
     "selectClassFormAlert": "Bitte forme deine Klasse.",
     "selectSpellsAlert": "Bitte wähle einen Zauber aus.",
     "selectBackgroundAlert": "Bitte wähle einen Hintergrund aus.",
@@ -313,7 +314,8 @@ const translations = {
     "subclass": "Unterklasse",
     "classFeaturesTitle": "Klassenmerkmale",
     "additionalSkillsLabel": "Zusätzliche Fertigkeiten",
-    "additionalSkillsShortD": "Du erlangst Übung in zusätzlichen Fertigkeiten.",
+    "additionalSkillsShortD": "Du erlangst Übung in einer Auswahl zusätzlicher Fertigkeiten.",
+    "additionalSkillsGrantedShortD": "Du erlangst Übung in den folgenden zusätzlichen Fertigkeiten: {skills}",
     "savingThrowChoiceShortD": "Du wählst Attribute aus, die deine Rettungswürfe ergänzen.",
     "proficiencyBonusLabel": "Übungsbonus",
     "proficiencyBonusShortD": "Bonus, den du auf Würfe erhältst, wenn du in einer Fertigkeit geübt bist.",
@@ -601,6 +603,7 @@ const translations = {
     "selectSpeciesAlert": "Please choose a species.",
     "selectClassAlert": "Please choose a class.",
     "levelRangeAlert": "Please select a level between 1 and 20.",
+    "levelDownResetStep6ConfirmLabel": "Lowering your level will reset specialization choices in step 6. Continue?",
     "selectClassFormAlert": "Please form your class.",
     "selectSpellsAlert": "Please choose a spell.",
     "selectBackgroundAlert": "Please choose a background.",
@@ -769,7 +772,8 @@ const translations = {
     "subclass": "Subclass",
     "classFeaturesTitle": "Class Features",
     "additionalSkillsLabel": "Additional Skills",
-    "additionalSkillsShortD": "You gain proficiency in additional skills.",
+    "additionalSkillsShortD": "You gain proficiency in a selection of additional skills.",
+    "additionalSkillsGrantedShortD": "You gain proficiency in the following additional skills: {skills}",
     "savingThrowChoiceShortD": "You choose abilities that add to your saving throw proficiencies.",
     "proficiencyBonusLabel": "Proficiency Bonus",
     "proficiencyBonusShortD": "Bonus you receive on rolls when you are proficient in a skill.",
@@ -1191,6 +1195,13 @@ function applyTranslations(translations, currentLang) {
     // Custom-Class-UI (falls geladen) aktualisieren
     if (typeof refreshCustomClassUI === 'function') {
         refreshCustomClassUI();
+    }
+    if (typeof applyCspcTranslations === "function") applyCspcTranslations();
+
+    // LEVEL-UP: Stepbar-/Titel-Chrome nach Sprachwechsel erneut setzen
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()
+        && typeof applyLevelUpModeChrome === "function") {
+        applyLevelUpModeChrome();
     }
     
 }

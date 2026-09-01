@@ -73,14 +73,14 @@ Object.assign(translations.de, {
         "infernalTraitD": "Du hast Resistenz gegen Feuerschaden und kennst den Zaubertrick 'Feuerpfeil'. Abhängig von deiner Stufe erlernst du spezielle Zauber.",
 
         // Species: Erblinien, Beschreibungen (Bogen)
-        "drowTraitDSheet": "Die Reichweite deiner Dunkelsicht erhöht sich auf 36 m. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br><b>Volkszauber:</b><br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
+        "drowTraitDSheet": "Die Reichweite deiner Dunkelsicht erhöht sich auf 36 m. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br>Du beherrscht folgende Zauber:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
         "highElfTraitDSheet": "Nach jeder langen Rast kannst du den Zaubertrick 'Taschenspielerei' durch einen anderen Zaubertrick aus der Magier-Zauberliste ersetzen.",
-        "woodElfTraitDSheet": "Deine Bewegungsrate erhöht sich auf 10 m. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br><b>Volkszauber:</b><br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
+        "woodElfTraitDSheet": "Deine Bewegungsrate erhöht sich auf 10 m. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br>Du beherrscht folgende Zauber:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
         "forestGnomeTraitDSheet": "Du kennst den Zaubertrick 'Einfache Illusion'. Du kannst den Zauber 'Mit Tieren sprechen' in Höhe deines Übungsbonus ohne Zauberplatz wirken (Regeneration: Lange Rast). Du kannst den Zauber auch mit regulären Zauberplätzen wirken.",
         "rockGnomeTraitDSheet": "Du kennst die Zaubertricks 'Ausbessern' und 'Taschenspielerei'. Du kannst 10 Minuten aufwenden, um durch den Zaubertrick 'Taschenspielerei' ein winziges Uhrwerkgerät (RK 5, 1 TP) zu erschaffen. Es speichert einen von dir gewählten Effekt des Zaubers, welcher durch eine Bonusaktion (Berührung) aktiviert wird. Du kannst bis zu 3 Geräte gleichzeitig besitzen (sie zerfallen nach 8 Stunden oder bei manueller Zerlegung).",
-        "abyssalTraitDSheet": "Du hast Resistenz gegen Giftschaden. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br><b>Volkszauber:</b><br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
-        "chthonicTraitDSheet": "Du hast Resistenz gegen nekrotischen Schaden. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br><b>Volkszauber:</b><br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
-        "infernalTraitDSheet": "Du hast Resistenz gegen Feuerschaden. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br><b>Volkszauber:</b><br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
+        "abyssalTraitDSheet": "Du hast Resistenz gegen Giftschaden. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br>Du beherrscht folgende Zauber:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
+        "chthonicTraitDSheet": "Du hast Resistenz gegen nekrotischen Schaden. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br>Du beherrscht folgende Zauber:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
+        "infernalTraitDSheet": "Du hast Resistenz gegen Feuerschaden. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br>Du beherrscht folgende Zauber:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
 
         // Species: Abstammung, Namen
         "blackLabel": "Schwarz",
@@ -176,8 +176,8 @@ Object.assign(translations.de, {
         "otherworldlyPresenceLabel": "Außerweltliche Präsenz",
 
         // Species: Merkmale, Kurzbeschreibungen
-    	"darkvision1ShortD": "Du kannst bei schwachem Licht und Dunkelheit auf 18 Meter sehen.",
-    	"darkvision2ShortD": "Du kannst bei schwachem Licht und Dunkelheit auf 36 Meter sehen.",
+    	"darkvision1ShortD": "Du hast Dunkelsicht mit einer Reichweite von 18 Meter.",
+    	"darkvision2ShortD": "Du hast Dunkelsicht mit einer Reichweite von 36 Meter.",
     	"celestialResistanceShortD": "Du hast Resistenz gegen nekrotischen und gleißenden Schaden.",
     	"healingHandsShortD": "Einmal pro langer Rast kannst du eine Kreatur berühren und sie um eine Anzahl von W4 in Höhe deines Übungsbonus heilen.",
     	"lightBearerShortD": "Du kennst den Zaubertrick 'Licht'.",
@@ -211,8 +211,8 @@ Object.assign(translations.de, {
         "otherworldlyPresenceShortD": "Du kennst den Zaubertrick 'Thaumaturgie'.",
 
         // Species: Merkmale, Beschreibungen (Ersteller)
-        "darkvision1D": "Du hast Dunkelsicht mit einer Reichweite von 18 Meter.",
-        "darkvision2D": "Du hast Dunkelsicht mit einer Reichweite von 36 Meter.",
+        "darkvision1D": "Du kannst bei schwachem Licht und Dunkelheit auf 18 Meter sehen.",
+        "darkvision2D": "Du kannst bei schwachem Licht und Dunkelheit auf 36 Meter sehen.",
         "celestialResistanceD": "Du hast Resistenz gegen nekrotischen Schaden und gleißenden Schaden.",
         "healingHandsD": "Als magische Aktion berührst du eine Kreatur und würfelst eine Anzahl von W4 entsprechend deinem Übungsbonus. Die Kreatur erhält Trefferpunkte in Höhe der Gesamtzahl der gewürfelten Punkte zurück. Sobald du diese Eigenschaft verwendest, kannst du sie erst nach einer langen Rast wieder verwenden.",
         "lightBearerD": "Du kennst den Zaubertrick 'Licht'. Charisma dient dazu als Zauberfähigkeit.",
@@ -246,8 +246,8 @@ Object.assign(translations.de, {
         "otherworldlyPresenceD": "Du kennst den Zaubertrick 'Thaumaturgie'. Wenn du ihn mit dieser Eigenschaft wirkst, verwendet der Zauber dieselbe Zauberfähigkeit, die du für dein Merkmal Unholdisches Erbe verwendest.",
 
         // Species: Merkmale, Beschreibungen (Bogen)
-	"drowTraitDSheet": "Die Reichweite deiner Dunkelsicht erhöht sich auf 36 m. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br><b>Volkszauber:</b><br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
-    "woodElfTraitDSheet": "Deine Bewegungsrate erhöht sich auf 10 m. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br><b>Volkszauber:</b><br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
+	"drowTraitDSheet": "Die Reichweite deiner Dunkelsicht erhöht sich auf 36 m. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br>Du beherrscht folgende Zauber:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
+    "woodElfTraitDSheet": "Deine Bewegungsrate erhöht sich auf 10 m. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br>Du beherrscht folgende Zauber:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
     	"darkvision1DSheet": "Du besitzt Dunkelsicht mit einer Reichweite von 18 Metern.",
     	"darkvision2DSheet": "Du besitzt Dunkelsicht mit einer Reichweite von 36 Metern.",
     	"celestialResistanceDSheet": "Du hast Resistenz gegen nekrotischen Schaden und gleißenden Schaden.",
@@ -357,14 +357,14 @@ Object.assign(translations.en, {
         "infernalTraitD": "You have Resistance to Fire damage and know the 'Fire Bolt' cantrip. Depending on your level, you will learn special spells.",
 
         // Species: Lineages, Traits Descriptions (Sheet)
-	"drowTraitDSheet": "The range of your Darkvision increases to 120 feet. Depending on your level, you learn special spells. You always have these spells prepared and can cast them once per Long Rest without using a spell slot. You can also cast them using any spell slots of the appropriate level.<br><br><b>Species Spells:</b><br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
+	"drowTraitDSheet": "The range of your Darkvision increases to 120 feet. Depending on your level, you learn special spells. You always have these spells prepared and can cast them once per Long Rest without using a spell slot. You can also cast them using any spell slots of the appropriate level.<br><br>You know the following spells:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
     	"highElfTraitDSheet": "Whenever you finish a Long Rest, you can replace the 'Prestidigitation' cantrip with a different cantrip from the Wizard spell list.",
-    	"woodElfTraitDSheet": "Your Speed increases to 35 feet. Depending on your level, you learn special spells. You always have these spells prepared and can cast them once per Long Rest without using a spell slot. You can also cast them using any spell slots of the appropriate level.<br><br><b>Species Spells:</b><br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
+    	"woodElfTraitDSheet": "Your Speed increases to 35 feet. Depending on your level, you learn special spells. You always have these spells prepared and can cast them once per Long Rest without using a spell slot. You can also cast them using any spell slots of the appropriate level.<br><br>You know the following spells:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
     	"forestGnomeTraitDSheet": "You know the 'Minor Illusion' cantrip. You can cast the 'Speak with Animals' spell without a spell slot a number of times equal to your Proficiency Bonus (Regains on Long Rest). You can also cast it using any available spell slots.",
     	"rockGnomeTraitDSheet": "You know the cantrips 'Mending' and 'Prestidigitation'. You can spend 10 minutes casting 'Prestidigitation' to create a Tiny clockwork device (AC 5, 1 HP) that stores one specific effect of the spell. The effect is activated via a Bonus Action (touch). You can have up to 3 devices at once (they fall apart after 8 hours or if dismantled).",
-    	"abyssalTraitDSheet": "You have Resistance to Poison damage. Depending on your level, you learn special spells. You always have these spells prepared and can cast them once per Long Rest without using a spell slot. You can also cast them using any spell slots of the appropriate level.<br><br><b>Species Spells:</b><br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
-    	"chthonicTraitDSheet": "You have Resistance to Necrotic damage. Depending on your level, you learn special spells. You always have these spells prepared and can cast them once per Long Rest without using a spell slot. You can also cast them using any spell slots of the appropriate level.<br><br><b>Species Spells:</b><br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
-    	"infernalTraitDSheet": "You have Resistance to Fire damage. Depending on your level, you learn special spells. You always have these spells prepared and can cast them once per Long Rest without using a spell slot. You can also cast them using any spell slots of the appropriate level.<br><br><b>Species Spells:</b><br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
+    	"abyssalTraitDSheet": "You have Resistance to Poison damage. Depending on your level, you learn special spells. You always have these spells prepared and can cast them once per Long Rest without using a spell slot. You can also cast them using any spell slots of the appropriate level.<br><br>You know the following spells:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
+    	"chthonicTraitDSheet": "You have Resistance to Necrotic damage. Depending on your level, you learn special spells. You always have these spells prepared and can cast them once per Long Rest without using a spell slot. You can also cast them using any spell slots of the appropriate level.<br><br>You know the following spells:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
+    	"infernalTraitDSheet": "You have Resistance to Fire damage. Depending on your level, you learn special spells. You always have these spells prepared and can cast them once per Long Rest without using a spell slot. You can also cast them using any spell slots of the appropriate level.<br><br>You know the following spells:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
 
         // Species: Ancestry, Names
         "blackLabel": "Black",
@@ -460,8 +460,8 @@ Object.assign(translations.en, {
         "otherworldlyPresenceLabel": "Otherworldly Presence",
 
         // Species: Traits, Short Descriptions
-    	"darkvision1ShortD": "You can see in dim light and darkness within 60 feet.",
-    	"darkvision2ShortD": "You can see in dim light and darkness within 120 feet.",
+    	"darkvision1ShortD": "You have Darkvision with a range of 60 feet.",
+    	"darkvision2ShortD": "You have Darkvision with a range of 120 feet.",
     	"celestialResistanceShortD": "You have resistance to necrotic and radiant damage.",
     	"healingHandsShortD": "Once per long rest, you can touch a creature to heal it for a number of d4s equal to your proficiency bonus.",
    	"lightBearerShortD": "You know the 'Light' cantrip. Charisma is your spellcasting ability for it.",
@@ -495,8 +495,8 @@ Object.assign(translations.en, {
     	"otherworldlyPresenceShortD": "You know the 'Thaumaturgy' cantrip.",
 
         // Species: Traits, Descriptions
-        "darkvision1D": "You have Darkvision with a range of 60 feet.",
-        "darkvision2D": "You have Darkvision with a range of 120 feet.",
+        "darkvision1D": "You can see in dim light and darkness within 60 feet.",
+        "darkvision2D": "You can see in dim light and darkness within 120 feet.",
         "celestialResistanceD": "You have Resistance to Necrotic damage and Radiant damage.",
         "healingHandsD": "As a Magic action, you touch a creature and roll a number of d4s equal to your Proficiency Bonus. The creature regains a number of Hit Points equal to the total rolled. Once you use this trait, you can’t use it again until you finish a Long Rest.",
         "lightBearerD": "You know the 'Light' cantrip. Charisma is your spellcasting ability for it.",

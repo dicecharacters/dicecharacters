@@ -74,8 +74,8 @@ Object.assign(translations.de, {
     "greaterPortentD": "Du würfelst nun 3W20 für 'Omen' (statt 2).",
     "overchannelD": "Schadens-Magierzauber (Grad 1–5): maximiere den Schaden. 1. Nutzung frei. Weitere vor langer Rast: 2W12 nekrotisch pro Platzgrad (ignoriert Resistenz/Immunität); jede weitere Nutzung +1W12 pro Grad.",
     "illusoryRealityD": "Bonusaktion während Illusionszauber (Grad 1+, mit Platz): Ein unbelebtes, nichtmagisches Objekt der Illusion wird 1 Min. real (kein Schaden, keine Zustände).",
-    "spellMasteryD": "Wähle je einen Magierzauber Grad 1 und 2 mit Wirkungszeit Aktion. Stets vorbereitet; auf niedrigstem Grad beliebig oft ohne Platz. (Tausch nach langer Rast.)",
-    "signatureSpellsD": "Wähle zwei Zauber Grad 3. Diese sind immer vorbereitet und können jeweils 1x pro Kurze/Lange Rast ohne Zauberplatz gewirkt werden."
+    "spellMasteryD": "Magierzauber (Grad 1 / 2) mit Wirkungszeit Aktion. Die folgenden Zauber sind stets vorbereitet. Du kannst diese auf niedrigstem Grad beliebig oft ohne Zauberplatz wirken. (Tausch nach langer Rast.)<br><br>[CHOICE_LIST]favoredSpells.source.name.spellMasteryLabel[/CHOICE_LIST]",
+    "signatureSpellsD": "Die folgenden Zauber (Grad 3) sind stets vorbereitet und können jeweils einmal pro Kurzen oder Langen Rast ohne Zauberplatz gewirkt werden.<br><br>[CHOICE_LIST]favoredSpells.source.name.signatureSpellsLabel[/CHOICE_LIST]"
 });
 
 Object.assign(translations.en, {
@@ -153,6 +153,6 @@ Object.assign(translations.en, {
     "greaterPortentD": "You now roll 3d20 for Portent (instead of 2).",
     "overchannelD": "Damaging Wizard spell (levels 1–5): maximize damage. First use free. Further before Long Rest: 2d12 Necrotic per slot level (ignores Resistance/Immunity); each further use +1d12 per level.",
     "illusoryRealityD": "Bonus Action during Illusion spell (level 1+, with a slot): One inanimate nonmagical object of the illusion becomes real for 1 minute (no damage, no conditions).",
-    "spellMasteryD": "Choose one level 1 and one level 2 spell (casting time: Action). Always prepared; cast at lowest level at will without a slot. (Swap after Long Rest.)",
-    "signatureSpellsD": "Choose two Level 3 spells. Always prepared, can be cast 1x per Short/Long Rest without slot."
+    "spellMasteryD": "Wizard spells (levels 1 and 2) with a casting time of Action. The following spells are always prepared. You can cast them at their lowest level at will without a spell slot. (Swap after a Long Rest.)<br><br>[CHOICE_LIST]favoredSpells.source.name.spellMasteryLabel[/CHOICE_LIST]",
+    "signatureSpellsD": "The following spells (level 3) are always prepared and can each be cast once per Short or Long Rest without a spell slot.<br><br>[CHOICE_LIST]favoredSpells.source.name.signatureSpellsLabel[/CHOICE_LIST]"
 });
