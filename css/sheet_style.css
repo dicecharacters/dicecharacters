@@ -133,6 +133,24 @@ body {
 .btn-edit { background-color: #1d3557 !important; }		/* dunkles blau */
 .btn-edit.active { background-color: #457b9d !important; }	/* helles blau */
 .btn-export { background-color: #6a994e !important; }		/* grün */
+.btn-levelup { background-color: #c9a227 !important; gap: 0.35rem; }	/* gold — Stufenaufstieg */
+.btn-levelup:disabled {
+    background-color: #7a7a7a !important;
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: none;
+    transform: none;
+    box-shadow: none;
+}
+.btn-levelup:disabled:hover {
+    filter: none;
+    transform: none;
+}
+.level-up-btn-icon {
+    font-size: 1.15em;
+    line-height: 1;
+    font-weight: bold;
+}
 .btn-import { background-color: #bc6c25 !important; }		/* gelb */
 .btn-pdf { background-color: #333533 !important; }		/* schwarz */
 .btn-clear { background-color: #ae2012 !important; } 		/* rot */
@@ -372,7 +390,7 @@ body {
 .header .field-value-row input { flex: 1; min-width: 0; }
 .header input { width: 100%; border: none; border-bottom: 0.1rem solid #333; padding: 0.5rem 0; font-size: 1.4rem; background-color: transparent; }
 
-/* Custom-Inhalt-Marker (Kreis mit Plus) neben Custom-Bezeichnungen */
+/* Custom-Inhalt-Marker (⊕) neben Custom-Bezeichnungen */
 .custom-content-marker {
     display: inline-flex;
     align-items: center;
@@ -381,15 +399,12 @@ body {
     height: 1.55rem;
     flex-shrink: 0;
     color: #222;
-    line-height: 0;
+    line-height: 1;
+    font-size: 1.25rem;
+    font-weight: normal;
 }
 .custom-content-marker[hidden] {
     display: none !important;
-}
-.custom-content-marker svg {
-    width: 100%;
-    height: 100%;
-    display: block;
 }
 .sd-title .custom-content-marker,
 .compact-list .custom-content-marker,
@@ -397,6 +412,7 @@ body {
     width: 1.2rem;
     height: 1.2rem;
     margin-left: 0.25rem;
+    font-size: 1rem;
     vertical-align: middle;
 }
 .header label { font-size: 1.1rem; margin-top: 0.2rem; }
@@ -428,7 +444,7 @@ body {
 .saving-throw { display: flex; align-items: center; gap: 0.3rem; }
 .skills { display: flex; flex-direction: column; gap: 0.75rem; margin-top: auto; }
 .skill { display: flex; align-items: center; gap: 0.5rem; }
-.saving-throw input[type="text"], .skill .skill-value { width: 2rem; text-align: center; border: none; border-bottom: 0.1rem solid black; font-size: 1.4rem; }
+.saving-throw input[type="text"], .skill .skill-value { width: 2.5rem; text-align: center; border: none; border-bottom: 0.1rem solid black; font-size: 1.4rem; }
 
 .stats-group { display: grid; grid-template-columns: auto 1fr; gap: 1rem; }
 .left-stats-column, .right-stats-column { display: flex; flex-direction: column; gap: 1rem; }
@@ -813,16 +829,11 @@ input[type="checkbox"].rounded-checkbox:checked { background-color: #000; }
     height: 100%; /* Füllt die Tabellenzelle */
 }
 
-/* Stil für deaktivierte Inventar-Zeilen */
-.disabled-inventory-row {
-    opacity: 1;
-    pointer-events: none; /* Verhindert Klicks */
-    filter: grayscale(100%);
-}
-
-/* Damit die Checkbox trotzdem erkennbar bleibt, falls nötig */
-.disabled-inventory-row input[type="checkbox"] {
+/* Gesperrte Rüstungs-Zeile: nur Checkbox sperren, Textfelder bleiben im Edit-Mode nutzbar */
+.disabled-inventory-row .equipped-checkbox {
+    pointer-events: none;
     cursor: not-allowed;
+    filter: grayscale(100%);
 }
 
 /* ==========================================================================
@@ -1524,6 +1535,26 @@ padding: 0.8rem
     text-overflow: ellipsis;
 }
 .center-text { text-align: center; }
+
+/* Name + ⊕ in der Zaubertabelle (Seite 5) */
+.spell-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    min-width: 0;
+    width: 100%;
+}
+.spell-name-cell .spell-input {
+    flex: 1;
+    min-width: 0;
+}
+.spell-table .spell-name-cell .custom-content-marker {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-left: 0;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
 
 /* PDF OPTIMIERUNG FÜR SEITE 5 */
 .pdf-export-mode .spell-sheet-box {

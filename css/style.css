@@ -40,11 +40,19 @@ body::before {
     top: 20px; /* Positioniert ihn 20px vom oberen Bildschirmrand */
     right: 2%; /* Positioniert ihn 16.5% vom linken Bildschirmrand */
     z-index: 1000; /* Setzt die Stapelreihenfolge über andere Elemente */
-    display: flex; /* Nutzt flexbox für die Anordnung */
-    align-items: center; /* Zentriert die Elemente vertikal */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
 }
 
-#languageSwitcher button {
+.language-switcher-flags {
+    display: flex;
+    align-items: center;
+}
+
+/* Nur Flaggen-Buttons – nicht die Custom-Hub-+-Buttons */
+.language-switcher-flags > button {
     background: none; /* Entfernt den Standard-Hintergrund des Buttons */
     border: none; /* Entfernt die Standardrahmen des Buttons */
     cursor: pointer; /* Ändert den Mauszeiger zu einem Zeiger bei Hover */
@@ -52,11 +60,161 @@ body::before {
     margin-right: 10px; /* Fügt einen rechten Abstand zwischen Buttons hinzu */
 }
 
+.language-switcher-flags > button:last-child {
+    margin-right: 0;
+}
+
 #languageSwitcher img {
     border-radius: 50%; /* Macht die Bilder rund */
     width: 24px; /* Setzt die Breite der Bilder */
     height: 24px; /* Setzt die Höhe der Bilder */
     border: 2px solid #7a431d; /* Fügt einen kupferfarbenen Rahmen hinzu */
+}
+
+/* Schritt-1: Custom-Hub unter den Sprachen; Zone öffnet nach links.
+   Gleicher Breakpoint wie die „+“-Buttons in den Fach-Schritten: ab 768px + Flag. */
+.step1-custom-hub {
+    display: none !important;
+    position: relative;
+    margin: 0;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+@media screen and (min-width: 768px) {
+    .step1-custom-hub.cc-feature-enabled {
+        display: inline-flex !important;
+    }
+}
+
+.step1-custom-hub-toggle {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    color: #d4a017;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: auto;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 0;
+}
+
+.step1-custom-hub-toggle:hover,
+.step1-custom-hub-toggle:focus,
+.step1-custom-hub-toggle:active {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.step1-custom-hub-toggle-face {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: auto;
+    background: none;
+    border: none;
+}
+
+/* Pfeil +30%; ⊕ +20%; initial nach links, geöffnet 180° nach rechts */
+.step1-custom-hub-toggle-face .cc-collapse-arrow {
+    position: relative;
+    font-size: 3.504rem;
+    line-height: 1;
+    display: inline-block;
+    color: #8b5e34;
+    transform: rotate(-90deg);
+    transition: transform 0.35s ease-in-out;
+}
+
+.step1-custom-hub-toggle-face .cc-collapse-arrow.is-collapsed {
+    transform: rotate(90deg);
+}
+
+.step1-custom-hub-glyph {
+    position: absolute;
+    left: 50%;
+    top: 38%;
+    transform: translate(-50%, -50%);
+    font-size: 0.367em;
+    line-height: 1;
+    font-weight: normal;
+    color: #e8d8b5;
+    pointer-events: none;
+}
+
+/* Zone: aus dem rechten Rand nach innen einschieben */
+.step1-custom-hub-panel {
+    position: absolute;
+    top: 0;
+    right: calc(100% + 10px);
+    left: auto;
+    min-width: 210px;
+    padding: 8px 10px;
+    border: 1px solid rgba(232, 216, 181, 0.28);
+    border-radius: 6px;
+    background: rgba(30, 30, 34, 0.96);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: transform 0.35s ease-in-out, opacity 0.35s ease-in-out, visibility 0.35s ease-in-out;
+}
+
+.step1-custom-hub-panel.collapsed {
+    display: flex !important;
+    transform: translateX(calc(100% + 3.5rem));
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.step1-custom-hub-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+}
+
+.step1-custom-hub-row[hidden] {
+    display: none !important;
+}
+
+.step1-custom-hub-label {
+    color: #e8d8b5;
+    font-family: 'Garamond', serif;
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+.step1-custom-hub-label.is-loaded {
+    color: #6faf6f;
+}
+
+.step1-custom-hub-row.is-disabled {
+    opacity: 0.45;
+}
+
+.step1-custom-hub-row.is-disabled .add-custom-subclass-btn {
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 /* Container für den Hauptinhalt und Fortschritt */
@@ -133,6 +291,216 @@ body::before {
 .stepButton:disabled { background-color: #4a4a4f; cursor: not-allowed; }
 .stepButton.active { background-color: #a36a42; }
 
+/* --- LEVEL-UP: Pseudo-Step (nicht klickbar) ---
+   Ansatz: normaler .stepButton (gleiche Größe/Clip/Breakpoints) als Kupfer-Außenform.
+   Innen: etwas kleinere Fläche in Stepbar-Farbe + Aufschrift → wirkt wie Rahmen. */
+.level-up-mode-badge {
+    /* Außen = aktiver Step-Button (Kupfer), kein Hover/Active-Wechsel */
+    background-color: #a36a42 !important;
+    cursor: default;
+    user-select: none;
+    pointer-events: none;
+    counter-increment: none;
+    filter: none;
+    min-width: 0;
+}
+
+/* Desktop-Spalte: äußerer Kupfer-Button leicht kleiner als volle Step-Buttons */
+@media screen and (min-width: 1441px) and (min-height: 851px) {
+    .level-up-mode-badge {
+        width: 100%;
+        max-width: 95%;
+        align-self: center;
+        min-height: 50px;
+        padding: 8px 4px;
+    }
+}
+
+.level-up-mode-badge:hover,
+.level-up-mode-badge:disabled,
+.level-up-mode-badge.active {
+    background-color: #a36a42 !important;
+}
+
+/* Keine Step-Nummer am Pseudo-Step */
+.level-up-mode-badge::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* Kleinere Innenfläche = Stepbar-Farbe (gleicher Clip, leicht skaliert) */
+.level-up-mode-badge-inner {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+    padding: 2px 6px;
+    /* gleiche Silhouette wie der äußere stepButton */
+    clip-path: inherit;
+    transform: scale(0.86);
+    transform-origin: center center;
+    background-color: rgba(58, 58, 65, 1);
+    color: #e8d8b5;
+    pointer-events: none;
+}
+
+body.level-up-mode .level-up-mode-badge {
+    display: flex;
+}
+
+.level-up-mode-badge[hidden] {
+    display: none !important;
+}
+
+/* Level-Up: nur Schritte 5–7 sichtbar — Layout der sichtbaren Buttons unverändert */
+body.level-up-mode #stepBar .stepButton[hidden],
+body.level-up-mode #stepBar .stepButton.level-up-step-hidden {
+    display: none !important;
+}
+
+/* Level-Up: gesperrte Felder (Vergangenheit / Bib-Einträge / Volk-Talent-Zauber) */
+body.level-up-mode .level-up-field-locked {
+    cursor: not-allowed;
+}
+
+body.level-up-mode select.level-up-field-locked {
+    /* Schloss kommt aus dem globalen select:disabled-Hintergrund — kein Extra-Badge */
+    opacity: 1;
+}
+
+/*
+ * Gesperrte Radios/Checkboxen: nur das Control selbst ausgrauen (nicht Label/Schloss).
+ * Ausnahme: fest gewähltes + gesperrtes Control bleibt voll sichtbar.
+ */
+body.level-up-mode input[type="radio"].level-up-field-locked:not(:checked),
+body.level-up-mode input[type="checkbox"].level-up-field-locked:not(:checked),
+body.level-up-mode .level-up-field-locked input[type="radio"]:not(:checked),
+body.level-up-mode .level-up-field-locked input[type="checkbox"]:not(:checked) {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(0.4);
+    pointer-events: none;
+}
+
+body.level-up-mode input[type="radio"].level-up-field-locked:not(:checked):hover,
+body.level-up-mode input[type="radio"].level-up-field-locked:not(:checked):focus,
+body.level-up-mode .level-up-field-locked input[type="radio"]:not(:checked):hover,
+body.level-up-mode .level-up-field-locked input[type="radio"]:not(:checked):focus {
+    border-color: #5a5a60 !important;
+    background-color: #2e2e33 !important;
+    box-shadow: none !important;
+}
+
+body.level-up-mode input[type="checkbox"].level-up-field-locked:not(:checked):hover,
+body.level-up-mode .level-up-field-locked input[type="checkbox"]:not(:checked):hover {
+    box-shadow: none !important;
+}
+
+/* Fest gewählt + gesperrt: voll sichtbar, aber ohne Hover-Highlight / nicht klickbar */
+body.level-up-mode input[type="radio"].level-up-field-locked:checked,
+body.level-up-mode input[type="checkbox"].level-up-field-locked:checked,
+body.level-up-mode .level-up-field-locked input[type="radio"]:checked,
+body.level-up-mode .level-up-field-locked input[type="checkbox"]:checked {
+    opacity: 1;
+    filter: none;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+body.level-up-mode input[type="radio"].level-up-field-locked:checked:hover,
+body.level-up-mode input[type="radio"].level-up-field-locked:checked:focus,
+body.level-up-mode .level-up-field-locked input[type="radio"]:checked:hover,
+body.level-up-mode .level-up-field-locked input[type="radio"]:checked:focus {
+    /* normales Checked-Look behalten, kein Extra-Glow durch :hover-Regel erzwingen */
+    pointer-events: none;
+}
+
+body.level-up-mode .csp-action-btn--locked {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Schloss-Banner hinter Radio-Label (z. B. festgelegte Unterklasse) */
+body.level-up-mode .level-up-lock-badge {
+    display: inline;
+    margin-left: 0.35em;
+    opacity: 0.95;
+    font-size: 0.95em;
+    line-height: 1;
+    vertical-align: middle;
+    pointer-events: none;
+}
+
+/* Neue offene Auswahl (Level-Up only) — goldener Aufwärtspfeil */
+body.level-up-mode .level-up-new-choice-icon {
+    display: inline;
+    margin-left: 0.3em;
+    color: #d4a017;
+    font-size: 0.95em;
+    font-weight: bold;
+    line-height: 1;
+    vertical-align: middle;
+    pointer-events: none;
+    opacity: 0.95;
+}
+
+/*
+ * Leere Selects: nur goldenes ↑ rechts im Feld (wie 🔒 bei select:disabled).
+ * Schrift und nativer Auswahlpfeil bleiben in Standardfarbe.
+ */
+body.level-up-mode select.level-up-new-choice-select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><text x='0' y='16' font-size='16' fill='%23d4a017' font-weight='bold'>↑</text></svg>") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 28px center !important;
+    background-size: 18px !important;
+    padding-right: 48px !important;
+}
+
+@media screen and (max-width: 1000px) {
+    body.level-up-mode select.level-up-new-choice-select {
+        background-position: right 24px center !important;
+        padding-right: 44px !important;
+    }
+}
+
+/* Außerhalb Level-Up unsichtbar (falls DOM-Reste) */
+.level-up-new-choice-icon {
+    display: none;
+}
+
+/* Unterklasse bereits gesetzt: Custom-UC-+ ausblenden (schlägt cc-feature-enabled) */
+body.level-up-mode #addCustomSubclassWrap.level-up-subclass-add-hidden,
+body.level-up-mode #addCustomSubclassWrap.level-up-subclass-add-hidden.cc-feature-enabled {
+    display: none !important;
+}
+
+.level-up-badge-full {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.level-up-badge-icon {
+    font-size: 1.15em;
+    line-height: 1;
+    font-weight: bold;
+}
+
+.level-up-badge-compact {
+    display: none;
+    font-size: 1.15em;
+    line-height: 1;
+    font-weight: bold;
+}
+
 /* 3. Der Subtext Bereich (Die Auswahl) */
 .step-subtext {
     color: #e8d8b5; 
@@ -189,6 +557,35 @@ body::before {
         color: #e8d8b5;
         display: block;
     }
+
+    /* LEVEL-UP: Compact-Pfeil statt Langtext; keine Step-Nummer */
+    .level-up-mode-badge .level-up-badge-full { display: none !important; }
+    .level-up-mode-badge .level-up-badge-compact {
+        display: block !important;
+        font-size: 1.5em;
+        color: #e8d8b5;
+    }
+    .level-up-mode-badge::after {
+        content: none !important;
+        display: none !important;
+    }
+    /* Innen-Scale bleibt (transform am Kind, nicht am .stepButton) */
+    .level-up-mode-badge-inner {
+        transform: scale(0.84);
+    }
+
+    /* LEVEL-UP: gleiche Verkleinerung wie Desktop (95% / etwas flacher) */
+    .level-up-mode-badge {
+        width: 100%;
+        max-width: 95%;
+        height: 95%;
+        max-height: 0px;
+        min-height: 50px;
+        padding: 8px 4px;
+        align-self: center;
+        justify-self: center;
+        margin: 0;
+    }
 }
 
 /* STUFE 3: Tablet / Schmale Fenster (< 1000px) */
@@ -206,6 +603,18 @@ body::before {
         height: 60px;
         margin: 2px 0;
         transform: none !important; /* Versatz aufheben */
+    }
+
+    /* LEVEL-UP: gleiche Verkleinerung wie Desktop */
+    .level-up-mode-badge {
+        width: 100%;
+        max-width: 90%;
+        align-self: center;
+        height: 50px;
+        min-height: 50px;
+        max-height: 50px;
+        padding: 8px 4px;
+        margin: 2px auto;
     }
 }
 
@@ -1348,11 +1757,16 @@ button[type="button"]:hover {
 /* BASIS: Desktop (> 1440px) */
 /* Wir platzieren die Buttons 320px von der Mitte entfernt (250px Content + 70px Puffer) */
 
-/* Linker Button (Back) */
-#back {
+/* Linker Button (Back / Level-Up-Abbruch — identische Position) */
+#back,
+#levelUpAbort {
     /* 50% (Mitte) - 250px (halber Content) + 15px (Einzug nach innen) */
     left: calc(50% - 235px);
     right: auto;
+}
+
+#levelUpAbort {
+    display: none;
 }
 
 /* Rechte Buttons (Save / Continue / Finish) */
@@ -1928,6 +2342,21 @@ input.asi-point-input {
     height: 30px;
     font-size: 14px;
     margin: 0; /* WICHTIG: Überschreibt den generischen 5vh-Abstand */
+    box-sizing: border-box;
+    border: 1px solid #8b5e34;
+    border-radius: 4px;
+    background-color: #2e2e33;
+    color: #e8d8b5;
+    text-align: center;
+    padding: 2px 4px;
+}
+
+input.asi-point-input:disabled {
+    border: 1px solid #8b5e34;
+    opacity: 1;
+    color: #e8d8b5;
+    background-color: rgba(45, 45, 50, 0.85);
+    cursor: not-allowed;
 }
 
 .feat-content .granted-proficiency-header {
@@ -3379,6 +3808,24 @@ textarea::placeholder,
         font-size: 0.8em;
     }
 
+    /* LEVEL-UP: gleiche Verkleinerung wie Desktop (anteilig) */
+    .level-up-mode-badge {
+        width: 100%;
+        max-width: 90%;
+        align-self: center;
+        height: 30px;
+        min-height: 26px;
+        max-height: 30px;
+        padding: 4px 2px;
+        margin: 2px auto;
+        font-size: 0.8em;
+    }
+
+    /* LEVEL-UP: Innenfläche (wie Desktop deckend) */
+    .level-up-mode-badge-inner {
+        background-color: rgba(58, 58, 65, 1);
+    }
+
     /* 4. Listen-Layout für Mobile (Spezies, Klassen etc.) */
     #speciesList, #classList, #backgroundList {
         grid-template-columns: 1fr; /* Einspaltig auf dem Handy */
@@ -3987,7 +4434,7 @@ textarea::placeholder,
    Custom Class Builder Modal
    ======================================================================= */
 
-/* Custom-Inhalt-Marker (Kreis mit Plus) rechts neben der Bezeichnung */
+/* Custom-Inhalt-Marker (⊕) rechts neben der Bezeichnung */
 .custom-content-marker {
     display: inline-flex;
     align-items: center;
@@ -3998,17 +4445,13 @@ textarea::placeholder,
     flex-shrink: 0;
     color: #e8d8b5;
     vertical-align: middle;
-    line-height: 0;
+    line-height: 1;
+    font-size: 1.05em;
+    font-weight: normal;
 }
 
 .custom-content-marker[hidden] {
     display: none !important;
-}
-
-.custom-content-marker svg {
-    width: 100%;
-    height: 100%;
-    display: block;
 }
 
 #customClassListItem,
@@ -4028,6 +4471,7 @@ textarea::placeholder,
     margin-left: 0.3em;
     width: 1.05em;
     height: 1.05em;
+    font-size: 0.95em;
 }
 
 .add-custom-class-item {
@@ -4131,6 +4575,646 @@ textarea::placeholder,
 
 .add-custom-background-btn:hover {
     background: rgba(232, 216, 181, 0.15);
+}
+
+/* Custom Species „+“ in der Völker-Liste (Schritt 3). */
+.add-custom-species-item {
+    display: none !important;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+@media screen and (min-width: 768px) {
+    #addCustomSpeciesListItem.add-custom-species-item.cc-feature-enabled {
+        display: flex !important;
+    }
+}
+
+.add-custom-species-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #e8d8b5;
+    background: transparent;
+    color: #e8d8b5;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-custom-species-btn:hover {
+    background: rgba(232, 216, 181, 0.15);
+}
+
+#customSpeciesTab1Content > .custom-class-field.cspc-phys-oversection {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+}
+
+#customSpeciesTab1Content .custom-class-lang-block > .custom-class-field:first-child {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+}
+
+#customSpeciesTab1Content .custom-class-field > .custom-class-field:last-child,
+#customSpeciesTab1Content .custom-class-lang-block > .custom-class-field:last-child {
+    margin-bottom: 0;
+}
+
+#customSpeciesTab1Content .cspc-phys-oversection .custom-class-lang-block > .custom-class-field {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#customSpeciesTab1Content .cspc-phys-oversection .custom-class-lang-block .custom-class-section-title {
+    text-align: center;
+    width: 100%;
+}
+
+.cspc-size-range-row,
+.cspc-speed-row {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+#customSpeciesTab1Content .cspc-speed-row input[type="number"],
+#customSpeciesTab1Content .cspc-size-range-row input[type="number"],
+#customSpeciesTab1Content .cspc-age-input {
+    width: 90px !important;
+    max-width: 90px !important;
+    min-width: 90px;
+    height: 38px;
+    margin: 0;
+    flex: 0 0 90px;
+    box-sizing: border-box;
+}
+
+.cspc-inline-label {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+.cspc-unit {
+    display: inline-flex;
+    align-items: center;
+    height: 38px;
+    margin: 0;
+    line-height: 1;
+    opacity: 0.8;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.cspc-origin-hint {
+    margin-top: 8px;
+    font-size: 0.92em;
+    line-height: 1.45;
+    color: #e8d8b5;
+    opacity: 0.9;
+}
+
+.cspc-tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
+.cspc-tree-root {
+    border: 1px solid rgba(232, 216, 181, 0.45);
+    border-radius: 6px;
+    padding: 10px 18px;
+    font-weight: bold;
+    color: #d4a017;
+    background: rgba(27, 27, 31, 0.6);
+}
+
+.cspc-tree-head {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    align-self: stretch;
+    box-sizing: border-box;
+}
+
+.cspc-tree-head .cspc-tree-controls {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+    z-index: 2;
+}
+
+.cspc-tree-trunk {
+    width: 2px;
+    height: 22px;
+    background: rgba(212, 160, 23, 0.7);
+}
+
+.cspc-tree-bar {
+    width: min(100%, 640px);
+    height: 2px;
+    background: rgba(212, 160, 23, 0.7);
+    margin-bottom: 0;
+}
+
+.cspc-tree-branches {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    margin-top: 12px;
+}
+
+.cspc-tree-branch {
+    flex: 1 1 220px;
+    max-width: 280px;
+    border: 1px solid rgba(232, 216, 181, 0.3);
+    border-radius: 6px;
+    padding: 10px;
+    background: rgba(27, 27, 31, 0.45);
+    position: relative;
+}
+
+#customSpeciesTab2Content .cspc-tree {
+    width: 100%;
+}
+
+/* Volksname → Bezeichnung (Abstammung): längerer Stamm + mehr Abstand */
+#customSpeciesTab2Content .cspc-tree-trunk--to-ancestry-group {
+    height: 36px;
+}
+
+#customSpeciesTab2Content .cspc-ancestry-group-wrap {
+    width: min(100%, 280px);
+    margin: 0 auto;
+}
+
+#customSpeciesTab2Content .cspc-ancestry-group-field {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+#customSpeciesTab2Content .cspc-ancestry-group-field > label {
+    font-size: 0.82rem;
+    line-height: 1.2;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+#customSpeciesTab2Content .cspc-ancestry-group-field .char-counter {
+    margin-top: 2px;
+}
+
+/* Globaler 5vh-Abstand unter Inputs (wie bei Branch-Bezeichnung) entfernen */
+#customSpeciesTab2Content .cspc-ancestry-group-field input[type="text"],
+#customSpeciesTab2Content .cspc-ancestry-group-field .custom-class-name-input {
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 4px 8px !important;
+    font-size: inherit !important;
+    max-width: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#customSpeciesTab2Content .cspc-tree-bar {
+    width: 100%;
+    max-width: none;
+}
+
+#customSpeciesTab2Content .cspc-tree-branches {
+    gap: 8px;
+}
+
+#customSpeciesTab2Content .cspc-tree-branch {
+    flex: 1 1 160px;
+    min-width: 150px;
+    max-width: 200px;
+    padding: 8px;
+}
+
+#customSpeciesTab2Content .cspc-tree-branch .custom-class-name-input {
+    max-width: none;
+}
+
+#customSpeciesTab2Content .cspc-tree-branch .custom-class-field.cspc-compact-field {
+    margin-bottom: 6px;
+}
+
+#customSpeciesTab2Content .cspc-tree-branch .custom-class-field.cspc-compact-field:last-child {
+    margin-bottom: 0;
+}
+
+#customSpeciesTab2Content .cspc-tree-branch .cspc-compact-field > label {
+    font-size: 0.82rem;
+    line-height: 1.2;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+#customSpeciesTab2Content .cspc-tree-branch .cspc-compact-field .char-counter {
+    margin-top: 2px;
+}
+
+#customSpeciesTab2Content .cspc-tree-branch textarea {
+    min-height: 44px !important;
+}
+
+.cspc-compact-lang-block {
+    padding: 6px 8px;
+    margin-bottom: 4px;
+}
+
+.cspc-compact-lang-block:last-child {
+    margin-bottom: 0;
+}
+
+.cspc-compact-lang-block .custom-class-lang-header {
+    font-size: 0.82rem;
+    margin-bottom: 4px;
+}
+
+.cspc-localized-field-label {
+    font-size: 0.82rem;
+    line-height: 1.2;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.cspc-origin-lang-hint {
+    margin: 6px 0 0;
+    font-size: 0.78rem;
+    text-align: center;
+    opacity: 0.85;
+}
+
+#customSpeciesTab2Content .cspc-localized-field.cspc-ancestry-group-field,
+#customSpeciesTab2Content .cspc-tree-branch .cspc-localized-field.cspc-compact-field {
+    margin-bottom: 6px;
+}
+
+#customSpeciesTab2Content .cspc-localized-field.cspc-ancestry-group-field:last-child,
+#customSpeciesTab2Content .cspc-tree-branch .cspc-localized-field.cspc-compact-field:last-child {
+    margin-bottom: 0;
+}
+
+#customSpeciesTab2Content .cspc-ancestry-group-field .cspc-compact-lang-block input[type="text"],
+#customSpeciesTab2Content .cspc-ancestry-group-field .cspc-compact-lang-block .custom-class-name-input,
+#customSpeciesTab2Content .cspc-tree-branch .cspc-compact-lang-block input[type="text"],
+#customSpeciesTab2Content .cspc-tree-branch .cspc-compact-lang-block .custom-class-name-input {
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 4px 8px !important;
+    font-size: inherit !important;
+    max-width: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#customSpeciesTab2Content .cspc-tree-branch .cspc-compact-lang-block textarea,
+#customSpeciesTab3Content .cspc-tree-branch .cspc-compact-lang-block textarea {
+    min-height: 44px !important;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#customSpeciesTab3Content .cspc-localized-field {
+    margin-bottom: 8px;
+}
+
+#customSpeciesTab3Content .cspc-localized-field:last-of-type {
+    margin-bottom: 0;
+}
+
+#customSpeciesTab2Content .cspc-tree-branch textarea {
+    height: 44px;
+    margin: 0 !important;
+    padding: 4px 8px !important;
+    font-size: inherit !important;
+    resize: vertical;
+}
+
+.cspc-tree-branch .custom-class-field {
+    margin-bottom: 10px;
+}
+
+.cspc-tree-branch .custom-class-field + .custom-class-field {
+    border-top: 1px solid rgba(232, 216, 181, 0.35);
+    padding-top: 10px;
+    margin-top: 0;
+}
+
+/* Bezeichnung: gleiche Höhe wie Tab-1-Name; 5vh-Globalmargin zum Zähler entfernen */
+#customSpeciesTab2Content .cspc-tree-branch input[type="text"],
+#customSpeciesTab3Content .cspc-tree-branch input[type="text"] {
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 4px 8px !important;
+    font-size: inherit !important;
+}
+
+.cspc-tree-branch::before {
+    content: "";
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 2px;
+    height: 12px;
+    background: rgba(212, 160, 23, 0.7);
+}
+
+/* Erblinie: Stammbaum-Schiene links, Äste einklappbar */
+#customSpeciesTab3Content .cspc-tree--lineage {
+    --cspc-lin-box-width: 60%;
+    --cspc-lin-rail-gap: 14px;
+    align-items: center;
+    width: 100%;
+    position: relative;
+    padding-left: 0;
+    box-sizing: border-box;
+}
+
+#customSpeciesTab3Content .cspc-tree--lineage::before {
+    content: "";
+    position: absolute;
+    left: calc((100% - var(--cspc-lin-box-width)) / 2 - var(--cspc-lin-rail-gap));
+    top: 16px;
+    bottom: 8px;
+    width: 2px;
+    background: rgba(212, 160, 23, 0.7);
+}
+
+#customSpeciesTab3Content .cspc-tree--lineage .cspc-tree-head {
+    justify-content: flex-start;
+}
+
+#customSpeciesTab3Content .cspc-tree--lineage .cspc-tree-root {
+    align-self: flex-start;
+    position: relative;
+    width: auto;
+    max-width: var(--cspc-lin-box-width);
+    box-sizing: border-box;
+    margin-left: calc((100% - var(--cspc-lin-box-width)) / 2);
+}
+
+#customSpeciesTab3Content .cspc-tree--lineage .cspc-tree-root::before {
+    content: "";
+    position: absolute;
+    left: calc(-1 * var(--cspc-lin-rail-gap));
+    top: 50%;
+    width: var(--cspc-lin-rail-gap);
+    height: 2px;
+    background: rgba(212, 160, 23, 0.7);
+}
+
+#customSpeciesTab3Content .cspc-tree--lineage .cspc-tree-branches {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 100%;
+    margin-top: 12px;
+}
+
+#customSpeciesTab3Content .cspc-tree--lineage .cspc-tree-branch {
+    flex: 0 0 auto;
+    width: var(--cspc-lin-box-width);
+    max-width: var(--cspc-lin-box-width);
+    min-width: 0;
+    padding: 0;
+    background: #1a1a1a;
+    overflow: visible;
+}
+
+#customSpeciesTab3Content .cspc-tree--lineage .cspc-tree-branch::before {
+    top: 22px;
+    left: calc(-1 * var(--cspc-lin-rail-gap));
+    width: var(--cspc-lin-rail-gap);
+    height: 2px;
+}
+
+#customSpeciesTab3Content .cspc-tree--lineage .cc-sc-box-header {
+    border-radius: 5px 5px 0 0;
+}
+
+#customSpeciesTab3Content .cspc-tree--lineage .cc-sc-box--collapsed .cc-sc-box-header,
+#customSpeciesTab3Content .cspc-tree--lineage .is-collapsed .cc-sc-box-header {
+    border-radius: 5px;
+}
+
+#customSpeciesTab3Content .cspc-tree--lineage .cc-sc-box-body > .custom-class-field:first-child {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+}
+
+#customSpeciesTab3Content .cspc-tree--lineage .cc-sc-box-body > .custom-class-field:last-child {
+    margin-bottom: 0;
+}
+
+.cspc-tree-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 14px;
+}
+
+.cspc-tree-controls button {
+    min-width: 36px;
+}
+
+.cspc-origin-radios {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px 18px;
+    width: 100%;
+    margin: 8px 0;
+}
+
+.cspc-size-checks {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px 16px;
+    margin: 6px 0 10px;
+}
+
+#customSpeciesTab1Content .cspc-avg-size-title {
+    margin-top: 4px;
+}
+
+#customSpeciesTab1Content .cspc-phys-oversection .cspc-origin-hint {
+    text-align: center;
+}
+
+#customSpeciesTab1Content .cc-lf-table.cspc-lf-table {
+    min-width: 920px;
+}
+
+#customSpeciesTab1Content .cc-lf-header.cspc-lf-header,
+#customSpeciesTab1Content .cc-lf-row.cspc-lf-row {
+    grid-template-columns: 64px minmax(110px, 1.1fr) minmax(120px, 1.2fr) minmax(140px, 1.4fr) minmax(140px, 1.4fr) 118px 84px;
+}
+
+#customSpeciesTab3Content .cc-lf-table.cspc-lin-lf-table {
+    min-width: 360px;
+}
+
+#customSpeciesTab3Content .cc-lf-header.cspc-lin-lf-header,
+#customSpeciesTab3Content .cc-lf-row.cspc-lin-lf-row {
+    grid-template-columns: 72px minmax(90px, 0.84fr) minmax(165px, 1.56fr);
+}
+
+#customSpeciesTab3Content .cspc-lin-lf-row > .cc-lf-cell--spell-options {
+    display: flex;
+    text-align: left;
+}
+
+#customSpeciesTab3Content .cspc-lin-lf-row > .cc-lf-cell--spell-options-idle,
+#customSpeciesTab3Content .cspc-lin-lf-row > .cc-lf-cell--spell-options-empty {
+    justify-content: center;
+    align-items: center;
+}
+
+#customSpeciesTab3Content .cspc-lin-lf-row > .cc-lf-cell--spell-options-filled {
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+#customSpeciesTab3Content .cspc-lin-spell-gear-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(232, 216, 181, 0.35);
+    line-height: 1;
+    pointer-events: none;
+}
+
+#customSpeciesTab3Content .cspc-lin-spell-gear-placeholder .cc-lf-gear-icon {
+    font-size: 0.95rem;
+}
+
+#customSpeciesTab3Content .cspc-lin-lf-row .cc-lf-chip-btn--spell-name {
+    box-sizing: border-box;
+    font-size: 0.85rem;
+    line-height: 1.3;
+    margin: 0;
+}
+
+/* Leer: kompakter Button, Zahnrad, zentriert in der Zelle (+10 % Höhe, +15 % Breite) */
+#customSpeciesTab3Content .cspc-lin-lf-row .cc-lf-chip-btn--spell-empty {
+    width: auto;
+    max-width: none;
+    min-width: 36px;
+    height: 30px;
+    min-height: 30px;
+    max-height: 30px;
+    padding: 0 10px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+#customSpeciesTab3Content .cspc-lin-lf-row .cc-lf-chip-btn--spell-empty .cc-lf-gear-icon {
+    line-height: 1;
+    font-size: 0.94rem;
+}
+
+/* Belegt: Breite/Höhe am Inhalt, Umbruch erst an Spaltenkante */
+#customSpeciesTab3Content .cspc-lin-lf-row .cc-lf-chip-btn--spell-filled {
+    width: fit-content;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: 5px 6px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left;
+    display: inline-block;
+    vertical-align: top;
+}
+
+/* Gleiche Boxhöhe wie .cc-lf-select in der Zeile; globale number-Margins (5vh) aushebeln. */
+#customSpeciesOverlay .cspc-lf-row .cc-lf-select,
+#customSpeciesOverlay .cspc-lin-lf-row .cc-lf-select,
+#customSpeciesOverlay input[type="number"].cspc-level-input {
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    margin: 0 !important;
+    padding: 5px 6px !important;
+    font-size: 0.85rem !important;
+    line-height: 1.25 !important;
+    font-family: inherit !important;
+    box-sizing: border-box !important;
+}
+
+#customSpeciesOverlay input[type="number"].cspc-level-input {
+    width: 56px !important;
+    max-width: 56px !important;
+    min-width: 56px !important;
+    text-align: center;
+    align-self: center;
+}
+
+#customSpeciesTab1Content .cspc-lf-row > .cc-lf-cell:first-child,
+#customSpeciesTab3Content .cspc-lin-lf-row > .cc-lf-cell:first-child {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cspc-desc-optional textarea:focus,
+.cspc-desc-optional input:focus {
+    opacity: 1;
+}
+
+.cspc-predef-select {
+    min-width: 140px;
+}
+
+.cspc-lineage-spell-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 8px;
+    align-items: center;
+    margin-top: 6px;
 }
 
 /* Custom Spell „+“ in Schritt 7 (zwischen Boxen und Masterliste).
@@ -4274,6 +5358,13 @@ textarea::placeholder,
 
 #customFeatTab2Content .custom-class-field input[type="number"] {
     max-width: 120px;
+    margin-bottom: 0 !important;
+}
+
+/* Stufen-Input: globalen 5vh-Abstand zur Box-Unterlinie entfernen */
+#customFeatTab2Content #cffPrereqLevel {
+    margin-top: 5px !important;
+    margin-bottom: 0 !important;
 }
 
 /* Grenzwert: gleiche Maße aktiv (number) und entwertet („-“, text) */
@@ -4313,6 +5404,12 @@ textarea::placeholder,
 
 #customFeatTab2Content .custom-class-field > .custom-class-field:last-child {
     margin-bottom: 0;
+}
+
+#customFeatTab2Content > .custom-class-field.cff-benefit-oversection {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
 }
 
 .cff-tab2-footer {
@@ -6188,11 +7285,9 @@ button.cc-lf-choice-remove[type="button"]:focus {
     align-self: center;
     margin-left: auto;
 }
-    color: #c62828;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    align-self: center;
-    margin-left: auto;
+
+.cc-lf-sc-pick-counter--gold {
+    color: #d4a017;
 }
 
 .cc-lf-subclass-spells-hint-intro {
