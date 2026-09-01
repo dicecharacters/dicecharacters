@@ -19,7 +19,7 @@ Object.assign(translations.de, {
     "universeCardDnd4": "Alle Klassen, Hintergründe und Völker bis Stufe 20 (D&amp;D 2024 5.5e)",
     "universeCardDnd5": "Führt Einsteiger Schritt für Schritt und intuitiv durch die Erstellung",
     "universeCardDnd6": "Charakterbogen im DIN-A4-Format, speicherbar, mit PDF-Export",
-    "universeCardDnd7": "Bearbeitbarer Bogen: Merkmale und Talente rechnen Spielwerte automatisch mit",
+    "universeCardDnd7": "Bearbeitbarer Bogen, Merkmale und Talente rechnen Spielwerte automatisch mit,<br>Stufenaufstieg bestehender Charaktere",
     "universeCardDnd8": "Läuft am zuverlässigsten in Google Chrome",
 
     "aboutHeader": "Ein Projekt von einem Fan für Fans",
@@ -106,7 +106,7 @@ Object.assign(translations.en, {
     "universeCardDnd4": "All classes, backgrounds, and species through level 20 (D&amp;D 2024 5.5e)",
     "universeCardDnd5": "Guides beginners step by step and intuitively through creation",
     "universeCardDnd6": "Character sheet in A4 format, saveable, with PDF export",
-    "universeCardDnd7": "Editable sheet: features and feats update your stats automatically",
+    "universeCardDnd7": "Editable sheet, features and feats update your stats automatically,<br>level-up for existing characters",
     "universeCardDnd8": "Works most reliably in Google Chrome",
 
     "aboutHeader": "A Project by a Fan for Fans",
