@@ -42,12 +42,11 @@ const CUSTOM_FEATURE_FLAGS = {
     customSpellBuilder: 0,
     /** Custom-Talentbibliothek: „+“ in Schritt 6 */
     customFeatsBuilder: 0,
+    /** Custom-Völker-Ersteller: „+“ in Schritt 3 */
+    customSpeciesBuilder: 0,
 
     /** Kreis-mit-Plus-Icon neben Custom-Bezeichnungen (Ersteller + Bogen) */
-    customContentMarker: 0
-
-    // Weitere Schalter (später einkommentieren / auf 1 setzen):
-    // customSpeciesBuilder: 0,
+    customContentMarker: 1
 };
 
 /**
@@ -64,14 +63,11 @@ function applyCustomContentSource(entry) {
 }
 
 //=======================================================================
-// Custom-Inhalt-Marker (Kreis mit Plus neben der Bezeichnung)
+// Custom-Inhalt-Marker (⊕ neben der Bezeichnung; einheitlich inkl. Dropdowns)
 //=======================================================================
 
-/** Inline-SVG: erbt currentColor (Ersteller hell, Bogen dunkel). */
-const CUSTOM_CONTENT_MARKER_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
-    + '<circle cx="12" cy="12" r="8.25" stroke="currentColor" stroke-width="1.5"/>'
-    + '<path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M12 8v8M8 12h8"/>'
-    + "</svg>";
+/** Einheitliches Glyph (natives <option> kann kein SVG). */
+const CUSTOM_CONTENT_MARKER_CHAR = "⊕";
 
 function getCustomContentMarkerTitle() {
     const lang = (typeof currentLang !== "undefined" && currentLang)
@@ -92,7 +88,7 @@ function isCustomContentMarkerEnabled() {
         : (Number(CUSTOM_FEATURE_FLAGS?.customContentMarker) === 1);
 }
 
-/** Füllt/aktualisiert ein Marker-Element (Titel + SVG). */
+/** Füllt/aktualisiert ein Marker-Element (Titel + ⊕). */
 function paintCustomContentMarker(el) {
     if (!el) return;
     const title = getCustomContentMarkerTitle();
@@ -100,7 +96,7 @@ function paintCustomContentMarker(el) {
     el.setAttribute("role", "img");
     el.title = title;
     el.setAttribute("aria-label", title);
-    el.innerHTML = CUSTOM_CONTENT_MARKER_SVG;
+    el.textContent = CUSTOM_CONTENT_MARKER_CHAR;
     el.style.removeProperty("--custom-content-marker-url");
 }
 
@@ -113,7 +109,7 @@ function setCustomContentMarkerVisible(el, show) {
     if (!el) return;
     if (!isCustomContentMarkerEnabled() || !show) {
         el.hidden = true;
-        el.innerHTML = "";
+        el.textContent = "";
         return;
     }
     paintCustomContentMarker(el);
@@ -125,15 +121,51 @@ function getCustomContentMarkerHtml() {
     if (!isCustomContentMarkerEnabled()) return "";
     const title = getCustomContentMarkerTitle()
         .replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-    return `<span class="custom-content-marker" role="img" title="${title}" aria-label="${title}">${CUSTOM_CONTENT_MARKER_SVG}</span>`;
+    return `<span class="custom-content-marker" role="img" title="${title}" aria-label="${title}">${CUSTOM_CONTENT_MARKER_CHAR}</span>`;
 }
 
 /**
- * Native <option> kann kein SVG. Prefix für Custom-Einträge in Dropdowns.
+ * Prefix/Suffix für Custom-Einträge in nativen <select>-Dropdowns.
  * @returns {string}
  */
 function getCustomContentSelectPrefix() {
-    return isCustomContentMarkerEnabled() ? "⊕ " : "";
+    return isCustomContentMarkerEnabled() ? `${CUSTOM_CONTENT_MARKER_CHAR} ` : "";
+}
+
+/**
+ * Anzeigename + ⊕ für Dropdowns/Checkboxen (Suffix, wie createFeatOptions).
+ * @param {string} displayName
+ * @param {boolean} isCustom
+ * @returns {string}
+ */
+function withCustomContentSelectMarker(displayName, isCustom) {
+    const name = displayName == null ? "" : String(displayName);
+    if (!isCustom || !isCustomContentMarkerEnabled()) return name;
+    const mark = String(getCustomContentSelectPrefix() || "").trim();
+    return mark ? `${name} ${mark}` : name;
+}
+
+/**
+ * Effektive featList: PHB + Session-Talentbibliothek (ohne Duplikate).
+ * Mutiert niemals die globale featList.
+ * @returns {object[]}
+ */
+function getEffectiveFeatList() {
+    const base = (typeof featList !== "undefined" && Array.isArray(featList)) ? featList : [];
+    const pack = (typeof getRegisteredCustomFeatPackFeats === "function")
+        ? (getRegisteredCustomFeatPackFeats() || [])
+        : [];
+    if (!pack.length) return base;
+    const seen = new Set(base.map(f => f && Number(f.ID)).filter(Number.isFinite));
+    const append = [];
+    pack.forEach(f => {
+        if (!f) return;
+        const id = Number(f.ID);
+        if (!Number.isFinite(id) || seen.has(id)) return;
+        seen.add(id);
+        append.push(f);
+    });
+    return append.length ? base.concat(append) : base;
 }
 
 /** true = Talent aus der Talentbibliothek / isCustom. */
@@ -218,13 +250,16 @@ function applyCustomFeatureVisibility() {
     const subclassBuilderOn = isCustomFeatureEnabled("customSubclassBuilder");
     const addScWrap = document.getElementById("addCustomSubclassWrap");
     const addScBtn = document.getElementById("addCustomSubclassBtn");
+    const hideScForLevelUp = (typeof isLevelUpMode === "function" && isLevelUpMode()
+        && typeof isLevelUpSubclassFixed === "function" && isLevelUpSubclassFixed());
     if (addScWrap) {
-        addScWrap.classList.toggle("cc-feature-enabled", subclassBuilderOn);
-        addScWrap.setAttribute("aria-hidden", subclassBuilderOn ? "false" : "true");
+        addScWrap.classList.toggle("cc-feature-enabled", subclassBuilderOn && !hideScForLevelUp);
+        addScWrap.classList.toggle("level-up-subclass-add-hidden", !!hideScForLevelUp);
+        addScWrap.setAttribute("aria-hidden", (subclassBuilderOn && !hideScForLevelUp) ? "false" : "true");
     }
     if (addScBtn) {
-        addScBtn.disabled = !subclassBuilderOn;
-        addScBtn.tabIndex = subclassBuilderOn ? 0 : -1;
+        addScBtn.disabled = !subclassBuilderOn || hideScForLevelUp;
+        addScBtn.tabIndex = (subclassBuilderOn && !hideScForLevelUp) ? 0 : -1;
     }
     if (!subclassBuilderOn) {
         const scOverlay = document.getElementById("customSubclassOverlay");
@@ -287,10 +322,176 @@ function applyCustomFeatureVisibility() {
         }
     }
 
+    const speciesBuilderOn = isCustomFeatureEnabled("customSpeciesBuilder");
+    const addSpItem = document.getElementById("addCustomSpeciesListItem");
+    const addSpBtn = document.getElementById("addCustomSpeciesBtn");
+    if (addSpItem) {
+        addSpItem.classList.toggle("cc-feature-enabled", speciesBuilderOn);
+        addSpItem.setAttribute("aria-hidden", speciesBuilderOn ? "false" : "true");
+    }
+    if (addSpBtn) {
+        addSpBtn.disabled = !speciesBuilderOn;
+        addSpBtn.tabIndex = speciesBuilderOn ? 0 : -1;
+    }
+    if (!speciesBuilderOn) {
+        const spcOverlay = document.getElementById("customSpeciesOverlay");
+        if (spcOverlay && spcOverlay.style.display !== "none" && spcOverlay.style.display !== "") {
+            if (typeof closeCustomSpeciesModal === "function") closeCustomSpeciesModal();
+        }
+    }
+
     if (typeof applyCscTranslations === "function") applyCscTranslations();
     if (typeof applyCbgTranslations === "function") applyCbgTranslations();
     if (typeof applyCspTranslations === "function") applyCspTranslations();
     if (typeof applyCffTranslations === "function") applyCffTranslations();
+    if (typeof applyCspcTranslations === "function") applyCspcTranslations();
+
+    updateStep1CustomHub();
+}
+
+//=======================================================================
+// Schritt-1: klappbarer Spiegel der Custom-Builder-„+“-Buttons
+//=======================================================================
+
+function tStep1CustomHub(key, fallback) {
+    const lang = (typeof currentLang !== "undefined" && currentLang)
+        ? currentLang
+        : ((typeof currentLanguage !== "undefined" && currentLanguage) ? currentLanguage : "de");
+    if (typeof translations !== "undefined" && translations[lang]?.[key] != null) {
+        return translations[lang][key];
+    }
+    if (typeof tCC === "function") {
+        const via = tCC(key);
+        if (via && via !== key) return via;
+    }
+    return fallback || key;
+}
+
+/** true = mind. ein Custom-Builder-Flag aktiv → Hub-Pfeil sichtbar */
+function isStep1CustomHubAnyBuilderEnabled() {
+    return isCustomFeatureEnabled("customClassBuilder")
+        || isCustomFeatureEnabled("customSubclassBuilder")
+        || isCustomFeatureEnabled("customBackgroundBuilder")
+        || isCustomFeatureEnabled("customSpeciesBuilder")
+        || isCustomFeatureEnabled("customFeatsBuilder")
+        || isCustomFeatureEnabled("customSpellBuilder");
+}
+
+/** true = Paket in dieser Session per Upload/Erstellen geladen (kein LS-Hydrate). */
+function isStep1CustomHubDcSessionLoaded(packageTypeOrTypes) {
+    if (typeof wasDcPackageUserLoadedThisSession !== "function"
+        || typeof DC_PACKAGE_TYPE === "undefined") {
+        return true;
+    }
+    const types = Array.isArray(packageTypeOrTypes) ? packageTypeOrTypes : [packageTypeOrTypes];
+    return types.some(t => wasDcPackageUserLoadedThisSession(t));
+}
+
+function isStep1CustomHubRuntimeLoaded(hubKey) {
+    switch (hubKey) {
+        case "class":
+            if (!isStep1CustomHubDcSessionLoaded([
+                DC_PACKAGE_TYPE.CUSTOM_CLASS,
+                DC_PACKAGE_TYPE.CUSTOM_CLASS_RUNTIME
+            ])) return false;
+            return !!(typeof registeredCustomClass !== "undefined"
+                && registeredCustomClass?.translationLabel);
+        case "subclass":
+            if (!isStep1CustomHubDcSessionLoaded(DC_PACKAGE_TYPE.CUSTOM_SUBCLASS)) return false;
+            return !!(typeof registeredCustomSubclass !== "undefined"
+                && registeredCustomSubclass);
+        case "background":
+            if (!isStep1CustomHubDcSessionLoaded(DC_PACKAGE_TYPE.CUSTOM_BACKGROUND)) return false;
+            return !!(typeof registeredCustomBackground !== "undefined"
+                && registeredCustomBackground?.translationLabel);
+        case "species":
+            if (!isStep1CustomHubDcSessionLoaded(DC_PACKAGE_TYPE.CUSTOM_SPECIES)) return false;
+            return !!(typeof registeredCustomSpecies !== "undefined"
+                && registeredCustomSpecies?.translationLabel);
+        case "feat":
+            if (!isStep1CustomHubDcSessionLoaded(DC_PACKAGE_TYPE.CUSTOM_FEAT_PACK)) return false;
+            return !!(typeof registeredCustomFeatPack !== "undefined"
+                && Array.isArray(registeredCustomFeatPack?.feats)
+                && registeredCustomFeatPack.feats.length > 0);
+        case "spell":
+            if (!isStep1CustomHubDcSessionLoaded(DC_PACKAGE_TYPE.CUSTOM_SPELL_PACK)) return false;
+            return !!(typeof registeredCustomSpellPack !== "undefined"
+                && Array.isArray(registeredCustomSpellPack?.spells)
+                && registeredCustomSpellPack.spells.length > 0);
+        default:
+            return false;
+    }
+}
+
+function toggleStep1CustomHub(forceCollapse) {
+    const panel = document.getElementById("step1CustomHubPanel");
+    const toggle = document.getElementById("step1CustomHubToggle");
+    const arrow = document.getElementById("step1CustomHubArrow");
+    if (!panel || !toggle) return;
+    let collapsed;
+    if (typeof forceCollapse === "boolean") collapsed = forceCollapse;
+    else collapsed = !panel.classList.contains("collapsed");
+    panel.classList.toggle("collapsed", collapsed);
+    // Kein hidden/display:none – Slide-Animation braucht sichtbares Layout
+    panel.removeAttribute("hidden");
+    panel.setAttribute("aria-hidden", collapsed ? "true" : "false");
+    toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    if (arrow) arrow.classList.toggle("is-collapsed", collapsed);
+}
+
+/**
+ * Hub-Sichtbarkeit (Flags), Labels, Grün-Status (Runtime), UC-Gate (Klasse gewählt).
+ * Spiegel-Buttons behalten dieselben onclick-Handler wie die Fach-Schritte.
+ */
+function updateStep1CustomHub() {
+    const hub = document.getElementById("step1CustomHub");
+    if (!hub) return;
+    const anyOn = isStep1CustomHubAnyBuilderEnabled();
+    hub.classList.toggle("cc-feature-enabled", anyOn);
+    hub.setAttribute("aria-hidden", anyOn ? "false" : "true");
+    if (!anyOn) toggleStep1CustomHub(true);
+
+    const hasClass = !!(typeof character !== "undefined" && character?.class);
+    const needClassTitle = tStep1CustomHub(
+        "step1CustomNeedClassHoverLabel",
+        "Zuerst Klasse wählen"
+    );
+
+    hub.querySelectorAll(".step1-custom-hub-row").forEach(row => {
+        const flag = row.getAttribute("data-flag");
+        const hubKey = row.getAttribute("data-hub");
+        const enabled = flag ? isCustomFeatureEnabled(flag) : false;
+        row.hidden = !enabled;
+        if (!enabled) return;
+
+        const label = row.querySelector(".step1-custom-hub-label");
+        const btn = row.querySelector("button");
+        const labelKey = label?.getAttribute("data-label-key");
+        if (label && labelKey) {
+            label.textContent = tStep1CustomHub(labelKey, label.textContent);
+            label.classList.toggle("is-loaded", isStep1CustomHubRuntimeLoaded(hubKey));
+        }
+
+        const subclassNeedsClass = hubKey === "subclass" && !hasClass;
+        row.classList.toggle("is-disabled", subclassNeedsClass);
+        if (btn) {
+            btn.disabled = subclassNeedsClass;
+            btn.tabIndex = subclassNeedsClass ? -1 : 0;
+            const baseAria = label?.textContent || "+";
+            if (subclassNeedsClass) {
+                btn.title = needClassTitle;
+                row.title = needClassTitle;
+                btn.setAttribute("aria-label", needClassTitle);
+            } else {
+                btn.removeAttribute("title");
+                row.removeAttribute("title");
+                btn.setAttribute("aria-label", baseAria);
+                btn.title = baseAria;
+            }
+        } else if (row) {
+            row.removeAttribute("title");
+        }
+    });
 }
 
 (function scheduleApplyCustomFeatureVisibility() {

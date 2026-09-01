@@ -244,14 +244,15 @@ function cloneCustomSpellListState(src) {
 }
 
 /**
- * Legacy no-op: Bibliotheks-Zauber gehören nicht in Tab 4 (Session-Pool in Schritt 7).
+ * Legacy no-op: Bib-Locks werden nicht mehr separat geführt (Auswahl = selectedSpellIds).
  */
 function reconcileCustomClassSpellPackLocksFromSession(state) {
     return false;
 }
 
 /**
- * Legacy-Felder (lockedFromSpellPackIds) leeren — Bib ist nicht mit Tab 4 verknüpft.
+ * Legacy-Feld lockedFromSpellPackIds leeren.
+ * Bibliotheks-Zauber bleiben in Tab 4 wählbar (selectedSpellIds unangetastet).
  */
 function stripSessionLibrarySpellsFromCustomClassTab4(state) {
     if (!state) return false;
@@ -259,16 +260,6 @@ function stripSessionLibrarySpellsFromCustomClassTab4(state) {
     const beforeLock = (csl.lockedFromSpellPackIds || []).length;
     if (!beforeLock) return false;
     csl.lockedFromSpellPackIds = [];
-    // Auch Auswahl-IDs, die zur Session-Bib gehören, entfernen
-    if (typeof getRegisteredCustomSpellPackSpells === "function") {
-        const pack = getRegisteredCustomSpellPackSpells() || [];
-        const packIds = new Set(
-            pack.map(s => parseInt(s?.ID, 10)).filter(Number.isFinite)
-        );
-        if (packIds.size) {
-            csl.selectedSpellIds = (csl.selectedSpellIds || []).filter(id => !packIds.has(id));
-        }
-    }
     return true;
 }
 
@@ -434,11 +425,41 @@ function unlockCustomSpellList() {
 }
 
 /**
+ * Export-Dependencies: direkte Custom-Spell-/Feat-Referenzen (Variante A).
+ */
+function buildCustomClassPackageDependencies(state) {
+    const scan = {
+        spellIds: [],
+        featIds: [],
+        spellLabels: [],
+        featLabels: []
+    };
+    (state?.customSpellList?.selectedSpellIds || []).forEach(id => {
+        if (typeof isDcCustomSpellId === "function" ? isDcCustomSpellId(id) : Number(id) >= 1000) {
+            scan.spellIds.push(Number(id));
+        }
+    });
+    if (typeof walkDcLfSlotsForCustomRefs === "function") {
+        walkDcLfSlotsForCustomRefs(state?.levelFeatures || [], scan);
+        (state?.subclasses || []).forEach(sc => {
+            walkDcLfSlotsForCustomRefs(sc?.levelFeatures || [], scan);
+        });
+    }
+    return (typeof buildDcPackageDepsFromCustomRefs === "function")
+        ? buildDcPackageDepsFromCustomRefs(scan, {
+            spellPackId: resolveDcSessionSpellPackId ? resolveDcSessionSpellPackId() : null,
+            featPackId: resolveDcSessionFeatPackId ? resolveDcSessionFeatPackId() : null
+        })
+        : [];
+}
+
+/**
  * Effektive spellList-View:
  * 1) Basis = globale spellList
  * 2) Append aller Pack-Zauber (registeredCustomSpellPack / Sheet-Runtime)
  * 3) Custom-Slug virtuell in classLabel der gewählten Tab-4-Zauber
  * Mutiert niemals die globale spellList.
+ * Wird von Class-/Feat-/Species-Builder und LF-Masken genutzt (inkl. Tab 4).
  */
 function getEffectiveSpellList() {
     const base = (typeof spellList !== "undefined" && Array.isArray(spellList)) ? spellList : [];
@@ -806,7 +827,11 @@ function handleCustomClassFile(event) {
                     );
                 }
                 if (typeof notifyDcPackageDependencyPossiblyResolved === "function") {
-                    notifyDcPackageDependencyPossiblyResolved();
+                    notifyDcPackageDependencyPossiblyResolved({
+                        envelope: result.envelope,
+                        payload: result.payload,
+                        packageType: result.detectedType
+                    });
                 }
                 return;
             }
@@ -1979,6 +2004,15 @@ function applyCompiledCustomTexts(row, slot, keyStem, translationsBag, state, co
         row.classFeatureDescription = freeFamilyReuse.longKey || 0;
     } else if (partial.classFeatureShortDescription && partial.classFeatureShortDescription !== 0) {
         row.classFeatureShortDescription = partial.classFeatureShortDescription;
+    } else if (type === "simple" && cat === "skills") {
+        const dynamicShort = getLfSimpleSkillsShortDescPair(slot);
+        if (dynamicShort) {
+            const key = `${keyStem}ShortD`;
+            putCompiledTranslation(translationsBag, key, dynamicShort.de, dynamicShort.en);
+            row.classFeatureShortDescription = key;
+        } else {
+            row.classFeatureShortDescription = fixedDesc.shortKey || 0;
+        }
     } else if (fixedDesc.shortKey) {
         row.classFeatureShortDescription = fixedDesc.shortKey;
     } else if (lfHasText(shorts)) {
@@ -2111,10 +2145,21 @@ function applyCompiledCustomTexts(row, slot, keyStem, translationsBag, state, co
         }
     }
 
-    // Zaubertrick erhalten/wählen: nur feste Kurzbeschreibung (wie Sprachen/ASI)
+    // Zaubertrick erhalten/wählen: Kurzbeschreibung (get: mit Zauberliste)
     if (type === "spellcraft" && (cat === "getCantrip" || cat === "chooseCantrip")) {
         const spec = getLfSpellcraftCategorySpec(cat);
-        row.classFeatureShortDescription = spec?.shortKey || 0;
+        if (cat === "getCantrip") {
+            const dynamicShort = getLfSpellcraftGetCantripShortDescPair(slot);
+            if (dynamicShort) {
+                const key = `${keyStem}ShortD`;
+                putCompiledTranslation(translationsBag, key, dynamicShort.de, dynamicShort.en);
+                row.classFeatureShortDescription = key;
+            } else {
+                row.classFeatureShortDescription = spec?.shortKey || 0;
+            }
+        } else {
+            row.classFeatureShortDescription = spec?.shortKey || 0;
+        }
         row.classFeatureDescription = 0;
         row.classFeaturesCharacterSheet = 0;
         if (row.classFeatureShortDescription && row.classFeatureShortDescription !== 0
@@ -2134,7 +2179,18 @@ function applyCompiledCustomTexts(row, slot, keyStem, translationsBag, state, co
         const spec = getLfSpellcraftCategorySpec(cat);
         const cfg = slot.payload?.optionsConfig || {};
         const addToBook = customClassStateUsesSpellbook(state) && cfg.addToSpellbook !== false;
-        row.classFeatureShortDescription = spec?.shortKey || 0;
+        if (cat === "getPreparedSpell") {
+            const dynamicShort = getLfSpellcraftGetPreparedSpellShortDescPair(slot);
+            if (dynamicShort) {
+                const key = `${keyStem}ShortD`;
+                putCompiledTranslation(translationsBag, key, dynamicShort.de, dynamicShort.en);
+                row.classFeatureShortDescription = key;
+            } else {
+                row.classFeatureShortDescription = spec?.shortKey || 0;
+            }
+        } else {
+            row.classFeatureShortDescription = spec?.shortKey || 0;
+        }
         if (!addToBook && row.translationLabel && row.translationLabel !== 0) {
             const key = `${keyStem}D`;
             putCompiledTranslation(
@@ -2463,7 +2519,9 @@ function countConstForChoiceParts(constForChoice) {
 
 /** Feat-IDs für Kampfstil-Pool (Auswahl oder alle Cat-3) */
 function resolveCompiledFightingStyleIds(cfg) {
-    const feats = typeof featList !== "undefined" ? featList : [];
+    const feats = (typeof getEffectiveFeatList === "function")
+        ? getEffectiveFeatList()
+        : ((typeof featList !== "undefined") ? featList : []);
     const mode = cfg?.mode || "selection";
     if (mode === "all") {
         const ids = feats.filter(f => f.featCategoryNumber === 3).map(f => f.ID);
@@ -2821,6 +2879,9 @@ function applyCompiledAttributeChoiceExtras(row, slot) {
             bonuses[key] = (bonuses[key] || 0) + pts;
         });
         row.classAttributeBonuses = Object.keys(bonuses).length ? bonuses : 0;
+        if (cfg.abilityScoreCapRaise) {
+            row.abilityScoreCapRaise = parseInt(cfg.abilityScoreCapRaise, 10) || 25;
+        }
     }
 }
 
@@ -3827,7 +3888,8 @@ function appendCustomClassChoiceDropdown(container, {
     selectId,
     selectName,
     labelText,
-    optionsHtml
+    optionsHtml,
+    featureLevel
 }) {
     const elements = translations[currentLang];
     const lab = document.createElement("label");
@@ -3840,6 +3902,10 @@ function appendCustomClassChoiceDropdown(container, {
     sel.id = selectId;
     sel.name = selectName || selectId;
     sel.className = "dropdown";
+    const fl = parseInt(featureLevel, 10);
+    if (Number.isFinite(fl) && fl > 0) {
+        sel.dataset.featureLevel = String(fl);
+    }
     sel.innerHTML = `<option value="">${elements.pleaseSelectLabel || ""}</option>${optionsHtml || ""}`;
     container.appendChild(sel);
     return sel;
@@ -4171,12 +4237,18 @@ function getGrantedCustomClassArmorCategoryNumbers() {
 function createCustomFightingStyleOptionsHtml(fightingStyleIDs) {
     const ids = Array.isArray(fightingStyleIDs) ? fightingStyleIDs : [];
     const elements = translations[currentLang];
-    const feats = typeof featList !== "undefined" ? featList : [];
+    const feats = (typeof getEffectiveFeatList === "function")
+        ? getEffectiveFeatList()
+        : ((typeof featList !== "undefined") ? featList : []);
     return feats
         .filter(f => ids.includes(f.ID))
         .map(f => {
             const name = elements[f.translationLabel] || f.translationLabel;
-            return `<option value="${f.ID}">${name}</option>`;
+            const isCustom = (typeof isCustomContentFeat === "function") && isCustomContentFeat(f);
+            const display = (typeof withCustomContentSelectMarker === "function")
+                ? withCustomContentSelectMarker(name, isCustom)
+                : name;
+            return `<option value="${f.ID}">${display}</option>`;
         })
         .join("");
 }
@@ -4249,7 +4321,8 @@ function renderCustomClassChoiceFeatures(container, features, indexState, render
                     selectId: `feat${n}`,
                     selectName: `feats${featLevel}`,
                     labelText,
-                    optionsHtml: optsHtml
+                    optionsHtml: optsHtml,
+                    featureLevel: featLevel
                 });
             }
             return;
@@ -4265,7 +4338,8 @@ function renderCustomClassChoiceFeatures(container, features, indexState, render
                     selectId: `expertise${n}`,
                     selectName: `expertise${n}`,
                     labelText,
-                    optionsHtml: ""
+                    optionsHtml: "",
+                    featureLevel: featLevel
                 });
             }
             renderedExpertise = true;
@@ -4285,7 +4359,8 @@ function renderCustomClassChoiceFeatures(container, features, indexState, render
                     selectId: `weaponMastery${n}`,
                     selectName: `weaponMastery${n}`,
                     labelText,
-                    optionsHtml: optsHtml
+                    optionsHtml: optsHtml,
+                    featureLevel: featLevel
                 });
             }
             return;
@@ -4305,7 +4380,8 @@ function renderCustomClassChoiceFeatures(container, features, indexState, render
                     selectId: `attribute${n}`,
                     selectName: `attribute${n}`,
                     labelText,
-                    optionsHtml: optsHtml
+                    optionsHtml: optsHtml,
+                    featureLevel: featLevel
                 });
             }
             return;
@@ -4325,7 +4401,8 @@ function renderCustomClassChoiceFeatures(container, features, indexState, render
                     selectId: `maneuver${n}`,
                     selectName: `maneuver${n}`,
                     labelText,
-                    optionsHtml: optsHtml
+                    optionsHtml: optsHtml,
+                    featureLevel: featLevel
                 });
             }
             return;
@@ -4345,7 +4422,8 @@ function renderCustomClassChoiceFeatures(container, features, indexState, render
                     selectId: `language${n}`,
                     selectName: `language${n}`,
                     labelText,
-                    optionsHtml: optsHtml
+                    optionsHtml: optsHtml,
+                    featureLevel: featLevel
                 });
             }
             return;
@@ -4369,7 +4447,8 @@ function renderCustomClassChoiceFeatures(container, features, indexState, render
                     selectId: `${prefix}${n}`,
                     selectName: `${prefix}${n}`,
                     labelText,
-                    optionsHtml: parts.optionsHtml
+                    optionsHtml: parts.optionsHtml,
+                    featureLevel: featLevel
                 });
             }
             return;
@@ -4401,7 +4480,8 @@ function renderCustomClassChoiceFeatures(container, features, indexState, render
                     selectId: `freeChoice${n}`,
                     selectName: `freeChoice${n}`,
                     labelText: fallbackText,
-                    optionsHtml: freeOpts
+                    optionsHtml: freeOpts,
+                    featureLevel: featLevel
                 });
             }
         }
@@ -4451,7 +4531,8 @@ function renderCustomClassSkillChoiceDropdowns(container, feature, indexState, r
             selectId: `skill${n}`,
             selectName: `skill${n}`,
             labelText,
-            optionsHtml
+            optionsHtml,
+            featureLevel: featLevel
         });
         const sel = document.getElementById(`skill${n}`);
         if (sel) sel.setAttribute("onchange", "updateSkills()");
@@ -4967,11 +5048,12 @@ function unregisterPreviousCustomClass() {
 function clearClassSelectionUI() {
     document.querySelectorAll('input[name="class"]').forEach(r => { r.checked = false; });
 
-    if (typeof character !== "undefined") {
+    const skipCharacterClear = typeof isLevelUpMode === "function" && isLevelUpMode();
+    if (typeof character !== "undefined" && !skipCharacterClear) {
         character.class = null;
         character.classForm = null;
     }
-    if (typeof selectedClassName !== "undefined") {
+    if (typeof selectedClassName !== "undefined" && !skipCharacterClear) {
         selectedClassName = null;
     }
 
@@ -4989,6 +5071,8 @@ function clearClassSelectionUI() {
 
     const toggleText = document.getElementById("toggleText");
     if (toggleText) toggleText.style.display = "none";
+
+    if (skipCharacterClear) return;
 
     // Schritt-6-UC: Radios + Dropdowns der zuletzt gewählten UC entfernen
     // (wie bei PHB-Klassenwechsel über selectClass / saveClass)
@@ -5277,15 +5361,16 @@ function hydrateEditorStateFromExport(data, envelope) {
     }
     if (data.customSpellList) {
         state.customSpellList = cloneCustomSpellListState(data.customSpellList);
-        // Legacy Bib-Locks verwerfen; Bib ist listenunabhängig
+        // Legacy Bib-Locks verwerfen
         state.customSpellList.lockedFromSpellPackIds = [];
-        // Ungültige IDs gegen aktuelle spellList verwerfen (ohne Bib-IDs in Tab 4)
+        // Ungültige IDs gegen effektive Liste verwerfen (PHB + Session-Bibliothek)
         const valid = new Set();
-        if (typeof spellList !== "undefined" && Array.isArray(spellList)) {
-            spellList.forEach(s => {
-                if (s && s.ID != null && !s.isCustom) valid.add(s.ID);
-            });
-        }
+        const effective = (typeof getEffectiveSpellList === "function")
+            ? getEffectiveSpellList()
+            : ((typeof spellList !== "undefined" && Array.isArray(spellList)) ? spellList : []);
+        effective.forEach(s => {
+            if (s && s.ID != null) valid.add(s.ID);
+        });
         if (valid.size) {
             state.customSpellList.selectedSpellIds = state.customSpellList.selectedSpellIds
                 .filter(id => valid.has(id));
@@ -5965,6 +6050,13 @@ function getLfSpellcraftCategorySpec(category) {
     return CUSTOM_CLASS_LF_CONFIG.spellcraftCategorySpecs[category] || null;
 }
 
+/** Anzahl der Get-Zauber-Dropdowns (Spec.dropdownCount, Fallback 3). */
+function getLfSpellcraftGetDropdownCount(slot) {
+    const spec = getLfSpellcraftCategorySpec(slot?.payload?.category);
+    const n = parseInt(spec?.dropdownCount, 10);
+    return Number.isFinite(n) && n > 0 ? n : 3;
+}
+
 //=======================================================================
 // Unterklassenzauber (Magieprogression) – Hilfen
 //=======================================================================
@@ -6272,8 +6364,11 @@ function collectLfSubclassSpellsSelectedLabels(cfg) {
 }
 
 function getLfSpellGradeRankForSpellLabel(spellLabel) {
-    if (typeof spellList === "undefined" || !spellLabel) return -1;
-    const spell = spellList.find(s => s.translationLabel === spellLabel);
+    if (!spellLabel) return -1;
+    const list = (typeof getEffectiveSpellList === "function")
+        ? getEffectiveSpellList()
+        : ((typeof spellList !== "undefined" && Array.isArray(spellList)) ? spellList : []);
+    const spell = list.find(s => s.translationLabel === spellLabel);
     return spell ? getLfSpellGradeRank(spell.spellLevel) : -1;
 }
 
@@ -7788,14 +7883,17 @@ function filterLfSpells({
     onlyCantrips = false,
     excludeUsed = null
 } = {}) {
-    if (typeof spellList === "undefined") return [];
+    const source = (typeof getEffectiveSpellList === "function")
+        ? getEffectiveSpellList()
+        : ((typeof spellList !== "undefined" && Array.isArray(spellList)) ? spellList : []);
+    if (!source.length) return [];
     const lists = Array.isArray(spellListLabels) ? spellListLabels : [];
     const schools = Array.isArray(schoolLabels) ? schoolLabels : [];
     const levels = levelLabels == null
         ? null
         : (Array.isArray(levelLabels) ? levelLabels : []);
 
-    return spellList.filter(spell => {
+    return source.filter(spell => {
         const label = spell.translationLabel;
         if (!label) return false;
         if (excludeUsed && excludeUsed.has(label)) return false;
@@ -7812,7 +7910,10 @@ function filterLfSpells({
         if (listMode === "selection") {
             if (!lists.length) return false;
             const classes = Array.isArray(spell.classLabel) ? spell.classLabel : [spell.classLabel];
-            if (!lists.some(l => classes.includes(l))) return false;
+            // Bibliotheks-Zauber: frei nach Grad, ohne Listenbindung
+            const isBib = (typeof isCustomContentSpell === "function" && isCustomContentSpell(spell))
+                || (typeof isSpellFromSessionLibrary === "function" && isSpellFromSessionLibrary(spell));
+            if (!isBib && !lists.some(l => classes.includes(l))) return false;
         }
 
         if (schoolMode === "selection") {
@@ -7833,7 +7934,11 @@ function buildLfSpellDropdownOptionsHtml(spells, selectedValue, usedElsewhere) {
         const lab = spell.translationLabel;
         if (usedElsewhere && usedElsewhere.has(lab) && lab !== selectedValue) return;
         const selected = lab === selectedValue ? "selected" : "";
-        html += `<option value="${lab}" ${selected}>${escapeLfHtml(tCC(lab))}</option>`;
+        const isCustom = (typeof isCustomContentSpell === "function") && isCustomContentSpell(spell);
+        const name = (typeof withCustomContentSelectMarker === "function")
+            ? withCustomContentSelectMarker(tCC(lab), isCustom)
+            : tCC(lab);
+        html += `<option value="${lab}" ${selected}>${escapeLfHtml(name)}</option>`;
     });
     return html;
 }
@@ -7865,7 +7970,7 @@ function buildLfSpellcraftFilterBlockHtml({
             </select>`
         )}
         <div id="${listId}Wrap" style="display:${showSelection ? "block" : "none"};">
-            <p class="cc-lf-float-hint cc-lf-float-hint--after-filter">${formatLfMinOptionsHint(minHint)}</p>
+            <p class="cc-lf-float-hint cc-lf-float-hint--after-filter">${formatLfPickMinHint(minHint)}</p>
             ${buildLfCheckboxGridHtml(listId, items, selectedSet, null, gridOpts)}
         </div>
     `;
@@ -9627,6 +9732,7 @@ function getLfCategoryLabelKey(category) {
         chooseCantrip: "ccLfCatChooseCantripLabel",
         getPreparedSpell: "ccLfCatGetPreparedSpellLabel",
         choosePreparedSpell: "ccLfCatChoosePreparedSpellLabel",
+        originFeats: "ccLfFeatCatOriginLabel",
         subclassSpells: "ccLfCatSubclassSpellsLabel",
         none: null
     };
@@ -10346,8 +10452,14 @@ function canOpenLfNameMask(slot) {
     // Einfach → Vordefiniert: Auswahl in der Bezeichnungsspalte
     if (slot.payload.featureType === "simple" && slot.payload.category === "preDefined") return true;
     if (getLfFixedDesignationKey(slot)) return false;
-    if (slot.payload.featureType === "options" && slot.payload.category === "free") return true;
-    if (slot.payload.featureType === "simple" && slot.payload.category === "free") return true;
+    if (slot.payload.featureType === "options") {
+        const spec = getLfOptionsCategorySpec(slot.payload.category);
+        if (spec?.designation === "custom") return true;
+    }
+    if (slot.payload.featureType === "simple") {
+        const spec = getLfSimpleCategorySpec(slot.payload.category);
+        if (spec?.designation === "custom") return true;
+    }
     if (slot.payload.featureType === "spellcraft") return true;
     return false;
 }
@@ -10522,8 +10634,8 @@ function formatLfChoosePreparedSpellDesc(featureLabel, lang) {
     if (!tpl) {
         const tag = `[CHOICE_LIST]preparedSpells.source.name.${featureLabel || "…"}[/CHOICE_LIST]`;
         return lang === "en"
-            ? `<b>Learned Spells:</b> ${tag} (Cast once/Long Rest without slot or use own slots).`
-            : `<b>Erlernte Zauber:</b> ${tag} (Einmal täglich ohne Zauberplatz wirkbar oder mit eigenen Plätzen).`;
+            ? `You know the following spells: ${tag} (Cast once/Long Rest for free or use slots).`
+            : `Du beherrscht folgende Zauber: ${tag} (Einmal täglich kostenlos wirkbar oder mit Zauberplätzen).`;
     }
     return String(tpl).replace(/\{featureLabel\}/g, featureLabel || "…");
 }
@@ -10548,6 +10660,139 @@ function formatLfSpellListNamesForDesc(labels, lang) {
         .map(lab => resolveLfTranslationLabelText(lab, lang) || String(lab))
         .filter(Boolean)
         .join(", ");
+}
+
+/** Anzeigenamen gewählter Fertigkeiten (alphabetisch nach UI-Sprache). */
+function formatLfSkillNamesForDesc(labels, lang) {
+    const arr = Array.isArray(labels) ? labels.filter(Boolean) : [];
+    if (!arr.length) return "—";
+    return arr
+        .map(lab => resolveLfTranslationLabelText(lab, lang) || String(lab))
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, lang))
+        .join(", ");
+}
+
+/** Anzeigenamen gewählter Zauber (Zaubertrick / vorbereitet) für Kurzbeschreibungen. */
+function formatLfSpellNamesForDesc(spellLabels, lang) {
+    const arr = Array.isArray(spellLabels) ? spellLabels.filter(Boolean) : [];
+    if (!arr.length) return "—";
+    const list = (typeof getEffectiveSpellList === "function")
+        ? getEffectiveSpellList()
+        : (typeof spellList !== "undefined" ? spellList : []);
+    return arr
+        .map(lab => {
+            const fromList = list.find(s => s.translationLabel === lab);
+            if (fromList && typeof translations !== "undefined") {
+                const name = translations[lang]?.[lab] || translations.de?.[lab];
+                if (name) return name;
+            }
+            return resolveLfTranslationLabelText(lab, lang) || String(lab);
+        })
+        .filter(Boolean)
+        .join(", ");
+}
+
+function formatLfGetCantripShortDesc(spellLabels, lang) {
+    const key = "ccLfGetCantripShortD";
+    let tpl = "";
+    if (typeof translations !== "undefined") {
+        tpl = (translations[lang] && translations[lang][key])
+            || (translations.de && translations.de[key])
+            || "";
+    }
+    const spellsText = formatLfSpellNamesForDesc(spellLabels, lang);
+    if (!tpl) {
+        return lang === "en"
+            ? `You have gained proficiency in the following cantrips: ${spellsText}.`
+            : `Du hast in den folgenden Zaubertricks Übung erlangt: ${spellsText}.`;
+    }
+    return String(tpl).replace(/\{spells\}/g, spellsText);
+}
+
+function formatLfGetPreparedSpellShortDesc(spellLabels, lang) {
+    const key = "ccLfGetPreparedSpellShortD";
+    let tpl = "";
+    if (typeof translations !== "undefined") {
+        tpl = (translations[lang] && translations[lang][key])
+            || (translations.de && translations.de[key])
+            || "";
+    }
+    const spellsText = formatLfSpellNamesForDesc(spellLabels, lang);
+    if (!tpl) {
+        return lang === "en"
+            ? `You have learned the formulas and workings of the following powerful spells: ${spellsText}.`
+            : `Du hast die Formeln und Wirkungsweise folgender mächtiger Zauber erlernt: ${spellsText}.`;
+    }
+    return String(tpl).replace(/\{spells\}/g, spellsText);
+}
+
+function getLfSpellcraftGetCantripShortDescPair(slot) {
+    if (!slot || slot.payload?.featureType !== "spellcraft" || slot.payload?.category !== "getCantrip") {
+        return null;
+    }
+    const labels = (slot.payload.optionsConfig?.selectedSpells || []).filter(Boolean);
+    if (!labels.length) return null;
+    return {
+        de: formatLfGetCantripShortDesc(labels, "de"),
+        en: formatLfGetCantripShortDesc(labels, "en")
+    };
+}
+
+function getLfSpellcraftGetPreparedSpellShortDescPair(slot) {
+    if (!slot || slot.payload?.featureType !== "spellcraft" || slot.payload?.category !== "getPreparedSpell") {
+        return null;
+    }
+    const cfg = slot.payload.optionsConfig || {};
+    const labels = [];
+    Object.values(cfg.selectedByLevel || {}).forEach(arr => {
+        if (!Array.isArray(arr)) return;
+        arr.filter(Boolean).forEach(lab => {
+            if (!labels.includes(lab)) labels.push(lab);
+        });
+    });
+    // Fallback: einzelne Auswahl nur in selectedSpells (z. B. Species-Builder)
+    if (!labels.length && Array.isArray(cfg.selectedSpells)) {
+        cfg.selectedSpells.filter(Boolean).forEach(lab => {
+            if (!labels.includes(lab)) labels.push(lab);
+        });
+    }
+    if (!labels.length) return null;
+    return {
+        de: formatLfGetPreparedSpellShortDesc(labels, "de"),
+        en: formatLfGetPreparedSpellShortDesc(labels, "en")
+    };
+}
+
+/** Kurzbeschreibung Einfach→Fertigkeiten mit konkreter Aufzählung. */
+function formatLfAdditionalSkillsShortDesc(skillLabels, lang) {
+    const key = "additionalSkillsGrantedShortD";
+    let tpl = "";
+    if (typeof translations !== "undefined") {
+        tpl = (translations[lang] && translations[lang][key])
+            || (translations.de && translations.de[key])
+            || "";
+    }
+    const skillsText = formatLfSkillNamesForDesc(skillLabels, lang);
+    if (!tpl) {
+        return lang === "en"
+            ? `You gain proficiency in the following additional skills: ${skillsText}`
+            : `Du erlangst Übung in den folgenden zusätzlichen Fertigkeiten: ${skillsText}`;
+    }
+    return String(tpl).replace(/\{skills\}/g, skillsText);
+}
+
+/** de/en-Paar für Einfach→Fertigkeiten aus Optionsmaske; sonst null. */
+function getLfSimpleSkillsShortDescPair(slot) {
+    if (!slot || slot.payload?.featureType !== "simple" || slot.payload?.category !== "skills") {
+        return null;
+    }
+    const labels = slot.payload.optionsConfig?.selectedSkills || [];
+    if (!Array.isArray(labels) || !labels.length) return null;
+    return {
+        de: formatLfAdditionalSkillsShortDesc(labels, "de"),
+        en: formatLfAdditionalSkillsShortDesc(labels, "en")
+    };
 }
 
 /**
@@ -10842,7 +11087,9 @@ function getLfSavingThrowPoolCount() {
 }
 
 function getLfFeatPoolCount(mode, cfg) {
-    const feats = typeof featList !== "undefined" ? featList : [];
+    const feats = (typeof getEffectiveFeatList === "function")
+        ? getEffectiveFeatList()
+        : ((typeof featList !== "undefined") ? featList : []);
     if (mode === "all") return feats.length;
     if (mode === "featCategory") {
         const catNum = cfg?.featCategoryNumber || 2;
@@ -10857,8 +11104,10 @@ function getLfManeuverPoolCount() {
 
 /** Kampfstil-Talente (featCategoryNumber 3) für Optionen→Fighting Style */
 function getLfFightingStyleFeats() {
-    if (typeof featList === "undefined") return [];
-    return featList.filter(f => f.featCategoryNumber === 3);
+    const feats = (typeof getEffectiveFeatList === "function")
+        ? getEffectiveFeatList()
+        : ((typeof featList !== "undefined") ? featList : []);
+    return feats.filter(f => f.featCategoryNumber === 3);
 }
 
 function getLfFightingStylePoolCount() {
@@ -10895,6 +11144,9 @@ function countLfOptionsEntries(slot) {
     if (!cfg) return 0;
     if (slot.payload.featureType === "simple") {
         if (slot.payload.category === "skills") return (cfg.selectedSkills || []).length;
+        if (slot.payload.category === "originFeats") {
+            return (cfg.selectedFeats || []).filter(Boolean).length;
+        }
         if (slot.payload.category === "savingThrows") {
             if (cfg.mode === "all") return getLfSavingThrowPoolCount();
             return (cfg.selectedLabels || []).length;
@@ -10997,6 +11249,7 @@ function countLfOptionsEntries(slot) {
     if (Array.isArray(cfg.allowedLabels)) return cfg.allowedLabels.length;
     if (Array.isArray(cfg.selectedLabels)) return cfg.selectedLabels.length;
     if (Array.isArray(cfg.selectedSkills)) return cfg.selectedSkills.length;
+    if (Array.isArray(cfg.selectedFeats)) return cfg.selectedFeats.length;
     if (Array.isArray(cfg.selectedFeatLabels)) return cfg.selectedFeatLabels.length;
     if (Array.isArray(cfg.selectedManeuvers)) return cfg.selectedManeuvers.length;
     if (cfg.mode === "all") return 1;
@@ -11428,6 +11681,30 @@ function buildLfFixedDescPreviewBlock(labelKey, translationKey, previewOpts) {
         pair.de = formatLfCustomUnarmoredDefenseDesc(abilities, "de", mode);
         pair.en = formatLfCustomUnarmoredDefenseDesc(abilities, "en", mode);
     }
+    if (translationKey === "additionalSkillsShortD" || translationKey === "additionalSkillsGrantedShortD") {
+        const slot = previewOpts?.slot;
+        const dynamic = getLfSimpleSkillsShortDescPair(slot);
+        if (dynamic) {
+            pair.de = dynamic.de;
+            pair.en = dynamic.en;
+        }
+    }
+    if (translationKey === "ccLfGetCantripShortD") {
+        const slot = previewOpts?.slot;
+        const dynamic = getLfSpellcraftGetCantripShortDescPair(slot);
+        if (dynamic) {
+            pair.de = dynamic.de;
+            pair.en = dynamic.en;
+        }
+    }
+    if (translationKey === "ccLfGetPreparedSpellShortD") {
+        const slot = previewOpts?.slot;
+        const dynamic = getLfSpellcraftGetPreparedSpellShortDescPair(slot);
+        if (dynamic) {
+            pair.de = dynamic.de;
+            pair.en = dynamic.en;
+        }
+    }
     if (translationKey === "spellcastingCustomD" || translationKey === "spellcastingCustomSpellbookD") {
         const slot = previewOpts?.slot;
         const cfg = slot?.payload?.optionsConfig || {};
@@ -11583,6 +11860,16 @@ function buildLfCheckboxGridHtml(listId, items, selectedSet, max = null, display
                 ? String(displayOpts.labelOverrides[label])
                 : tCC(label);
             if (uppercase) text = String(text).toLocaleUpperCase(lang);
+            // Custom-Talente / -Zauber mit ⊕ markieren
+            if (typeof item === "object" && item) {
+                const isCustomFeat = (typeof isCustomContentFeat === "function") && isCustomContentFeat(item);
+                const isCustomSpell = (typeof isCustomContentSpell === "function") && isCustomContentSpell(item);
+                if (isCustomFeat || isCustomSpell) {
+                    text = (typeof withCustomContentSelectMarker === "function")
+                        ? withCustomContentSelectMarker(text, true)
+                        : text;
+                }
+            }
             // Zauberlisten (Klassen) erhalten in allen Masken ihre definierte Schriftfarbe
             const colorCls = getSpellListColorClass(label);
             const textHtml = colorCls
@@ -11802,7 +12089,9 @@ function buildLfFloatOptionsBody(slot) {
     if (type === "options" && cat === "asiAndFeat") {
         const mode = cfg.mode || "all";
         const selected = new Set(cfg.selectedFeatLabels || []);
-        const feats = typeof featList !== "undefined" ? featList : [];
+        const feats = (typeof getEffectiveFeatList === "function")
+            ? getEffectiveFeatList()
+            : ((typeof featList !== "undefined") ? featList : []);
         const catNum = cfg.featCategoryNumber || 2;
         const featCatOpts = [
             { n: 1, k: "ccLfFeatCatOriginLabel" },
@@ -12113,9 +12402,10 @@ function buildLfSpellcraftGetCantripMaskHtml(slot, cfg) {
     const listMode = cfg.listMode || "all";
     const lists = getLfSpellcastingClassOptions();
     const selectedLists = new Set(cfg.spellListLabels || []);
-    const picks = Array.isArray(cfg.selectedSpells) ? cfg.selectedSpells.slice(0, 3) : [];
-    while (picks.length < 3) picks.push("");
-    const used = getLfUsedSpellcraftSpellLabels(customClassEditorState.levelFeatures, slot.slotId);
+    const dropCount = getLfSpellcraftGetDropdownCount(slot);
+    const picks = Array.isArray(cfg.selectedSpells) ? cfg.selectedSpells.slice(0, dropCount) : [];
+    while (picks.length < dropCount) picks.push("");
+    const used = getLfUsedSpellcraftSpellLabels(getLfSlotsForSlot(slot), slot.slotId);
     const spells = filterLfSpells({
         listMode,
         spellListLabels: cfg.spellListLabels || [],
@@ -12148,7 +12438,7 @@ function buildLfSpellcraftGetCantripMaskHtml(slot, cfg) {
         </div>
         <div class="cc-lf-param-value-block cc-lf-sc-cantrip-picks" id="ccLfScCantripPicks">
             ${buildLfOptionsGearHeadingHtml("ccLfSpellcraftCantripsPickLabel")}
-            <p class="cc-lf-float-hint cc-lf-sc-cantrip-picks-hint">${formatLfMinOptionsHint(1)}</p>
+            <p class="cc-lf-float-hint cc-lf-sc-cantrip-picks-hint">${formatLfPickMinHint(1)}</p>
             ${dropdowns}
         </div>
     `;
@@ -12202,12 +12492,13 @@ function buildLfSpellcraftGetPreparedMaskHtml(slot, cfg) {
     const levelLabels = levelMode === "all"
         ? getLfPreparedSpellLevelLabels()
         : (cfg.levelLabels || []);
-    const used = getLfUsedSpellcraftSpellLabels(customClassEditorState.levelFeatures, slot.slotId);
+    const used = getLfUsedSpellcraftSpellLabels(getLfSlotsForSlot(slot), slot.slotId);
     const selectedByLevel = cfg.selectedByLevel || {};
 
+    const dropCount = getLfSpellcraftGetDropdownCount(slot);
     const sections = levelLabels.map(lvl => {
-        const picks = Array.isArray(selectedByLevel[lvl]) ? selectedByLevel[lvl].slice(0, 3) : [];
-        while (picks.length < 3) picks.push("");
+        const picks = Array.isArray(selectedByLevel[lvl]) ? selectedByLevel[lvl].slice(0, dropCount) : [];
+        while (picks.length < dropCount) picks.push("");
         const spells = filterLfSpells({
             listMode,
             spellListLabels: cfg.spellListLabels || [],
@@ -12332,12 +12623,13 @@ function refreshLfSpellcraftGetCantripDropdowns() {
     if (!slot) return;
     const { listMode, spellListLabels } = readLfSpellcraftListFilterFromDom();
     const used = getLfUsedSpellcraftSpellLabels(getLfSlotsForSlot(slot), slot.slotId);
+    const dropCount = getLfSpellcraftGetDropdownCount(slot);
     const currentPicks = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < dropCount; i++) {
         currentPicks.push(queryActiveLfFloat(`#ccLfScCantrip_${i}`)?.value || "");
     }
     const spells = filterLfSpells({ listMode, spellListLabels, onlyCantrips: true, excludeUsed: used });
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < dropCount; i++) {
         const sel = queryActiveLfFloat(`#ccLfScCantrip_${i}`);
         if (!sel) continue;
         const cur = currentPicks[i];
@@ -12420,8 +12712,9 @@ function applyLfSpellcraftLevelFilterFromDom() {
 
 function applyLfSpellcraftGetCantripFromDom(slot, { soft = false } = {}) {
     const { listMode, spellListLabels } = applyLfSpellcraftListFilterFromDom();
+    const dropCount = getLfSpellcraftGetDropdownCount(slot);
     const selectedSpells = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < dropCount; i++) {
         selectedSpells.push(queryActiveLfFloat(`#ccLfScCantrip_${i}`)?.value || "");
     }
     const filled = selectedSpells.filter(Boolean);
@@ -12439,7 +12732,7 @@ function applyLfSpellcraftGetCantripFromDom(slot, { soft = false } = {}) {
             alert(tCC("ccLfSpellcraftDuplicateAlertLabel"));
             return false;
         }
-        const used = getLfUsedSpellcraftSpellLabels(customClassEditorState.levelFeatures, slot.slotId);
+        const used = getLfUsedSpellcraftSpellLabels(getLfSlotsForSlot(slot), slot.slotId);
         if (filled.some(lab => used.has(lab))) {
             alert(tCC("ccLfSpellcraftAlreadyUsedAlertLabel"));
             return false;
@@ -12480,11 +12773,12 @@ function applyLfSpellcraftGetPreparedFromDom(slot, { soft = false } = {}) {
     const { listMode, spellListLabels } = applyLfSpellcraftListFilterFromDom();
     const { levelMode, levelLabels } = applyLfSpellcraftLevelFilterFromDom();
     const activeLevels = levelMode === "all" ? getLfPreparedSpellLevelLabels() : levelLabels;
+    const dropCount = getLfSpellcraftGetDropdownCount(slot);
     const selectedByLevel = {};
     const allFilled = [];
     activeLevels.forEach(lvl => {
         const picks = [];
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < dropCount; i++) {
             picks.push(queryActiveLfFloat(`#ccLfScPrep_${lvl}_${i}`)?.value || "");
         }
         selectedByLevel[lvl] = picks;
@@ -12807,6 +13101,7 @@ function buildLfAttributeDirectMaskHtml(slot, cfg) {
     const pointsMap = {};
     (cfg.abilityPoints || []).forEach(a => { pointsMap[a.ability] = a.points || 0; });
     const used = sumLfAbilityPoints(cfg.abilityPoints);
+    const capRaiseChecked = !!cfg.abilityScoreCapRaise;
     return `
         ${buildLfOptionsGearHeadingHtml("ccLfAttrDirectPointsHeadingLabel")}
         <p class="cc-lf-float-hint cc-lf-float-hint--after-filter">${formatLfPickRangeHint(1, pointsMax)}</p>
@@ -12821,6 +13116,10 @@ function buildLfAttributeDirectMaskHtml(slot, cfg) {
             `).join("")}
         </div>
         <p class="cc-lf-float-pool cc-lf-float-pool--center" id="ccLfAttrDirectPool">${tCC("ccLfAmountRemainingLabel")}: <strong>${Math.max(0, pointsMax - used)}</strong> / ${pointsMax}</p>
+        <label class="cc-lf-attr-cap-raise-label">
+            <input type="checkbox" id="ccLfAttrCapRaise25" ${capRaiseChecked ? "checked" : ""}>
+            <span>${escapeLfHtml(tCC("ccLfAttrCapRaise25Label"))}</span>
+        </label>
     `;
 }
 
@@ -14120,7 +14419,10 @@ function applyLfFloatOptions(slot, { soft = false } = {}) {
             alert(`${tCC("ccLfAttrDirectPointsAlertLabel")} (1–${pointsMax})`);
             return false;
         }
-        slot.payload.optionsConfig = { abilityPoints };
+        slot.payload.optionsConfig = {
+            abilityPoints,
+            abilityScoreCapRaise: document.getElementById("ccLfAttrCapRaise25")?.checked ? 25 : 0
+        };
         slot.payload.amount = null;
         return true;
     }
@@ -14980,17 +15282,16 @@ function getCcCustomSpellListFilteredSpells() {
         : ((typeof spellList !== "undefined" && Array.isArray(spellList)) ? spellList : []);
     const f = ccCustomSpellListFilters || {};
     return all.filter(spell => {
-        // Bibliotheks-Zauber nur in Schritt 7 (Session-Pool), nicht in Tab 4
-        if (typeof isSpellFromSessionLibrary === "function" && isSpellFromSessionLibrary(spell)) {
-            return false;
-        }
         if (f.level && spell.spellLevel !== f.level) return false;
         if (f.school && spell.spellSchool !== f.school) return false;
         if (f.classList) {
             const labels = Array.isArray(spell.classLabel)
                 ? spell.classLabel
                 : (spell.classLabel ? [spell.classLabel] : []);
-            if (!labels.includes(f.classList)) return false;
+            // Bibliotheks-Zauber: listenunabhängig – bei Klassenlisten-Filter trotzdem anzeigen
+            const isBib = (typeof isCustomContentSpell === "function" && isCustomContentSpell(spell))
+                || (typeof isSpellFromSessionLibrary === "function" && isSpellFromSessionLibrary(spell));
+            if (!isBib && !labels.includes(f.classList)) return false;
         }
         return true;
     });
@@ -15048,7 +15349,6 @@ function updateCcCustomSpellListCounter() {
 
 /**
  * Rest-Auswahl zu einer Spell-ID aus Tab 4 entfernen (z. B. Zauber in Bib gelöscht).
- * Keine Bib↔Listen-Verknüpfung.
  */
 function syncCustomSpellsIntoClassSpellList(spell, options) {
     if (!spell || typeof customClassEditorState === "undefined" || !customClassEditorState) return;
@@ -15150,8 +15450,13 @@ function renderCustomClassTab4SpellBody() {
             const click = locked
                 ? ""
                 : ` onclick="toggleCcCustomSpellListSpell(${spell.ID})"`;
+            const spellName = tCC(spell.translationLabel) || spell.translationLabel;
+            const markerHtml = (typeof isCustomContentSpell === "function" && isCustomContentSpell(spell)
+                && typeof getCustomContentMarkerHtml === "function")
+                ? getCustomContentMarkerHtml()
+                : "";
             html += `<li class="${cls}" data-spell-id="${spell.ID}"${click}>
-                <span class="spell-name">${escapeLfHtml(tCC(spell.translationLabel) || spell.translationLabel)}</span>
+                <span class="spell-name">${escapeLfHtml(spellName)}${markerHtml}</span>
             </li>`;
         });
         html += "</ul>";

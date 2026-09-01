@@ -226,6 +226,9 @@ function openCustomSpellChooser() {
         setCustomFeatureModalChooserMode(overlay, true);
     }
     overlay.style.setProperty("display", "flex", "important");
+    if (typeof applyLevelUpCustomBibRestrictions === "function") {
+        applyLevelUpCustomBibRestrictions();
+    }
     applyCspTranslations();
 }
 
@@ -407,7 +410,11 @@ async function handleCustomSpellFile(event) {
         }
         if (event?.target) event.target.value = "";
         if (typeof notifyDcPackageDependencyPossiblyResolved === "function") {
-            notifyDcPackageDependencyPossiblyResolved();
+            notifyDcPackageDependencyPossiblyResolved({
+                envelope: result.envelope,
+                payload: result.payload,
+                packageType: result.detectedType
+            });
         }
         return;
     }
@@ -740,6 +747,7 @@ function startCustomSpellCreateNew() {
 }
 
 function startCustomSpellEdit(spellId) {
+    if (typeof isLevelUpLockedSpell === "function" && isLevelUpLockedSpell(spellId)) return;
     if (!customSpellEditorState) return;
     const id = parseInt(spellId, 10);
     const spell = (customSpellEditorState.spells || []).find(s => s.ID === id);
@@ -751,6 +759,7 @@ function startCustomSpellEdit(spellId) {
 
 /** Zauber aus Pack entfernen (Übersicht); mit Bestätigung. */
 function removeCustomSpellFromPack(spellId) {
+    if (typeof isLevelUpLockedSpell === "function" && isLevelUpLockedSpell(spellId)) return;
     if (!customSpellEditorState) return;
     const id = parseInt(spellId, 10);
     const spell = (customSpellEditorState.spells || []).find(s => s.ID === id);
@@ -941,16 +950,19 @@ function buildCspOverviewTableRowsHtml() {
         const range = cspFormatRangeDisplay(spell.spellRange);
         const conc = cspSpellFocusHas(spell.spellFocus, "concentrationLabel") ? "✔" : "✘";
         const ritual = cspSpellFocusHas(spell.spellFocus, "ritualLabel") ? "✔" : "✘";
+        const locked = (typeof isLevelUpLockedSpell === "function" && isLevelUpLockedSpell(spell.ID));
+        const lockClass = locked ? " csp-action-btn--locked" : "";
+        const lockDisabled = locked ? " disabled" : "";
 
         return `<tr>
             <td class="csp-col-actions">
                 <div class="csp-action-btns">
-                    <button type="button" class="csp-edit-btn" title="${escapeCspHtml(cspT("cspEditSpellTitleLabel", "Bearbeiten"))}"
+                    <button type="button" class="csp-edit-btn${lockClass}" title="${escapeCspHtml(cspT("cspEditSpellTitleLabel", "Bearbeiten"))}"
                         aria-label="${escapeCspHtml(cspT("cspEditSpellTitleLabel", "Bearbeiten"))}"
-                        onclick="startCustomSpellEdit(${spell.ID})">✎</button>
-                    <button type="button" class="csp-delete-btn" title="${escapeCspHtml(cspT("cspDeleteSpellTitleLabel", "Entfernen"))}"
+                        onclick="startCustomSpellEdit(${spell.ID})"${lockDisabled}>✎</button>
+                    <button type="button" class="csp-delete-btn${lockClass}" title="${escapeCspHtml(cspT("cspDeleteSpellTitleLabel", "Entfernen"))}"
                         aria-label="${escapeCspHtml(cspT("cspDeleteSpellTitleLabel", "Entfernen"))}"
-                        onclick="removeCustomSpellFromPack(${spell.ID})">X</button>
+                        onclick="removeCustomSpellFromPack(${spell.ID})"${lockDisabled}>X</button>
                 </div>
             </td>
             <td class="csp-col-num">${index + 1}</td>
@@ -1677,10 +1689,6 @@ function finishCustomSpellPack() {
         customSpellImportSnapshot = currentSnapshot;
     }
 
-    registerCustomSpellPackFromPayload(
-        payload?.payload || payload,
-        payload?.dc || null
-    );
     if (typeof markDcPackageUserLoaded === "function") {
         markDcPackageUserLoaded(
             (typeof DC_PACKAGE_TYPE !== "undefined")
@@ -1689,10 +1697,16 @@ function finishCustomSpellPack() {
         );
     }
 
+    registerCustomSpellPackFromPayload(
+        payload?.payload || payload,
+        payload?.dc || null
+    );
+
     discardCustomSpellEditor();
     if (typeof populateSpells === "function") {
         try { populateSpells(); } catch (e) { /* ignore */ }
     }
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
 }
 
 //=======================================================================
@@ -1763,6 +1777,7 @@ function registerCustomSpellPackFromPayload(payload, envelope) {
     };
 
     persistCustomSpellPackRuntimeToLocalStorage();
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
     return true;
 }
 
@@ -1964,6 +1979,7 @@ function clearCustomSpellPackRuntimeCompletely() {
     }
     const overlay = document.getElementById("customSpellOverlay");
     if (overlay) overlay.style.setProperty("display", "none", "important");
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
     return true;
 }
 
@@ -1973,6 +1989,11 @@ function clearCustomSpellPackRuntimeCompletely() {
  * (Bogen hydriert weiterhin über customFeaturesSheet.js.)
  */
 function resetCustomSpellPackRuntimeOnCreatorLoad() {
+    // --- LEVEL-UP: Runtime aus Snapshot behalten ---
+    if (typeof shouldSkipCreatorRuntimeResetForLevelUp === "function"
+        && shouldSkipCreatorRuntimeResetForLevelUp()) {
+        return;
+    }
     clearCustomSpellPackRuntimeCompletely();
 }
 

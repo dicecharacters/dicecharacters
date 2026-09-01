@@ -253,33 +253,57 @@ function syncCscSpellcastingFromFeatures() {
 }
 
 /**
- * UC-Stufen der Elternklasse: Unique levels mit subclassCategoryNumber > 0.
+ * UC-Stufen der Elternklasse – gleiche Quelle wie Tab 3 im Klassenbuilder (getTab2SubclassLevels).
+ * Custom Class: Stufe(n) mit Merkmaltyp „Unterklasse“ in Tab 2 (kompiliert: translationLabel „subclass“).
+ * PHB: subclassCategoryNumber > 0 in classData.
  * Fallback: [3, 6, 10, 14]
  */
 function getCscParentSubclassLevels() {
+    const slug = getCscParentClassSlug();
+    const fromEditor = [];
+    const fromSubclassPick = [];
+    const fromScFeatures = [];
+
+    // 1) Parent-Editor in derselben Session (exakt wie Class-Builder Tab 3)
+    if (slug
+        && typeof customClassEditorState !== "undefined"
+        && customClassEditorState
+        && typeof getTab2SubclassLevels === "function"
+        && String(customClassEditorState.slug || "").toLowerCase() === String(slug).toLowerCase()) {
+        fromEditor.push(...getTab2SubclassLevels(customClassEditorState.levelFeatures));
+    }
+
     const data = getCscParentClassData();
-    const set = new Set();
-    data.forEach(row => {
+    (Array.isArray(data) ? data : []).forEach(row => {
         if (!row) return;
+        if (row.translationLabel === "subclass") {
+            const lvl = Number(row.level) || 0;
+            if (lvl >= 1) fromSubclassPick.push(lvl);
+        }
         const sc = row.subclassCategoryNumber || 0;
         if (sc > 0 && sc !== CUSTOM_SUBCLASS_CATEGORY_NUMBER) {
             const lvl = Number(row.level) || 0;
-            if (lvl >= 3) set.add(lvl);
+            if (lvl >= 3) fromScFeatures.push(lvl);
         }
     });
-    // Custom-Elternklasse: Tab-2-Typ subclass aus Bundle
-    if (!set.size && typeof getRegisteredCustomClassBundle === "function") {
-        const bundle = getRegisteredCustomClassBundle(getCscParentClassSlug());
-        const rows = Array.isArray(bundle?.classData) ? bundle.classData : [];
-        rows.forEach(row => {
-            if (row?.translationLabel === "subclass" || (row?.subclassCategoryNumber > 0)) {
-                const lvl = Number(row.level) || 0;
-                if (lvl >= 3) set.add(lvl);
-            }
-        });
+
+    const isCustomParent = !!(getCscParentCoreTraits()?.isCustom
+        || (typeof isRegisteredCustomClassSlug === "function" && slug && isRegisteredCustomClassSlug(slug)));
+
+    let levels;
+    if (isCustomParent) {
+        // Keine PHB-Template-UC-Zeilen (sc 1…4) – nur Tab-2-Unterklassen-Stufe(n)
+        levels = [...new Set([...fromEditor, ...fromSubclassPick])];
+    } else if (fromEditor.length) {
+        levels = [...new Set(fromEditor)];
+    } else if (fromSubclassPick.length) {
+        levels = [...new Set(fromSubclassPick)];
+    } else {
+        levels = [...new Set(fromScFeatures)];
     }
-    if (!set.size) return [3, 6, 10, 14];
-    return Array.from(set).sort((a, b) => a - b);
+
+    if (!levels.length) return [3, 6, 10, 14];
+    return levels.sort((a, b) => a - b);
 }
 
 function ensureCscLevelFeatureSlots(state) {
@@ -687,19 +711,101 @@ function triggerCustomSubclassUpload() {
 }
 
 function handleCustomSubclassFile(event) {
-    const file = event.target?.files?.[0];
+    const file = event?.target?.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-        try {
-            const raw = JSON.parse(reader.result);
-            importCustomSubclassPayload(raw);
-        } catch (e) {
-            alert(tCC("cscImportInvalidAlertLabel") || "Ungültige JSON-Datei.");
-        }
-        event.target.value = "";
+    const finish = () => {
+        if (event.target) event.target.value = "";
     };
-    reader.readAsText(file);
+
+    if (typeof readAndValidateDcPackageFile !== "function") {
+        alert(tCC("cscImportInvalidAlertLabel") || "Ungültige JSON-Datei.");
+        finish();
+        return;
+    }
+
+    readAndValidateDcPackageFile(file, {
+        expectedType: (typeof DC_PACKAGE_TYPE !== "undefined")
+            ? DC_PACKAGE_TYPE.CUSTOM_SUBCLASS
+            : "customSubclass"
+    }).then(result => {
+        try {
+            if (!result.ok) {
+                alert(result.message || tCC("cscImportInvalidAlertLabel") || "Import fehlgeschlagen.");
+                return;
+            }
+
+            const applySubclassImport = (payload, envelope) => {
+                importCustomSubclassPayload({ payload, envelope });
+                if (typeof markDcPackageUserLoaded === "function") {
+                    markDcPackageUserLoaded(
+                        (typeof DC_PACKAGE_TYPE !== "undefined")
+                            ? DC_PACKAGE_TYPE.CUSTOM_SUBCLASS
+                            : "customSubclass"
+                    );
+                }
+                if (typeof notifyDcPackageDependencyPossiblyResolved === "function") {
+                    notifyDcPackageDependencyPossiblyResolved();
+                }
+            };
+
+            if (typeof isDcPackageDependencyResolutionUpload === "function"
+                && isDcPackageDependencyResolutionUpload(result.detectedType)) {
+                const match = (typeof validateUploadedDcPackageAgainstPendingDependency === "function")
+                    ? validateUploadedDcPackageAgainstPendingDependency(
+                        result.detectedType,
+                        result.envelope,
+                        result.payload
+                    )
+                    : { ok: true };
+                if (!match.ok) {
+                    alert(match.message || tCC("cscImportInvalidAlertLabel") || "Import fehlgeschlagen.");
+                    if (typeof promptNextDcPackageDependencyUpload === "function") {
+                        promptNextDcPackageDependencyUpload();
+                    }
+                    return;
+                }
+                const wrapped = (result.envelope && result.payload)
+                    ? { dc: result.envelope, payload: result.payload }
+                    : result.payload;
+                if (typeof registerCustomSubclassInRuntime === "function") {
+                    registerCustomSubclassInRuntime(wrapped);
+                }
+                if (typeof markDcPackageUserLoaded === "function") {
+                    markDcPackageUserLoaded(
+                        (typeof DC_PACKAGE_TYPE !== "undefined")
+                            ? DC_PACKAGE_TYPE.CUSTOM_SUBCLASS
+                            : "customSubclass"
+                    );
+                }
+                if (typeof notifyDcPackageDependencyPossiblyResolved === "function") {
+                    notifyDcPackageDependencyPossiblyResolved({
+                        envelope: result.envelope,
+                        payload: result.payload,
+                        packageType: result.detectedType
+                    });
+                }
+                return;
+            }
+
+            if (typeof beginDcPackageImportWithDependencies === "function") {
+                beginDcPackageImportWithDependencies({
+                    envelope: result.envelope,
+                    payload: result.payload,
+                    detectedType: result.detectedType,
+                    onApply: (payload, envelope) => applySubclassImport(payload, envelope),
+                    onCancel: () => {}
+                });
+                return;
+            }
+
+            applySubclassImport(result.payload, result.envelope);
+        } catch (e) {
+            console.error(e);
+            alert(tCC("cscImportInvalidAlertLabel") || "Ungültige JSON-Datei.");
+        } finally {
+            finish();
+        }
+    });
 }
 
 function importCustomSubclassPayload(raw) {
@@ -708,7 +814,10 @@ function importCustomSubclassPayload(raw) {
         : "customSubclass";
     let payload = raw;
     let envelope = null;
-    if (typeof validateDcPackage === "function") {
+    if (raw && typeof raw === "object" && raw.payload && (raw.envelope || raw.dc)) {
+        envelope = raw.envelope || raw.dc || null;
+        payload = raw.payload;
+    } else if (typeof validateDcPackage === "function") {
         const v = validateDcPackage(raw, { expectedType: expected });
         if (!v.ok) {
             alert(v.message || tCC("cscImportInvalidAlertLabel") || "Import fehlgeschlagen.");
@@ -1181,6 +1290,28 @@ function compileCustomSubclassRuntime(state) {
     };
 }
 
+function buildCustomSubclassPackageDependencies(state) {
+    const scan = {
+        spellIds: [],
+        featIds: [],
+        spellLabels: [],
+        featLabels: []
+    };
+    if (typeof walkDcLfSlotsForCustomRefs === "function") {
+        walkDcLfSlotsForCustomRefs(state?.levelFeatures || [], scan);
+    }
+    return (typeof buildDcPackageDepsFromCustomRefs === "function")
+        ? buildDcPackageDepsFromCustomRefs(scan, {
+            spellPackId: (typeof resolveDcSessionSpellPackId === "function")
+                ? resolveDcSessionSpellPackId()
+                : null,
+            featPackId: (typeof resolveDcSessionFeatPackId === "function")
+                ? resolveDcSessionFeatPackId()
+                : null
+        })
+        : [];
+}
+
 function buildCustomSubclassExportPayload(state) {
     const compiled = compileCustomSubclassRuntime(state);
     const flat = {
@@ -1223,12 +1354,18 @@ function buildCustomSubclassExportPayload(state) {
                 required: true
             });
         }
+        const customDeps = (typeof buildCustomSubclassPackageDependencies === "function")
+            ? buildCustomSubclassPackageDependencies(state)
+            : [];
+        const merged = (typeof mergeDcPackageDependencies === "function")
+            ? mergeDcPackageDependencies(deps.concat(customDeps))
+            : deps.concat(customDeps);
         return wrapDcPackage({
             packageType: DC_PACKAGE_TYPE.CUSTOM_SUBCLASS,
             packageId: state.packageId || undefined,
             createdAt: state.packageCreatedAt || undefined,
             provides: [{ kind: "subclass", slug: compiled.slug, parentSlug: state.targetClassSlug, index: CUSTOM_SUBCLASS_CATEGORY_NUMBER }],
-            dependencies: deps,
+            dependencies: merged,
             payload: flat
         });
     }
@@ -1356,6 +1493,7 @@ function clearCustomSubclassRuntimeCompletely() {
         && typeof refreshCreatorSubclassOptionsRadios === "function") {
         refreshCreatorSubclassOptionsRadios({});
     }
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
     return true;
 }
 
@@ -1409,6 +1547,7 @@ function registerCustomSubclassInRuntime(rawOrEnvelope) {
 
     refreshCreatorSubclassOptionsRadios({ preferNotSelectCustom: true });
     persistCustomSubclassRuntimeToLocalStorage();
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
     return true;
 }
 
@@ -1631,6 +1770,11 @@ function applyCscTranslations() {
 
 /** Creator-Start / Seiten-Reset: keine Hydration – Custom-UC muss neu gespeichert werden */
 function resetCustomSubclassRuntimeOnCreatorLoad() {
+    // --- LEVEL-UP: Runtime aus Snapshot behalten ---
+    if (typeof shouldSkipCreatorRuntimeResetForLevelUp === "function"
+        && shouldSkipCreatorRuntimeResetForLevelUp()) {
+        return;
+    }
     clearCustomSubclassRuntimeCompletely();
 }
 

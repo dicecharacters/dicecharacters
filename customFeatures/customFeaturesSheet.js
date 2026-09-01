@@ -8,7 +8,7 @@
 //   1. Custom Class
 //   2. Custom Subclass
 //   3. Custom Background
-//   4. Custom Species (geplant)
+//   4. Custom Species
 //   5. Custom Feat Library (Talentbibliothek / techn. customFeatPack)
 //   6. Custom Spell Library (Zauberbibliothek / techn. customSpellPack)
 //
@@ -75,6 +75,18 @@ function updateSheetCustomSubclassMarker(className, subclassCategoryNumber) {
     }
 }
 
+/** Kopfzeile: Marker neben Volk. */
+function updateSheetCustomSpeciesMarker(speciesName) {
+    const marker = document.getElementById("speciesCustomContentMarker");
+    const show = typeof isSheetCustomSpeciesSlug === "function"
+        && isSheetCustomSpeciesSlug(speciesName);
+    if (typeof setCustomContentMarkerVisible === "function") {
+        setCustomContentMarkerVisible(marker, show);
+    } else if (marker) {
+        marker.hidden = !show;
+    }
+}
+
 /** Fokus-Liste aus CoreTraits normalisieren (Bogen + Ersteller) */
 function normalizeSpellcastingFocusList(focus) {
     if (focus == null || focus === 0 || focus === "") return [];
@@ -110,8 +122,7 @@ function hydrateAllCustomFeaturesSheetFromStorage() {
     if (hydrateCustomBackgroundRuntimeFromStorage()) any = true;
     if (hydrateCustomSpellPackRuntimeFromStorage()) any = true;
     if (hydrateCustomFeatPackRuntimeFromStorage()) any = true;
-    // Platzhalter für spätere Pakete:
-    // if (hydrateCustomSpeciesRuntimeFromStorage()) any = true;
+    if (hydrateCustomSpeciesRuntimeFromStorage()) any = true;
     return any;
 }
 
@@ -889,9 +900,155 @@ function hydrateCustomFeatPackRuntimeFromStorage() {
 }
 
 //=======================================================================
-// 4. Custom Species (geplant)
+// 4. Custom Species
 //=======================================================================
-// let sheetCustomSpeciesRuntime = null;
-// function hydrateCustomSpeciesRuntime(payload) { … }
-// function hydrateCustomSpeciesRuntimeFromStorage() { … }
-// function getSheetCustomSpeciesData(…) { … }
+
+const CUSTOM_SPECIES_SHEET_LS_KEY = "customSpeciesRuntime";
+const CUSTOM_SPECIES_SHEET_ID = 1000;
+
+let sheetCustomSpeciesRuntime = null;
+
+function getSheetCustomSpeciesRuntime() {
+    return sheetCustomSpeciesRuntime;
+}
+
+function isSheetCustomSpeciesSlug(speciesName) {
+    if (!speciesName || !sheetCustomSpeciesRuntime?.slug) return false;
+    return String(speciesName).toLowerCase().trim()
+        === String(sheetCustomSpeciesRuntime.slug).toLowerCase().trim();
+}
+
+/**
+ * Volk anhand Radio-/Storage-Wert finden (PHB „Human“ oder Custom-Slug).
+ */
+function findSpeciesBySelectionValue(value) {
+    if (!value || typeof speciesList === "undefined" || !Array.isArray(speciesList)) return null;
+    const raw = String(value);
+    const exact = speciesList.find(s => s.translationLabel === raw);
+    if (exact) return exact;
+    const lower = raw.toLowerCase();
+    const byLower = speciesList.find(s => String(s.translationLabel).toLowerCase() === lower);
+    if (byLower) return byLower;
+    const legacy = raw.charAt(0).toLowerCase() + raw.slice(1) + "Label";
+    const byLegacy = speciesList.find(s => s.translationLabel === legacy);
+    if (byLegacy) return byLegacy;
+    const lowerPlus = lower + "label";
+    const byPlus = speciesList.find(s => String(s.translationLabel).toLowerCase() === lowerPlus);
+    if (byPlus) return byPlus;
+    return speciesList.find(s => String(s.translationLabel).toLowerCase().startsWith(lower)) || null;
+}
+
+/**
+ * Anzeigename des Volks (PHB „Mensch“ / Custom „Neues Volk“) — nicht den translationLabel-Slug.
+ */
+function getSpeciesDisplayTranslation(speciesValue, lang) {
+    if (!speciesValue) return "";
+    const language = lang
+        || (typeof currentLanguage !== "undefined" ? currentLanguage : null)
+        || (typeof currentLang !== "undefined" ? currentLang : "de");
+    const t = (typeof translations !== "undefined" && translations[language]) ? translations[language] : {};
+    const entry = findSpeciesBySelectionValue(speciesValue);
+    const key = entry?.translationLabel
+        || (String(speciesValue).toLowerCase().endsWith("label")
+            ? speciesValue
+            : String(speciesValue).charAt(0).toLowerCase() + String(speciesValue).slice(1) + "Label");
+    if (t[key]) return t[key];
+    const sheetRt = (typeof sheetCustomSpeciesRuntime !== "undefined") ? sheetCustomSpeciesRuntime : null;
+    const rtName = sheetRt?.translations?.[language]?.[key];
+    if (rtName) return rtName;
+    return speciesValue;
+}
+
+function hydrateCustomSpeciesRuntime(raw) {
+    let payload = raw;
+    let envelope = null;
+    if (typeof normalizeDcPackageInput === "function") {
+        const norm = normalizeDcPackageInput(raw);
+        if (norm.ok && norm.detectedType === (typeof DC_PACKAGE_TYPE !== "undefined"
+            ? DC_PACKAGE_TYPE.CUSTOM_SPECIES
+            : "customSpecies")) {
+            payload = norm.payload;
+            envelope = norm.envelope;
+        } else if (norm.ok && raw?.dc) {
+            sheetCustomSpeciesRuntime = null;
+            return false;
+        }
+    }
+
+    if (!payload
+        || (payload.type !== "customSpecies" && payload.type !== "customSpeciesRuntime")
+        || !payload.slug
+        || !payload.compiledSpeciesListEntry) {
+        sheetCustomSpeciesRuntime = null;
+        return false;
+    }
+
+    if (payload.translations?.de && typeof translations !== "undefined") {
+        Object.assign(translations.de, payload.translations.de);
+    }
+    if (payload.translations?.en && typeof translations !== "undefined") {
+        Object.assign(translations.en, payload.translations.en);
+    }
+
+    const entry = Object.assign({}, payload.compiledSpeciesListEntry, {
+        ID: payload.compiledSpeciesListEntry.ID || CUSTOM_SPECIES_SHEET_ID,
+        isCustom: true
+    });
+
+    const strip = (arr, pred) => {
+        if (!Array.isArray(arr)) return;
+        for (let i = arr.length - 1; i >= 0; i--) {
+            if (pred(arr[i])) arr.splice(i, 1);
+        }
+    };
+    strip(typeof speciesList !== "undefined" ? speciesList : null, e =>
+        e && (e.isCustom || e.ID === CUSTOM_SPECIES_SHEET_ID || e.translationLabel === entry.translationLabel));
+    strip(typeof speciesTraitList !== "undefined" ? speciesTraitList : null, e => e && e.isCustom);
+    strip(typeof ancestryList !== "undefined" ? ancestryList : null, e => e && e.isCustom);
+    strip(typeof lineageList !== "undefined" ? lineageList : null, e => e && e.isCustom);
+
+    if (typeof speciesList !== "undefined") speciesList.push(entry);
+    (payload.compiledSpeciesTraitList || []).forEach(t => {
+        if (typeof speciesTraitList !== "undefined") {
+            speciesTraitList.push(Object.assign({}, t, { isCustom: true }));
+        }
+    });
+    (payload.compiledAncestryList || []).forEach(a => {
+        if (typeof ancestryList !== "undefined") {
+            ancestryList.push(Object.assign({}, a, { isCustom: true }));
+        }
+    });
+    (payload.compiledLineageList || []).forEach(l => {
+        if (typeof lineageList !== "undefined") {
+            lineageList.push(Object.assign({}, l, { isCustom: true }));
+        }
+    });
+
+    sheetCustomSpeciesRuntime = {
+        slug: String(payload.slug),
+        compiledSpeciesListEntry: entry,
+        compiledSpeciesTraitList: payload.compiledSpeciesTraitList || [],
+        compiledAncestryList: payload.compiledAncestryList || [],
+        compiledLineageList: payload.compiledLineageList || [],
+        compiledMagicFeatures: payload.compiledMagicFeatures || [],
+        translations: payload.translations || { de: {}, en: {} },
+        packageId: envelope?.packageId || payload.packageId || null,
+        editorState: payload.editorState || null
+    };
+    return true;
+}
+
+function hydrateCustomSpeciesRuntimeFromStorage() {
+    const raw = localStorage.getItem(CUSTOM_SPECIES_SHEET_LS_KEY);
+    if (!raw) {
+        sheetCustomSpeciesRuntime = null;
+        return false;
+    }
+    try {
+        return hydrateCustomSpeciesRuntime(JSON.parse(raw));
+    } catch (e) {
+        console.warn("customSpeciesRuntime ungültig:", e);
+        sheetCustomSpeciesRuntime = null;
+        return false;
+    }
+}

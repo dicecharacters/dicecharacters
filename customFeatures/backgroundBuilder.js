@@ -144,6 +144,10 @@ function isCbgToolSurfaceLabel(label) {
 }
 
 function getCbgOriginFeats() {
+    if (typeof getEffectiveFeatList === "function") {
+        const cat = CBG_CONFIG.originFeatCategoryNumber;
+        return getEffectiveFeatList().filter(f => Number(f.featCategoryNumber) === cat);
+    }
     if (typeof featList === "undefined" || !Array.isArray(featList)) return [];
     const cat = CBG_CONFIG.originFeatCategoryNumber;
     return featList.filter(f => Number(f.featCategoryNumber) === cat);
@@ -246,7 +250,72 @@ function handleCustomBackgroundFile(event) {
                 alert(result.message || tCC("cbgImportInvalidAlertLabel") || "Import fehlgeschlagen.");
                 return;
             }
-            importCustomBackgroundPayload(result.payload, result.envelope);
+
+            const applyBackgroundImport = (payload, envelope) => {
+                importCustomBackgroundPayload(payload, envelope);
+                if (typeof markDcPackageUserLoaded === "function") {
+                    markDcPackageUserLoaded(
+                        (typeof DC_PACKAGE_TYPE !== "undefined")
+                            ? DC_PACKAGE_TYPE.CUSTOM_BACKGROUND
+                            : "customBackground"
+                    );
+                }
+                if (typeof notifyDcPackageDependencyPossiblyResolved === "function") {
+                    notifyDcPackageDependencyPossiblyResolved();
+                }
+            };
+
+            if (typeof isDcPackageDependencyResolutionUpload === "function"
+                && isDcPackageDependencyResolutionUpload(result.detectedType)) {
+                const match = (typeof validateUploadedDcPackageAgainstPendingDependency === "function")
+                    ? validateUploadedDcPackageAgainstPendingDependency(
+                        result.detectedType,
+                        result.envelope,
+                        result.payload
+                    )
+                    : { ok: true };
+                if (!match.ok) {
+                    alert(match.message || tCC("cbgImportInvalidAlertLabel") || "Import fehlgeschlagen.");
+                    if (typeof promptNextDcPackageDependencyUpload === "function") {
+                        promptNextDcPackageDependencyUpload();
+                    }
+                    return;
+                }
+                const wrapped = (result.envelope && result.payload)
+                    ? { dc: result.envelope, payload: result.payload }
+                    : result.payload;
+                if (typeof registerCustomBackgroundInRuntime === "function") {
+                    registerCustomBackgroundInRuntime(wrapped);
+                }
+                if (typeof markDcPackageUserLoaded === "function") {
+                    markDcPackageUserLoaded(
+                        (typeof DC_PACKAGE_TYPE !== "undefined")
+                            ? DC_PACKAGE_TYPE.CUSTOM_BACKGROUND
+                            : "customBackground"
+                    );
+                }
+                if (typeof notifyDcPackageDependencyPossiblyResolved === "function") {
+                    notifyDcPackageDependencyPossiblyResolved({
+                        envelope: result.envelope,
+                        payload: result.payload,
+                        packageType: result.detectedType
+                    });
+                }
+                return;
+            }
+
+            if (typeof beginDcPackageImportWithDependencies === "function") {
+                beginDcPackageImportWithDependencies({
+                    envelope: result.envelope,
+                    payload: result.payload,
+                    detectedType: result.detectedType,
+                    onApply: applyBackgroundImport,
+                    onCancel: () => {}
+                });
+                return;
+            }
+
+            applyBackgroundImport(result.payload, result.envelope);
         } catch (err) {
             console.error(err);
             alert(tCC("cbgImportInvalidAlertLabel") || "Import fehlgeschlagen.");
@@ -285,8 +354,6 @@ function importCustomBackgroundPayload(payload, envelope) {
         alert(tCC("cbgImportInvalidAlertLabel") || "Kein gültiges Custom-Hintergrund-Paket.");
         return;
     }
-
-    warnCbgMissingCustomFeatDependencies(envelope, payload);
 
     const snap = payload.editorState;
     const entry = payload.compiledBackgroundListEntry;
@@ -732,7 +799,12 @@ function fillCbgFeatSelect() {
         .sort((a, b) => tCC(a.translationLabel).localeCompare(tCC(b.translationLabel), currentLang || "de"))
         .forEach(feat => {
             const sel = state.bgFeat === feat.translationLabel ? "selected" : "";
-            html += `<option value="${feat.translationLabel}" ${sel}>${tCC(feat.translationLabel)}</option>`;
+            const name = tCC(feat.translationLabel);
+            const isCustom = (typeof isCustomContentFeat === "function") && isCustomContentFeat(feat);
+            const display = (typeof withCustomContentSelectMarker === "function")
+                ? withCustomContentSelectMarker(name, isCustom)
+                : name;
+            html += `<option value="${feat.translationLabel}" ${sel}>${display}</option>`;
         });
     select.innerHTML = html;
     select.onchange = () => {
@@ -1065,6 +1137,25 @@ function buildCbgEditorStateSnapshot(state, slug) {
     };
 }
 
+function buildCustomBackgroundPackageDependencies(state) {
+    const scan = {
+        spellIds: [],
+        featIds: [],
+        spellLabels: [],
+        featLabels: []
+    };
+    if (state?.bgFeat) {
+        scan.featLabels.push(String(state.bgFeat));
+    }
+    return (typeof buildDcPackageDepsFromCustomRefs === "function")
+        ? buildDcPackageDepsFromCustomRefs(scan, {
+            featPackId: (typeof resolveDcSessionFeatPackId === "function")
+                ? resolveDcSessionFeatPackId()
+                : null
+        })
+        : [];
+}
+
 function buildCustomBackgroundExportPayload(state) {
     const slug = buildCbgStableSlug(state);
     state.slug = slug;
@@ -1087,9 +1178,12 @@ function buildCustomBackgroundExportPayload(state) {
         editorState: buildCbgEditorStateSnapshot(state, slug)
     };
 
-    const deps = [];
-    // Vorbereitung Custom-Feat-Pipeline (v1: immer PHB-Origin-Feat)
-    if (state.bgFeat) {
+    const deps = (typeof buildCustomBackgroundPackageDependencies === "function")
+        ? buildCustomBackgroundPackageDependencies(state)
+        : [];
+    // PHB-Herkunftstalent bleibt ohne Custom-Dep
+    if (!deps.length && state.bgFeat && typeof isDcCustomFeatLabel === "function"
+        && !isDcCustomFeatLabel(state.bgFeat)) {
         deps.push({
             packageType: "phbFeat",
             slug: state.bgFeat,
@@ -1249,6 +1343,45 @@ function clearBackgroundSelectionUI() {
     });
 }
 
+/**
+ * Schritt-2-Fertigkeiten für classForm.skills (skill65/66, Skilled skill70–72, .feat-content skills).
+ */
+function appendBackgroundSkillSelections(skillIds) {
+    if (!Array.isArray(skillIds)) return;
+    const push = (val) => {
+        const v = String(val || "").trim();
+        if (v && !skillIds.includes(v)) skillIds.push(v);
+    };
+    ["skill65", "skill66", "skill70", "skill71", "skill72"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el?.value) push(el.value);
+    });
+    const root = document.getElementById("backgroundDetailsContent");
+    if (!root) return;
+    root.querySelectorAll(".feat-content select").forEach(sel => {
+        const id = sel.id || "";
+        if (id.startsWith("skill") && sel.value) push(sel.value);
+    });
+}
+
+/**
+ * Talent-Unterauswahlen aus Schritt 2 (Musiker/Handwerker) für classForm tools/instruments/games.
+ */
+function appendBackgroundFeatContentProficiencies(tools, instruments, games) {
+    if (!Array.isArray(tools) || !Array.isArray(instruments) || !Array.isArray(games)) return;
+    document.querySelectorAll("#backgroundDetailsContent .feat-content select").forEach(sel => {
+        if (!sel.value) return;
+        const id = sel.id || "";
+        if (id.startsWith("tool")) {
+            tools.push(sel.value);
+        } else if (id.startsWith("instrument")) {
+            instruments.push(sel.value);
+        } else if (id.startsWith("game")) {
+            games.push(sel.value);
+        }
+    });
+}
+
 function ensureCustomBackgroundTextNode(slug) {
     const container = document.getElementById("backgroundTextContainer");
     if (!container || !slug) return;
@@ -1278,6 +1411,7 @@ function refreshCustomBackgroundListItemUI() {
         if (typeof setCustomContentMarkerVisible === "function") {
             setCustomContentMarkerVisible(marker, false);
         }
+        if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
         return;
     }
 
@@ -1292,6 +1426,7 @@ function refreshCustomBackgroundListItemUI() {
         setCustomContentMarkerVisible(marker, true);
     }
     ensureCustomBackgroundTextNode(slug);
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
 }
 
 function registerCustomBackgroundInRuntime(rawOrEnvelope) {
@@ -1438,11 +1573,17 @@ function clearCustomBackgroundRuntimeCompletely() {
         console.warn("customBackgroundRuntime löschen fehlgeschlagen:", e);
     }
     clearBackgroundSelectionUI();
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
     return true;
 }
 
 /** Creator-Start / Seiten-Reset: keine Hydration – Custom-BG muss neu gespeichert werden */
 function resetCustomBackgroundRuntimeOnCreatorLoad() {
+    // --- LEVEL-UP: Runtime aus Snapshot behalten ---
+    if (typeof shouldSkipCreatorRuntimeResetForLevelUp === "function"
+        && shouldSkipCreatorRuntimeResetForLevelUp()) {
+        return;
+    }
     clearCustomBackgroundRuntimeCompletely();
 }
 

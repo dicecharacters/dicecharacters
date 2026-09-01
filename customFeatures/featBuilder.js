@@ -360,6 +360,9 @@ function openCustomFeatChooser() {
         setCustomFeatureModalChooserMode(overlay, true);
     }
     overlay.style.setProperty("display", "flex", "important");
+    if (typeof applyLevelUpCustomBibRestrictions === "function") {
+        applyLevelUpCustomBibRestrictions();
+    }
     applyCffTranslations();
 }
 
@@ -539,7 +542,11 @@ async function handleCustomFeatFile(event) {
         }
         if (event?.target) event.target.value = "";
         if (typeof notifyDcPackageDependencyPossiblyResolved === "function") {
-            notifyDcPackageDependencyPossiblyResolved();
+            notifyDcPackageDependencyPossiblyResolved({
+                envelope: result.envelope,
+                payload: result.payload,
+                packageType: result.detectedType
+            });
         }
         return;
     }
@@ -649,6 +656,10 @@ function cffTForLang(lang, key, fallback) {
  */
 function cffBuildFeatSheetAutoBlocks(lang, translationLabel, flags) {
     const blocks = [];
+    if (Array.isArray(flags?.simpleSkillLabels) && flags.simpleSkillLabels.length
+        && typeof formatLfAdditionalSkillsShortDesc === "function") {
+        blocks.push(formatLfAdditionalSkillsShortDesc(flags.simpleSkillLabels, lang));
+    }
     if (flags?.hasSavesChoose) {
         blocks.push(cffTForLang(lang, "cffSheetSavesChooseBlockLabel",
             "Du erhältst Übung in Rettungswürfen für: [CHOICE]classForm.attributes[/CHOICE]"));
@@ -661,6 +672,14 @@ function cffBuildFeatSheetAutoBlocks(lang, translationLabel, flags) {
         const tpl = cffTForLang(lang, "cffSheetSpellChoiceBlockLabel",
             "Du beherrscht folgende Zauber: [CHOICE_LIST]preparedSpells.source.name.{label}[/CHOICE_LIST] (Einmal täglich kostenlos wirkbar oder mit Zauberplätzen).");
         blocks.push(String(tpl).split("{label}").join(translationLabel));
+    }
+    if (Array.isArray(flags?.getCantripLabels) && flags.getCantripLabels.length
+        && typeof formatLfGetCantripShortDesc === "function") {
+        blocks.push(formatLfGetCantripShortDesc(flags.getCantripLabels, lang));
+    }
+    if (Array.isArray(flags?.getPreparedSpellLabels) && flags.getPreparedSpellLabels.length
+        && typeof formatLfGetPreparedSpellShortDesc === "function") {
+        blocks.push(formatLfGetPreparedSpellShortDesc(flags.getPreparedSpellLabels, lang));
     }
     if (flags?.hasFreeChoose) {
         const familyId = String(flags.freeFamilyId || "").trim();
@@ -778,10 +797,14 @@ function cffSpellName(spell) {
     if (!spell) return "";
     const lang = typeof currentLang !== "undefined" ? currentLang : "de";
     const label = spell.translationLabel;
+    let name = label || String(spell.ID);
     if (typeof translations !== "undefined" && translations[lang]?.[label]) {
-        return translations[lang][label];
+        name = translations[lang][label];
     }
-    return label || String(spell.ID);
+    const isCustom = (typeof isCustomContentSpell === "function") && isCustomContentSpell(spell);
+    return (typeof withCustomContentSelectMarker === "function")
+        ? withCustomContentSelectMarker(name, isCustom)
+        : name;
 }
 
 //=======================================================================
@@ -801,6 +824,7 @@ function startCustomFeatCreateNew() {
 }
 
 function startCustomFeatEdit(featId) {
+    if (typeof isLevelUpLockedFeat === "function" && isLevelUpLockedFeat(featId)) return;
     if (!customFeatEditorState) return;
     const feat = (customFeatEditorState.feats || []).find(f => Number(f.ID) === Number(featId));
     if (!feat) return;
@@ -810,6 +834,7 @@ function startCustomFeatEdit(featId) {
 }
 
 function removeCustomFeatFromPack(featId) {
+    if (typeof isLevelUpLockedFeat === "function" && isLevelUpLockedFeat(featId)) return;
     if (!customFeatEditorState) return;
     const feat = (customFeatEditorState.feats || []).find(f => Number(f.ID) === Number(featId));
     const name = cffFeatDisplayName(feat, customFeatEditorState);
@@ -988,15 +1013,18 @@ function buildCffOverviewTableRowsHtml() {
     }
     return feats.map((feat, index) => {
         const name = cffFeatDisplayName(feat, customFeatEditorState);
+        const locked = (typeof isLevelUpLockedFeat === "function" && isLevelUpLockedFeat(feat.ID));
+        const lockClass = locked ? " csp-action-btn--locked" : "";
+        const lockDisabled = locked ? " disabled" : "";
         return `<tr>
             <td class="csp-col-actions">
                 <div class="csp-action-btns">
-                    <button type="button" class="csp-edit-btn" title="${escapeCffHtml(cffT("cspEditSpellTitleLabel", "Bearbeiten"))}"
+                    <button type="button" class="csp-edit-btn${lockClass}" title="${escapeCffHtml(cffT("cspEditSpellTitleLabel", "Bearbeiten"))}"
                         aria-label="${escapeCffHtml(cffT("cspEditSpellTitleLabel", "Bearbeiten"))}"
-                        onclick="startCustomFeatEdit(${feat.ID})">✎</button>
-                    <button type="button" class="csp-delete-btn" title="${escapeCffHtml(cffT("cspDeleteSpellTitleLabel", "Entfernen"))}"
+                        onclick="startCustomFeatEdit(${feat.ID})"${lockDisabled}>✎</button>
+                    <button type="button" class="csp-delete-btn${lockClass}" title="${escapeCffHtml(cffT("cspDeleteSpellTitleLabel", "Entfernen"))}"
                         aria-label="${escapeCffHtml(cffT("cspDeleteSpellTitleLabel", "Entfernen"))}"
-                        onclick="removeCustomFeatFromPack(${feat.ID})">X</button>
+                        onclick="removeCustomFeatFromPack(${feat.ID})"${lockDisabled}>X</button>
                 </div>
             </td>
             <td class="csp-col-num">${index + 1}</td>
@@ -1051,13 +1079,16 @@ function draftFromCompiledFeat(feat) {
         draft.prereqAttributes = [];
         draft.prereqAttributeValue = 13;
         draft.prereqNoThreshold = 1;
+        draft.prereqFeatureMode = "none";
     } else if (draft.featCategoryNumber === 4) {
         draft.prerequisiteLevel = 19;
     }
     const pf = feat.prerequisite_Feature;
-    if (Array.isArray(pf) && pf.includes("spellcastingLabel")) draft.prereqFeatureMode = "spellOrPact";
-    else if (pf === "fightingStyleLabel") draft.prereqFeatureMode = "fightingStyle";
-    else draft.prereqFeatureMode = "none";
+    if (draft.featCategoryNumber !== 1) {
+        if (Array.isArray(pf) && pf.includes("spellcastingLabel")) draft.prereqFeatureMode = "spellOrPact";
+        else if (pf === "fightingStyleLabel") draft.prereqFeatureMode = "fightingStyle";
+        else draft.prereqFeatureMode = "none";
+    }
     if (draft.featCategoryNumber === 3) draft.prereqFeatureMode = "fightingStyle";
     draft.multipleSelection = feat.multipleSelection === 1 ? 1 : 0;
     draft.attrImprovement = Array.isArray(feat.Get_attrImprovement)
@@ -1323,6 +1354,8 @@ function onCffCategoryChange() {
         customFeatDraft.prereqAttributeValue = 13;
         customFeatDraft.prereqNoThreshold = 1;
         customFeatDraft.prerequisiteLevel = 1;
+        // Herkunftstalente: Merkmalsvoraussetzung fest „Keine“
+        customFeatDraft.prereqFeatureMode = "none";
     } else if (cat === 3) {
         // Kampfstile: Merkmalsvoraussetzung fest „Kampfstil“
         customFeatDraft.prereqFeatureMode = "fightingStyle";
@@ -1458,7 +1491,9 @@ function syncCffDraftFromDom() {
     }
     const featMode = document.querySelector('input[name="cffPrereqFeature"]:checked');
     customFeatDraft.prereqFeatureMode = featMode ? featMode.value : "none";
-    if (catNum === 3) {
+    if (isOrigin) {
+        customFeatDraft.prereqFeatureMode = "none";
+    } else if (catNum === 3) {
         customFeatDraft.prereqFeatureMode = "fightingStyle";
     }
     const multiEl = document.getElementById("cffMultipleSelection");
@@ -1548,12 +1583,12 @@ function renderCustomFeatTab2() {
 
     const prereqMode = (cat === 3)
         ? "fightingStyle"
-        : (customFeatDraft.prereqFeatureMode || "none");
-    const fightingStylePrereqLocked = cat === 3;
+        : (originLocked ? "none" : (customFeatDraft.prereqFeatureMode || "none"));
+    const featurePrereqLocked = originLocked || cat === 3;
     const spellPactLabel = cffT("spellcastingLabel", "Zauberwirken");
-    const prereqNoneDisabled = fightingStylePrereqLocked ? "disabled" : "";
-    const prereqSpellDisabled = fightingStylePrereqLocked ? "disabled" : "";
-    const prereqFsDisabled = fightingStylePrereqLocked ? "disabled" : "";
+    const prereqNoneDisabled = featurePrereqLocked ? "disabled" : "";
+    const prereqSpellDisabled = featurePrereqLocked ? "disabled" : "";
+    const prereqFsDisabled = featurePrereqLocked ? "disabled" : "";
     const colHeaders = [
         cffT("ccLfColTypeLabel", "Merkmaltyp"),
         cffT("categoryLabel", "Kategorie"),
@@ -1608,18 +1643,18 @@ function renderCustomFeatTab2() {
             <div class="custom-class-field">
                 <div class="custom-class-section-title">${escapeCffHtml(cffT("cffPrereqFeatureLabel", "Merkmal"))}</div>
                 <div class="cff-prereq-grid custom-class-check-grid">
-                    <label class="${fightingStylePrereqLocked ? "cc-check-disabled" : ""}"><input type="radio" name="cffPrereqFeature" value="none" ${prereqMode === "none" ? "checked" : ""} ${prereqNoneDisabled}>
+                    <label class="${featurePrereqLocked ? "cc-check-disabled" : ""}"><input type="radio" name="cffPrereqFeature" value="none" ${prereqMode === "none" ? "checked" : ""} ${prereqNoneDisabled}>
                         ${escapeCffHtml(cffT("cffPrereqFeatureNoneLabel", "Keine"))}</label>
-                    <label class="${fightingStylePrereqLocked ? "cc-check-disabled" : ""}"><input type="radio" name="cffPrereqFeature" value="spellOrPact" ${prereqMode === "spellOrPact" ? "checked" : ""} ${prereqSpellDisabled}>
+                    <label class="${featurePrereqLocked ? "cc-check-disabled" : ""}"><input type="radio" name="cffPrereqFeature" value="spellOrPact" ${prereqMode === "spellOrPact" ? "checked" : ""} ${prereqSpellDisabled}>
                         ${escapeCffHtml(spellPactLabel)}</label>
-                    <label class="${fightingStylePrereqLocked ? "cc-check-disabled" : ""}"><input type="radio" name="cffPrereqFeature" value="fightingStyle" ${prereqMode === "fightingStyle" ? "checked" : ""} ${prereqFsDisabled}>
+                    <label class="${featurePrereqLocked ? "cc-check-disabled" : ""}"><input type="radio" name="cffPrereqFeature" value="fightingStyle" ${prereqMode === "fightingStyle" ? "checked" : ""} ${prereqFsDisabled}>
                         ${escapeCffHtml(cffT("fightingStyleLabel", "Kampfstil"))}</label>
                 </div>
             </div>
             </div>
         </div>
 
-        <div class="custom-class-field">
+        <div class="custom-class-field cff-benefit-oversection">
             <div class="custom-class-section-title cff-section-title--benefit">${escapeCffHtml(cffT("cffBenefitSectionLabel", "Vorteile"))}</div>
             <div class="custom-class-lang-block">
             <div class="custom-class-field">
@@ -2384,7 +2419,9 @@ function compileFeatFromDraft(draft) {
     const cat = parseInt(draft.featCategoryNumber, 10);
 
     let prereqFeature = 0;
-    if (cat === 3 || draft.prereqFeatureMode === "fightingStyle") {
+    if (cat === 1) {
+        prereqFeature = 0;
+    } else if (cat === 3 || draft.prereqFeatureMode === "fightingStyle") {
         prereqFeature = "fightingStyleLabel";
     } else if (draft.prereqFeatureMode === "spellOrPact") {
         prereqFeature = ["spellcastingLabel", "pactMagicLabel"];
@@ -2424,6 +2461,9 @@ function compileFeatFromDraft(draft) {
     let hasFreeChoose = false;
     let freeFamilyId = "";
     let freeChoiceOptionsCompiled = [];
+    const simpleSkillLabels = [];
+    const getCantripLabels = [];
+    const getPreparedSpellLabels = [];
 
     (draft.featureRows || []).forEach(row => {
         if (!row || !row.kind || !row.category) return;
@@ -2435,6 +2475,7 @@ function compileFeatFromDraft(draft) {
                 (cfg.selectedSkills || []).forEach(lab => {
                     const n = cffSkillLabelToNumber(lab);
                     if (Number.isFinite(n) && !customGrants.skillsGet.includes(n)) customGrants.skillsGet.push(n);
+                    if (lab && !simpleSkillLabels.includes(lab)) simpleSkillLabels.push(lab);
                 });
             } else if (category === "savingThrows") {
                 const labels = cfg.mode === "all" ? cffAllAbilityLabels() : (cfg.selectedLabels || []);
@@ -2544,6 +2585,9 @@ function compileFeatFromDraft(draft) {
             if (category === "getCantrip") {
                 const labels = (cfg.selectedSpells || []).filter(Boolean);
                 if (labels.length) {
+                    labels.forEach(lab => {
+                        if (!getCantripLabels.includes(lab)) getCantripLabels.push(lab);
+                    });
                     magicEntries.push(Object.assign({}, emptyMagic, {
                         getSpecificSpell: labels,
                         chooseType: 1
@@ -2571,6 +2615,9 @@ function compileFeatFromDraft(draft) {
                     (byLevel[lvl] || []).filter(Boolean).forEach(lab => labels.push(lab));
                 });
                 if (labels.length) {
+                    labels.forEach(lab => {
+                        if (!getPreparedSpellLabels.includes(lab)) getPreparedSpellLabels.push(lab);
+                    });
                     magicEntries.push(Object.assign({}, emptyMagic, {
                         getSpecificSpell: labels,
                         chooseType: 3
@@ -2613,7 +2660,10 @@ function compileFeatFromDraft(draft) {
         hasMastery,
         hasSpellChoice,
         hasFreeChoose,
-        freeFamilyId
+        freeFamilyId,
+        simpleSkillLabels: simpleSkillLabels.slice(),
+        getCantripLabels: getCantripLabels.slice(),
+        getPreparedSpellLabels: getPreparedSpellLabels.slice()
     };
     const hasAutoSheetBlocks = hasSavesChoose || hasMastery || hasSpellChoice || hasFreeChoose;
 
@@ -2773,8 +2823,37 @@ function buildCustomFeatPackProvides(state) {
     }));
 }
 
-function buildCustomFeatPackDependencies(_state) {
-    return [];
+function buildCustomFeatPackDependencies(state) {
+    const scan = {
+        spellIds: [],
+        featIds: [],
+        spellLabels: [],
+        featLabels: []
+    };
+    (state?.feats || []).forEach(feat => {
+        (feat?.editor?.featureRows || []).forEach(row => {
+            if (row.kind !== "spellcraft") return;
+            const labels = (typeof collectDcSpellLabelsFromLfOptionsConfig === "function")
+                ? collectDcSpellLabelsFromLfOptionsConfig(row.optionsConfig || {}, row.category)
+                : [];
+            labels.forEach(l => scan.spellLabels.push(l));
+        });
+    });
+    (state?.magicFeats || []).forEach(m => {
+        const spec = m?.getSpecificSpell;
+        if (Array.isArray(spec)) {
+            spec.forEach(l => { if (typeof l === "string") scan.spellLabels.push(l); });
+        } else if (typeof spec === "string") {
+            scan.spellLabels.push(spec);
+        }
+    });
+    return (typeof buildDcPackageDepsFromCustomRefs === "function")
+        ? buildDcPackageDepsFromCustomRefs(scan, {
+            spellPackId: (typeof resolveDcSessionSpellPackId === "function")
+                ? resolveDcSessionSpellPackId()
+                : null
+        })
+        : [];
 }
 
 function buildCustomFeatPackExportPayload(state) {
@@ -2874,10 +2953,6 @@ function finishCustomFeatPack() {
         customFeatImportSnapshot = currentSnapshot;
     }
 
-    registerCustomFeatPackFromPayload(
-        payload?.payload || payload,
-        payload?.dc || null
-    );
     if (typeof markDcPackageUserLoaded === "function") {
         markDcPackageUserLoaded(
             (typeof DC_PACKAGE_TYPE !== "undefined")
@@ -2886,7 +2961,13 @@ function finishCustomFeatPack() {
         );
     }
 
+    registerCustomFeatPackFromPayload(
+        payload?.payload || payload,
+        payload?.dc || null
+    );
+
     discardCustomFeatEditor();
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
 }
 
 //=======================================================================
@@ -2990,6 +3071,7 @@ function registerCustomFeatPackFromPayload(payload, envelope) {
     injectRegisteredCustomFeatsIntoGlobals();
     persistCustomFeatPackRuntimeToLocalStorage();
     refreshCreatorFeatDropdowns();
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
     return true;
 }
 
@@ -3042,6 +3124,19 @@ function persistCustomFeatPackRuntimeToLocalStorage() {
 }
 
 /**
+ * feat_species als Array (Fallback wenn speciesBuilder nicht geladen).
+ */
+function cffNormalizeFeatSpeciesIds(value) {
+    if (typeof normalizeFeatSpeciesIds === "function") return normalizeFeatSpeciesIds(value);
+    if (value == null) return [];
+    if (Array.isArray(value)) {
+        return [...new Set(value.map(v => parseInt(v, 10)).filter(n => Number.isFinite(n) && n > 0))];
+    }
+    const n = parseInt(value, 10);
+    return (Number.isFinite(n) && n > 0) ? [n] : [];
+}
+
+/**
  * true = Charakter hat mindestens ein Talent aus dem geladenen Custom-Pack gewählt.
  */
 function characterUsesRegisteredCustomFeatPack(character) {
@@ -3065,7 +3160,7 @@ function characterUsesRegisteredCustomFeatPack(character) {
         if (id != null) ids.push(id);
     });
     if (character?.feat_background != null) ids.push(character.feat_background);
-    if (character?.feat_species != null) ids.push(character.feat_species);
+    cffNormalizeFeatSpeciesIds(character?.feat_species).forEach(id => ids.push(id));
 
     return ids.some(id => packIds.has(id) || packIds.has(Number(id)));
 }
@@ -3179,7 +3274,7 @@ function cffCollectSelectedCustomFeats() {
         });
     }
     if (typeof character !== "undefined" && character) {
-        const extraIds = [character.feat_background, character.feat_species];
+        const extraIds = [character.feat_background, ...cffNormalizeFeatSpeciesIds(character.feat_species)];
         extraIds.forEach(id => {
             if (id == null) return;
             const feat = (typeof featList !== "undefined" ? featList : []).find(f =>
@@ -3625,10 +3720,16 @@ function clearCustomFeatPackRuntimeCompletely() {
     }
     const overlay = document.getElementById("customFeatOverlay");
     if (overlay) overlay.style.setProperty("display", "none", "important");
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
     return true;
 }
 
 function resetCustomFeatPackRuntimeOnCreatorLoad() {
+    // --- LEVEL-UP: Runtime aus Snapshot behalten ---
+    if (typeof shouldSkipCreatorRuntimeResetForLevelUp === "function"
+        && shouldSkipCreatorRuntimeResetForLevelUp()) {
+        return;
+    }
     clearCustomFeatPackRuntimeCompletely();
 }
 
