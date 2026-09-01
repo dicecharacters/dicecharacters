@@ -8,6 +8,49 @@ function getAbilityMod(score) {
     return Math.floor((score - 10) / 2);
 }
 
+/**
+ * Rüstungs-Inventar wie auf dem Bogen (Packs auflösen, Duplikate mergen).
+ * @param {object} charData
+ * @returns {Array}
+ */
+function getProcessedArmorInventory(charData) {
+    let processedArmor = (charData.equipment && charData.equipment.armor)
+        ? charData.equipment.armor
+        : [];
+    if (typeof expandInventoryPacks === 'function' && typeof mergeDuplicateItems === 'function') {
+        processedArmor = expandInventoryPacks(processedArmor);
+        processedArmor = mergeDuplicateItems(processedArmor);
+    }
+    return processedArmor;
+}
+
+/**
+ * Live-Check: Ist schwere Rüstung (Kat. 3) in Inventar Box 2 angelegt?
+ * @param {object} charData
+ * @returns {boolean}
+ */
+function isHeavyArmorEquippedLive(charData) {
+    const headerEl = document.getElementById('th_amount_2');
+    if (!headerEl || typeof armorList === 'undefined') return false;
+
+    const rows = headerEl.closest('table').querySelector('tbody').querySelectorAll('tr');
+    const processedArmor = getProcessedArmorInventory(charData);
+
+    for (let index = 0; index < rows.length; index++) {
+        const checkbox = rows[index].querySelector('input[type="checkbox"]');
+        if (!checkbox || !checkbox.checked) continue;
+
+        const item = processedArmor[index];
+        if (!item) continue;
+
+        const armorData = armorList.find(a => a.translationLabel === item.label);
+        if (armorData && armorData.armorCategoryNumber === 3) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // Interne Hilfsfunktion für Expertise-Logik (wird von mehreren Handlern genutzt)
 function applyExpertiseToStats(charData, stats) {
     if (charData.classForm && Array.isArray(charData.classForm.expertise)) {
@@ -67,53 +110,34 @@ const featureHandlers = {
 
     // --- BARBAR: Fast Movement (Schnelle Bewegung) ---
     "fastMovement": (charData, computedStats) => {
-        let isWearingHeavy = false;
-
-        // A. Zugriff auf die Rüstungs-Tabelle im HTML (Live-Status)
-        const headerEl = document.getElementById('th_amount_2');
-        
-        if (headerEl) {
-            const rows = headerEl.closest('table').querySelector('tbody').querySelectorAll('tr');
-            
-            // B. Wir müssen die Daten exakt so aufbereiten wie beim Rendern der Tabelle,
-            // damit Zeile 0 im HTML auch Index 0 in unseren Daten entspricht.
-            let processedArmor = charData.equipment.armor || [];
-            
-            // Hilfsfunktionen nutzen (falls vorhanden)
-            if (typeof expandInventoryPacks === 'function' && typeof mergeDuplicateItems === 'function') {
-                processedArmor = expandInventoryPacks(processedArmor);
-                processedArmor = mergeDuplicateItems(processedArmor);
-            }
-
-            // C. Zeilen durchgehen und LIVE-Checkboxen prüfen
-            rows.forEach((row, index) => {
-                const checkbox = row.querySelector('input[type="checkbox"]');
-                
-                // Ist die Checkbox JETZT GERADE angehakt?
-                if (checkbox && checkbox.checked) {
-                    
-                    // Welches Item gehört zu dieser Zeile?
-                    const item = processedArmor[index];
-                    
-                    if (item && typeof armorList !== 'undefined') {
-                        const armorData = armorList.find(a => a.translationLabel === item.label);
-                        
-                        // Check: Ist es Schwere Rüstung (Kategorie 3)?
-                        if (armorData && armorData.armorCategoryNumber === 3) {
-                            isWearingHeavy = true;
-                        }
-                    }
-                }
-            });
-        }
-
-        // D. Bonus anwenden
-        if (!isWearingHeavy) {
+        if (!isHeavyArmorEquippedLive(charData)) {
             computedStats.bonusSpeedFT += 10;
-            // console.log("Fast Movement (Barbar): Aktiv (+10 ft)");
-        } else {
-            // console.log("Fast Movement (Barbar): Inaktiv (Schwere Rüstung)");
         }
+    },
+
+    // --- WALDLÄUFER: Roving / Vagabund (L6) ---
+    // +10 ft Speed ohne schwere Rüstung (Klettern/Schwimmen nur in Merkmalstext)
+    "rovingLabel": (charData, computedStats) => {
+        if (!isHeavyArmorEquippedLive(charData)) {
+            computedStats.bonusSpeedFT += 10;
+        }
+    },
+
+    // --- FEENWANDERER: Otherworldly Glamour (L3) ---
+    // Charisma-Checks: +WEI-Mod (min. +1); Fertigkeitswahl über classForm.skills (Ersteller)
+    "otherworldlyGlamourLabel": (charData, stats) => {
+        const wisScore = parseInt(stats.wisdom, 10) || 10;
+        stats.charismaCheckBonus = Math.max(getAbilityMod(wisScore), 1);
+    },
+
+    // --- BARDE: Jack of All Trades (L2) ---
+    "jackOfAllTradesLabel": (charData, stats) => {
+        stats.hasJackOfAllTrades = true;
+    },
+
+    // --- MÖNCH: Disciplined Survivor (L14) — Übung in allen Rettungswürfen
+    "disciplinedSurvivorLabel": (charData, stats) => {
+        stats.grantAllSavingThrows = true;
     },
 
     // --- BARDE (College of Dance): Dazzling Footwork ---
@@ -341,6 +365,48 @@ const featureHandlers = {
         if (!stats.additionalLanguages.includes(14)) {
             stats.additionalLanguages.push(14);
         }
+    },
+
+    // --- CUSTOM CLASS: Waffenvertrautheit (Einfach→Grant) ---
+    "weaponTrainingLabel": (charData, stats, feat) => {
+        if (!feat) return;
+        if (!stats.additionalProficiencies) stats.additionalProficiencies = { armor: [], weapon: [] };
+        if (!stats.additionalWeaponProperties) stats.additionalWeaponProperties = [];
+
+        if (feat.Get_weaponCategoryNumber && feat.Get_weaponCategoryNumber !== 0) {
+            const weapons = Array.isArray(feat.Get_weaponCategoryNumber)
+                ? feat.Get_weaponCategoryNumber
+                : [feat.Get_weaponCategoryNumber];
+            weapons.forEach(n => {
+                const id = parseInt(n, 10);
+                if (Number.isFinite(id) && id > 0) stats.additionalProficiencies.weapon.push(id);
+            });
+        }
+
+        const props = feat.grantedWeaponPropertyCategoryNumbers;
+        if (props && props !== 0) {
+            const list = Array.isArray(props) ? props : [props];
+            list.forEach(n => {
+                const id = parseInt(n, 10);
+                if (Number.isFinite(id) && id > 0) stats.additionalWeaponProperties.push(id);
+            });
+        }
+    },
+
+    // --- CUSTOM CLASS: Rüstungsvertrautheit (Einfach→Grant) ---
+    "armorTrainingLabel": (charData, stats, feat) => {
+        if (!feat) return;
+        if (!stats.additionalProficiencies) stats.additionalProficiencies = { armor: [], weapon: [] };
+
+        if (feat.Get_armorCategoryNumber && feat.Get_armorCategoryNumber !== 0) {
+            const armor = Array.isArray(feat.Get_armorCategoryNumber)
+                ? feat.Get_armorCategoryNumber
+                : [feat.Get_armorCategoryNumber];
+            armor.forEach(n => {
+                const id = parseInt(n, 10);
+                if (Number.isFinite(id) && id > 0) stats.additionalProficiencies.armor.push(id);
+            });
+        }
     }
 
 };
@@ -559,49 +625,6 @@ const speciesHandlers = {
         // Da die Bewegungsrate AUF 35 steigt (und nicht um +5 addiert wird),
         // setzen wir hier eine globale Überschreibung. 
         window.baseSpeedOverride = 35; 
-    },
-
-    // --- CUSTOM CLASS: Waffenvertrautheit (Einfach→Grant) ---
-    // feat = aktuelle Merkmalszeile aus applyClassFeatureLogic (Get_* / granted*)
-    "weaponTrainingLabel": (charData, stats, feat) => {
-        if (!feat) return;
-        if (!stats.additionalProficiencies) stats.additionalProficiencies = { armor: [], weapon: [] };
-        if (!stats.additionalWeaponProperties) stats.additionalWeaponProperties = [];
-
-        if (feat.Get_weaponCategoryNumber && feat.Get_weaponCategoryNumber !== 0) {
-            const weapons = Array.isArray(feat.Get_weaponCategoryNumber)
-                ? feat.Get_weaponCategoryNumber
-                : [feat.Get_weaponCategoryNumber];
-            weapons.forEach(n => {
-                const id = parseInt(n, 10);
-                if (Number.isFinite(id) && id > 0) stats.additionalProficiencies.weapon.push(id);
-            });
-        }
-
-        const props = feat.grantedWeaponPropertyCategoryNumbers;
-        if (props && props !== 0) {
-            const list = Array.isArray(props) ? props : [props];
-            list.forEach(n => {
-                const id = parseInt(n, 10);
-                if (Number.isFinite(id) && id > 0) stats.additionalWeaponProperties.push(id);
-            });
-        }
-    },
-
-    // --- CUSTOM CLASS: Rüstungsvertrautheit (Einfach→Grant) ---
-    "armorTrainingLabel": (charData, stats, feat) => {
-        if (!feat) return;
-        if (!stats.additionalProficiencies) stats.additionalProficiencies = { armor: [], weapon: [] };
-
-        if (feat.Get_armorCategoryNumber && feat.Get_armorCategoryNumber !== 0) {
-            const armor = Array.isArray(feat.Get_armorCategoryNumber)
-                ? feat.Get_armorCategoryNumber
-                : [feat.Get_armorCategoryNumber];
-            armor.forEach(n => {
-                const id = parseInt(n, 10);
-                if (Number.isFinite(id) && id > 0) stats.additionalProficiencies.armor.push(id);
-            });
-        }
     }
 
 };

@@ -85,8 +85,8 @@ function getDcPackageTypeLabel(packageType) {
 // status: "active" = zur Laufzeit genutzt; "prepared" = Schema für spätere Builder.
 //
 // Zauberbibliothek (techn. customSpellPack): Blatt, keine Deps nach oben.
-// Class/UC/BG verknüpfen die Bib **nicht** — nur der Charakterbogen fordert sie,
-// wenn Custom-Zauber gewählt wurden.
+// Ersteller-Uploads: Consumer deklarieren direkte Deps (Spell-/Feat-Bibliothek).
+// Transitive Kette: Feat-Bib → Spell-Bib; Class → Feat-Bib (Variante A).
 //=======================================================================
 
 /**
@@ -258,6 +258,52 @@ function getDcPackageDependencyEdgesFrom(packageType, opts) {
     );
 }
 
+/** Slug eines registrierten Custom-Hintergrunds (translationLabel oder slug). */
+function getRegisteredCustomBackgroundSlug(bg) {
+    if (!bg) return null;
+    const slug = bg.slug || bg.translationLabel || null;
+    return slug ? String(slug) : null;
+}
+
+/**
+ * Kandidaten aus eingebetteter customBackgroundRuntime (Pending-Import-Basis / LS).
+ * Level-Up / Charakterbogen: Snapshot-Hydrate zählt ohne erneuten Upload.
+ */
+function collectCustomBackgroundEmbeddedRuntimeCandidates(candidates) {
+    const rawSources = [];
+    const pendingBase = dcPendingPackageImport?.payload?.base;
+    if (pendingBase?.customBackgroundRuntime) {
+        rawSources.push(pendingBase.customBackgroundRuntime);
+    }
+    try {
+        if (typeof localStorage !== "undefined") {
+            const lsRaw = localStorage.getItem("customBackgroundRuntime");
+            if (lsRaw) rawSources.push(lsRaw);
+        }
+    } catch (e) { /* ignore */ }
+
+    rawSources.forEach(raw => {
+        let parsed;
+        try {
+            parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+        } catch (e) {
+            return;
+        }
+        if (typeof normalizeDcPackageInput !== "function") return;
+        const norm = normalizeDcPackageInput(parsed);
+        if (!norm.ok || !norm.payload) return;
+        const slug = norm.payload.slug
+            || norm.payload.compiledBackgroundListEntry?.translationLabel
+            || null;
+        const packageId = norm.envelope?.packageId || norm.payload.packageId || null;
+        if (!slug && !packageId) return;
+        candidates.push({
+            packageId: packageId || null,
+            slug: slug ? String(slug) : null
+        });
+    });
+}
+
 /**
  * Prüft, ob eine Envelope-Dependency in der aktuellen Session erfüllt ist
  * (Ersteller-Runtime / offener Editor / Bogen-Runtime).
@@ -269,6 +315,10 @@ function isDcPackageDependencySatisfied(dep, opts) {
     if (!dep || !dep.packageType) return true;
     // PHB-Referenzen gelten immer als erfüllt
     if (dep.packageType === "phbClass" || dep.packageType === "phbSubclass") return true;
+
+    if (opts && opts.requireFreshUpload) {
+        return isDcPackageDependencySatisfiedViaFreshUpload(dep);
+    }
 
     const forImport = !!(opts && opts.forImport);
     const wantId = dep.packageId ? String(dep.packageId) : null;
@@ -415,11 +465,13 @@ function isDcPackageDependencySatisfied(dep, opts) {
         const allowSession = !forImport
             || wasDcPackageUserLoadedThisSession(DC_PACKAGE_TYPE.CUSTOM_BACKGROUND);
         if (allowSession) {
-            if (typeof registeredCustomBackground !== "undefined"
-                && registeredCustomBackground?.slug) {
+            const regSlug = getRegisteredCustomBackgroundSlug(
+                typeof registeredCustomBackground !== "undefined" ? registeredCustomBackground : null
+            );
+            if (regSlug) {
                 candidates.push({
                     packageId: registeredCustomBackground.packageId || null,
-                    slug: String(registeredCustomBackground.slug)
+                    slug: regSlug
                 });
             }
             if (typeof sheetCustomBackgroundRuntime !== "undefined"
@@ -430,6 +482,13 @@ function isDcPackageDependencySatisfied(dep, opts) {
                 });
             }
         }
+
+        // Eingebettete Runtime im Bogen-Snapshot (Level-Up / Import ohne Neu-Upload)
+        if (!forImport
+            || dcPendingPackageImport?.detectedType === DC_PACKAGE_TYPE.CHARACTER_SHEET) {
+            collectCustomBackgroundEmbeddedRuntimeCandidates(candidates);
+        }
+
         if (!candidates.length) return false;
         return candidates.some(matchCandidate);
     }
@@ -465,6 +524,33 @@ function isDcPackageDependencySatisfied(dep, opts) {
         return candidates.some(matchCandidate);
     }
 
+    if (dep.packageType === DC_PACKAGE_TYPE.CUSTOM_SPECIES) {
+        const candidates = [];
+        const pendingSp = getDcPendingImportCandidate(DC_PACKAGE_TYPE.CUSTOM_SPECIES);
+        if (pendingSp) candidates.push(pendingSp);
+
+        const allowSession = !forImport
+            || wasDcPackageUserLoadedThisSession(DC_PACKAGE_TYPE.CUSTOM_SPECIES);
+        if (allowSession) {
+            if (typeof registeredCustomSpecies !== "undefined"
+                && registeredCustomSpecies?.translationLabel) {
+                candidates.push({
+                    packageId: registeredCustomSpecies.packageId || null,
+                    slug: String(registeredCustomSpecies.translationLabel)
+                });
+            }
+            if (typeof sheetCustomSpeciesRuntime !== "undefined"
+                && sheetCustomSpeciesRuntime?.slug) {
+                candidates.push({
+                    packageId: sheetCustomSpeciesRuntime.packageId || null,
+                    slug: String(sheetCustomSpeciesRuntime.slug)
+                });
+            }
+        }
+        if (!candidates.length) return false;
+        return candidates.some(matchCandidate);
+    }
+
     // Noch nicht aktiv geprüfte Typen (prepared): nicht blockieren
     return true;
 }
@@ -474,6 +560,59 @@ function getUnsatisfiedDcPackageDependencies(dependencies, opts) {
     return (Array.isArray(dependencies) ? dependencies : []).filter(d =>
         d && d.required !== false && !isDcPackageDependencySatisfied(d, opts)
     );
+}
+
+/** Optionen für Dependency-Prüfung im ausstehenden Import-Modal. */
+function getDcPendingImportDependencyCheckOpts() {
+    const opts = { forImport: true };
+    if (dcPendingPackageImport?.requireFreshUpload) {
+        opts.requireFreshUpload = true;
+    }
+    return opts;
+}
+
+/**
+ * Stufenaufstieg / erzwungener Neu-Upload: nur Dateien aus dem aktuellen Modal zählen
+ * (kein Session-Mark, kein LS-Hydrate).
+ */
+function isDcPackageDependencySatisfiedViaFreshUpload(dep) {
+    if (!dep || !dep.packageType) return true;
+    if (dep.packageType === "phbClass" || dep.packageType === "phbSubclass") return true;
+
+    const fulfilled = dcPendingPackageImport?.fulfilledUploads?.[dep.packageType];
+    if (!fulfilled) return false;
+
+    const wantId = dep.packageId ? String(dep.packageId) : null;
+    if (wantId) {
+        if (!fulfilled.packageId || String(fulfilled.packageId) !== wantId) return false;
+    }
+
+    if (dep.slug
+        && (dep.packageType === DC_PACKAGE_TYPE.CUSTOM_CLASS
+            || dep.packageType === DC_PACKAGE_TYPE.CUSTOM_CLASS_RUNTIME)) {
+        if (!fulfilled.slug || String(fulfilled.slug) !== String(dep.slug)) return false;
+    }
+
+    return true;
+}
+
+/** Nach erfolgreichem Dependency-Upload im Fresh-Upload-Modus merken. */
+function recordDcPackageFreshUploadFulfillment(packageType, envelope, payload) {
+    if (!dcPendingPackageImport?.requireFreshUpload || !packageType) return;
+    if (!dcPendingPackageImport.fulfilledUploads) {
+        dcPendingPackageImport.fulfilledUploads = {};
+    }
+    let slug = null;
+    if (packageType === DC_PACKAGE_TYPE.CUSTOM_CLASS
+        || packageType === DC_PACKAGE_TYPE.CUSTOM_CLASS_RUNTIME) {
+        slug = payload?.coreTraits?.translationLabel
+            || payload?.slug
+            || null;
+    }
+    dcPendingPackageImport.fulfilledUploads[packageType] = {
+        packageId: envelope?.packageId || payload?.packageId || null,
+        slug: slug ? String(slug) : null
+    };
 }
 
 /**
@@ -513,7 +652,8 @@ const dcSessionUserLoadedPackages = {
     customSpellPack: false,
     customFeatPack: false,
     customBackground: false,
-    customSubclass: false
+    customSubclass: false,
+    customSpecies: false
 };
 
 function markDcPackageUserLoaded(packageType) {
@@ -528,7 +668,11 @@ function markDcPackageUserLoaded(packageType) {
         dcSessionUserLoadedPackages.customBackground = true;
     } else if (packageType === DC_PACKAGE_TYPE.CUSTOM_SUBCLASS) {
         dcSessionUserLoadedPackages.customSubclass = true;
+    } else if (packageType === DC_PACKAGE_TYPE.CUSTOM_SPECIES) {
+        dcSessionUserLoadedPackages.customSpecies = true;
     }
+    // Hub-Grün erst nach Session-Mark (register* ruft oft vorher updateStep1CustomHub auf)
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
 }
 
 function wasDcPackageUserLoadedThisSession(packageType) {
@@ -547,6 +691,9 @@ function wasDcPackageUserLoadedThisSession(packageType) {
     }
     if (packageType === DC_PACKAGE_TYPE.CUSTOM_SUBCLASS) {
         return !!dcSessionUserLoadedPackages.customSubclass;
+    }
+    if (packageType === DC_PACKAGE_TYPE.CUSTOM_SPECIES) {
+        return !!dcSessionUserLoadedPackages.customSpecies;
     }
     return false;
 }
@@ -626,7 +773,8 @@ function resolveDcPackageDependencyDisplayName(dep) {
     const runtimeFields = [
         "customClassRuntime",
         "customBackgroundRuntime",
-        "customSubclassRuntime"
+        "customSubclassRuntime",
+        "customSpeciesRuntime"
     ];
     if (pendingBase) {
         for (let i = 0; i < runtimeFields.length; i++) {
@@ -689,6 +837,8 @@ function getDcPackageDependencyButtonLabel(packageType, dep) {
         base = tDcPackage("dcPackageDepBtnCustomBackgroundLabel", "Custom-Hintergrund");
     } else if (packageType === DC_PACKAGE_TYPE.CUSTOM_SUBCLASS) {
         base = tDcPackage("dcPackageDepBtnCustomSubclassLabel", "Custom-Unterklasse");
+    } else if (packageType === DC_PACKAGE_TYPE.CUSTOM_SPECIES) {
+        base = tDcPackage("dcPackageDepBtnCustomSpeciesLabel", "Custom-Volk");
     } else {
         return getDcPackageTypeLabel(packageType);
     }
@@ -696,7 +846,8 @@ function getDcPackageDependencyButtonLabel(packageType, dep) {
     if (packageType === DC_PACKAGE_TYPE.CUSTOM_CLASS
         || packageType === DC_PACKAGE_TYPE.CUSTOM_CLASS_RUNTIME
         || packageType === DC_PACKAGE_TYPE.CUSTOM_BACKGROUND
-        || packageType === DC_PACKAGE_TYPE.CUSTOM_SUBCLASS) {
+        || packageType === DC_PACKAGE_TYPE.CUSTOM_SUBCLASS
+        || packageType === DC_PACKAGE_TYPE.CUSTOM_SPECIES) {
         const displayName = resolveDcPackageDependencyDisplayName(dep);
         if (displayName) return `${base} (${displayName})`;
     }
@@ -782,7 +933,10 @@ function getPendingDcPackageRequiredDependencies() {
 function arePendingDcPackageDependenciesFulfilled() {
     const required = getPendingDcPackageRequiredDependencies();
     if (!required.length) return true;
-    return getUnsatisfiedDcPackageDependencies(required, { forImport: true }).length === 0;
+    return getUnsatisfiedDcPackageDependencies(
+        required,
+        getDcPendingImportDependencyCheckOpts()
+    ).length === 0;
 }
 
 /**
@@ -909,6 +1063,22 @@ function registerDcPackageDependencyPayload(packageType, payload, envelope) {
         }
         return false;
     }
+    if (packageType === DC_PACKAGE_TYPE.CUSTOM_SPECIES) {
+        const wrapped = wrapDcPackageForSheetStorage(payload, envelope);
+        if (typeof registerCustomSpeciesInRuntime === "function") {
+            registerCustomSpeciesInRuntime(wrapped);
+            mergeLinkedPackageIntoPendingCharacterSheet("customSpeciesRuntime", wrapped);
+            return true;
+        }
+        if (typeof hydrateCustomSpeciesRuntime === "function") {
+            const ok = !!hydrateCustomSpeciesRuntime(wrapped);
+            if (ok) {
+                mergeLinkedPackageIntoPendingCharacterSheet("customSpeciesRuntime", wrapped);
+            }
+            return ok;
+        }
+        return false;
+    }
     return false;
 }
 
@@ -986,7 +1156,10 @@ function refreshDcPackageLinkedFilesModal() {
         listEl.innerHTML = "";
         required.forEach((dep, index) => {
             const packageType = dep.packageType;
-            const satisfied = isDcPackageDependencySatisfied(dep, { forImport: true });
+            const satisfied = isDcPackageDependencySatisfied(
+                dep,
+                getDcPendingImportDependencyCheckOpts()
+            );
             const btn = document.createElement("button");
             btn.type = "button";
             btn.className = "custom-class-action-btn dc-dep-file-btn"
@@ -1088,8 +1261,10 @@ async function handleDcPackageLinkedFileSelected(packageType, event) {
     }
 
     markDcPackageUserLoaded(packageType);
+    recordDcPackageFreshUploadFulfillment(packageType, result.envelope, result.payload);
+    mergeNestedDepsIntoPendingImport(result.envelope, result.payload, packageType);
     if (event?.target) event.target.value = "";
-    // Modal bleibt offen — Button wird grün, Bestätigen ggf. aktiv
+    // Modal bleibt offen — Button wird grün, Bestätigen ggf. aktiv (Hub via markDcPackageUserLoaded)
     refreshDcPackageLinkedFilesModal();
 }
 
@@ -1151,12 +1326,42 @@ function beginDcPackageImportWithDependencies(opts) {
     const envelope = opts.envelope || null;
     const payload = opts.payload;
     const detectedType = opts.detectedType;
+    const requireFreshUpload = !!opts.requireFreshUpload;
     // optional: feste Pflichtliste (z. B. fehlende eingebettete Bogen-Deps)
     const seedDeps = Array.isArray(opts.requiredDeps)
         ? opts.requiredDeps
         : ((typeof collectEffectiveDcPackageDependencies === "function")
             ? collectEffectiveDcPackageDependencies(envelope, payload, detectedType)
             : (envelope?.dependencies || []));
+
+    // Stufenaufstieg: immer Modal + Neu-Upload, auch wenn Paket schon in Session/LS liegt
+    if (requireFreshUpload) {
+        const required = (Array.isArray(seedDeps) ? seedDeps : [])
+            .filter(d => d && d.required !== false && d.packageType
+                && d.packageType !== "phbClass"
+                && d.packageType !== "phbSubclass");
+        if (!required.length) {
+            opts.onApply(payload, envelope);
+            return;
+        }
+        const byType = new Map();
+        required.forEach(d => {
+            if (!byType.has(d.packageType)) byType.set(d.packageType, d);
+        });
+        dcPendingPackageImport = {
+            envelope,
+            payload,
+            detectedType,
+            onApply: opts.onApply,
+            onCancel: opts.onCancel || null,
+            requiredDeps: Array.from(byType.values()),
+            requireFreshUpload: true,
+            fulfilledUploads: {}
+        };
+        refreshDcPackageLinkedFilesModal();
+        return;
+    }
+
     const missing = getUnsatisfiedDcPackageDependencies(seedDeps, { forImport: true });
     if (!missing.length) {
         opts.onApply(payload, envelope);
@@ -1181,11 +1386,20 @@ function beginDcPackageImportWithDependencies(opts) {
 
 /**
  * Nach Dependency-Upload (Legacy-Pfad Builder-Inputs): Modal aktualisieren, nicht auto-Apply.
+ * @param {{ envelope?: object, payload?: object, packageType?: string }} [uploadMeta]
  * @returns {boolean} true = es gab einen Pending-Import
  */
-function notifyDcPackageDependencyPossiblyResolved() {
+function notifyDcPackageDependencyPossiblyResolved(uploadMeta) {
     if (!dcPendingPackageImport) return false;
+    if (uploadMeta && uploadMeta.packageType) {
+        mergeNestedDepsIntoPendingImport(
+            uploadMeta.envelope || null,
+            uploadMeta.payload || null,
+            uploadMeta.packageType
+        );
+    }
     refreshDcPackageLinkedFilesModal();
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
     return true;
 }
 
@@ -1203,24 +1417,319 @@ function triggerDcPackageDependencyFilePicker(packageType) {
     return triggerDcPackageLinkedFilePicker(packageType);
 }
 
+//=======================================================================
+// Custom-Referenzen scannen (Export + Import-Fallback)
+//=======================================================================
+
+function getDcCustomSpellIdMin() {
+    return (typeof CUSTOM_SPELL_ID_MIN !== "undefined")
+        ? CUSTOM_SPELL_ID_MIN
+        : 1000;
+}
+
+function getDcCustomFeatIdMin() {
+    return (typeof CUSTOM_FEAT_ID_MIN !== "undefined")
+        ? CUSTOM_FEAT_ID_MIN
+        : 1000;
+}
+
+function isDcCustomSpellId(id) {
+    const n = Number(id);
+    return Number.isFinite(n) && n >= getDcCustomSpellIdMin();
+}
+
+function isDcCustomFeatId(id) {
+    const n = Number(id);
+    return Number.isFinite(n) && n >= getDcCustomFeatIdMin();
+}
+
+function resolveDcSpellEntryByLabel(label) {
+    if (!label) return null;
+    const list = (typeof getEffectiveSpellList === "function")
+        ? getEffectiveSpellList()
+        : ((typeof spellList !== "undefined" && Array.isArray(spellList)) ? spellList : []);
+    return list.find(s => s && s.translationLabel === label) || null;
+}
+
+function resolveDcFeatEntryByLabel(label) {
+    if (!label) return null;
+    const feats = (typeof getEffectiveFeatList === "function")
+        ? getEffectiveFeatList()
+        : ((typeof featList !== "undefined" && Array.isArray(featList)) ? featList : []);
+    return feats.find(f => f && f.translationLabel === label) || null;
+}
+
+function isDcCustomSpellLabel(label) {
+    const sp = resolveDcSpellEntryByLabel(label);
+    if (!sp) return false;
+    if (typeof isCustomContentSpell === "function") return isCustomContentSpell(sp);
+    return !!sp.isCustom;
+}
+
+function isDcCustomFeatLabel(label) {
+    const f = resolveDcFeatEntryByLabel(label);
+    if (!f) return false;
+    if (typeof isCustomContentFeat === "function") return isCustomContentFeat(f);
+    return !!f.isCustom;
+}
+
+/** true = Talent-Label gehört zur PHB-featList. */
+function isDcPhbFeatLabel(label) {
+    if (!label) return false;
+    const feats = (typeof featList !== "undefined" && Array.isArray(featList)) ? featList : [];
+    return feats.some(f => f && f.translationLabel === label && !f.isCustom);
+}
+
+/** Talent-Referenz aus Payload (Export/Import). */
+function isDcPayloadFeatReference(label) {
+    if (!label) return false;
+    if (typeof isDcCustomFeatLabel === "function" && isDcCustomFeatLabel(label)) return true;
+    if (!isDcPhbFeatLabel(label)) return true;
+    return false;
+}
+
+/** true = Zauber-Label gehört zur PHB-spellList (kein Bibliotheks-/Custom-Zauber). */
+function isDcPhbSpellLabel(label) {
+    if (!label) return false;
+    const list = (typeof spellList !== "undefined" && Array.isArray(spellList)) ? spellList : [];
+    return list.some(s => s && s.translationLabel === label && !s.isCustom);
+}
+
 /**
- * Consumer → Zauberbibliothek (nur künftige Feat/Species o. Ä. mit expliziten Spell-IDs).
- * Class/UC/BG deklarieren keine Bib-Deps — Verknüpfung läuft über den Charakterbogen.
+ * Keine echten Zauber-Labels — Sentinel/Platzhalter in magicSkills / Compile.
+ * Dürfen keine Zauberbibliothek-Dependency auslösen.
+ */
+const DC_NON_SPELL_REFERENCE_LABELS = Object.freeze(new Set([
+    "subclassSpellsList",
+    "0",
+    "null",
+    "undefined"
+]));
+
+function isDcNonSpellReferenceLabel(label) {
+    if (label == null) return true;
+    const s = String(label).trim();
+    if (!s) return true;
+    return DC_NON_SPELL_REFERENCE_LABELS.has(s);
+}
+
+/** Zauber-Referenz aus Payload: Custom-Bib-Zauber oder unbekannter Spell-Label (nicht Sentinel). */
+function isDcPayloadSpellReference(label) {
+    if (!label || isDcNonSpellReferenceLabel(label)) return false;
+    if (typeof isDcCustomSpellLabel === "function" && isDcCustomSpellLabel(label)) return true;
+    if (!isDcPhbSpellLabel(label)) return true;
+    return false;
+}
+
+/** Zauber-Labels aus LF optionsConfig (getCantrip / getPreparedSpell / …). */
+function collectDcSpellLabelsFromLfOptionsConfig(cfg, category) {
+    const out = [];
+    if (!cfg || typeof cfg !== "object") return out;
+    const cat = String(category || "");
+    if (cat === "getCantrip" || cat === "chooseCantrip") {
+        (cfg.selectedSpells || []).filter(Boolean).forEach(l => out.push(String(l)));
+    }
+    if (cat === "getPreparedSpell" || cat === "choosePreparedSpell" || cat === "subclassSpells") {
+        (cfg.selectedSpells || []).filter(Boolean).forEach(l => out.push(String(l)));
+        const byLevel = cfg.selectedByLevel || {};
+        Object.keys(byLevel).forEach(lvl => {
+            (byLevel[lvl] || []).filter(Boolean).forEach(l => out.push(String(l)));
+        });
+    }
+    if (cfg.spellLabel) out.push(String(cfg.spellLabel));
+    return out;
+}
+
+/**
+ * LF-Slots (Class / UC / Species / Feat) nach Custom-Spell-/Feat-Referenzen durchsuchen.
+ * @param {object} scanResult { spellIds, featIds, spellLabels, featLabels } mit Sets oder Arrays
+ */
+function walkDcLfSlotsForCustomRefs(slots, scanResult) {
+    if (!Array.isArray(slots) || !scanResult) return;
+    const spellIds = scanResult.spellIds instanceof Set ? scanResult.spellIds : null;
+    const featIds = scanResult.featIds instanceof Set ? scanResult.featIds : null;
+    const spellLabels = scanResult.spellLabels instanceof Set ? scanResult.spellLabels : null;
+    const featLabels = scanResult.featLabels instanceof Set ? scanResult.featLabels : null;
+    const pushSpellId = (id) => {
+        if (!isDcCustomSpellId(id)) return;
+        if (spellIds) spellIds.add(Number(id));
+        else if (Array.isArray(scanResult.spellIds)) scanResult.spellIds.push(Number(id));
+    };
+    const pushFeatId = (id) => {
+        if (!isDcCustomFeatId(id)) return;
+        if (featIds) featIds.add(Number(id));
+        else if (Array.isArray(scanResult.featIds)) scanResult.featIds.push(Number(id));
+    };
+    const pushSpellLabel = (lab) => {
+        if (!lab) return;
+        if (spellLabels) spellLabels.add(String(lab));
+        else if (Array.isArray(scanResult.spellLabels)) scanResult.spellLabels.push(String(lab));
+    };
+    const pushFeatLabel = (lab) => {
+        if (!lab) return;
+        if (featLabels) featLabels.add(String(lab));
+        else if (Array.isArray(scanResult.featLabels)) scanResult.featLabels.push(String(lab));
+    };
+
+    slots.forEach(slot => {
+        const p = slot && slot.payload;
+        if (!p) return;
+        const cfg = p.optionsConfig || {};
+        if (p.featureType === "spellcraft") {
+            collectDcSpellLabelsFromLfOptionsConfig(cfg, p.category).forEach(pushSpellLabel);
+        }
+        if (p.featureType === "options" && p.category === "fightingStyle") {
+            (cfg.selectedFeatLabels || []).filter(Boolean).forEach(pushFeatLabel);
+        }
+        if (p.featureType === "options" && p.category === "asiAndFeat") {
+            (cfg.selectedFeatLabels || []).filter(Boolean).forEach(pushFeatLabel);
+        }
+        if (p.featureType === "simple" && p.category === "originFeats") {
+            (cfg.selectedFeats || []).filter(Boolean).forEach(pushFeatLabel);
+        }
+        if (p.featureType === "options" && p.category === "originFeats") {
+            (cfg.selectedFeats || []).filter(Boolean).forEach(pushFeatLabel);
+        }
+    });
+}
+
+/** Payload rekursiv scannen (Import-Fallback ohne Envelope-Deps). */
+function scanDcPayloadCustomReferences(payload) {
+    const spellIds = new Set();
+    const featIds = new Set();
+    const spellLabels = new Set();
+    const featLabels = new Set();
+
+    function visit(val, key) {
+        if (val == null) return;
+        const k = String(key || "").toLowerCase();
+
+        if (typeof val === "number" || (typeof val === "string" && /^\d+$/.test(String(val).trim()))) {
+            const n = Number(val);
+            if (!Number.isFinite(n)) return;
+            if (k === "selectedspellids" || k === "spellid" || k.endsWith("spellid")) {
+                if (isDcCustomSpellId(n)) spellIds.add(n);
+            } else if (k === "fightingstyleid" || k === "featsget") {
+                if (isDcCustomFeatId(n)) featIds.add(n);
+            } else if (k === "featlabel" && isDcCustomFeatId(n)) {
+                featIds.add(n);
+            }
+            return;
+        }
+
+        if (typeof val === "string") {
+            if (k === "bgfeat") featLabels.add(val);
+            if (k === "spelllabel") spellLabels.add(val);
+            return;
+        }
+
+        if (Array.isArray(val)) {
+            if (k === "selectedspellids") {
+                val.forEach(v => { if (isDcCustomSpellId(v)) spellIds.add(Number(v)); });
+                return;
+            }
+            if (k === "fightingstyleid" || k === "featsget") {
+                val.forEach(v => { if (isDcCustomFeatId(v)) featIds.add(Number(v)); });
+                return;
+            }
+            if (k === "getspecificspell") {
+                val.forEach(v => {
+                    if (typeof v === "string") {
+                        if (isDcNonSpellReferenceLabel(v)) return;
+                        spellLabels.add(v);
+                    } else if (isDcCustomSpellId(v)) {
+                        spellIds.add(Number(v));
+                    }
+                });
+                return;
+            }
+            if (k === "selectedspells" || k === "selectedfeatlabels" || k === "selectedfeats") {
+                val.forEach(v => {
+                    if (typeof v !== "string") return;
+                    if (k === "selectedspells") spellLabels.add(v);
+                    else featLabels.add(v);
+                });
+                return;
+            }
+            val.forEach(item => visit(item, key));
+            return;
+        }
+
+        if (typeof val === "object") {
+            Object.keys(val).forEach(subKey => visit(val[subKey], subKey));
+        }
+    }
+
+    visit(payload, null);
+
+    return {
+        spellIds: Array.from(spellIds),
+        featIds: Array.from(featIds),
+        spellLabels: Array.from(spellLabels),
+        featLabels: Array.from(featLabels)
+    };
+}
+
+function resolveDcSessionSpellPackId() {
+    if (typeof registeredCustomSpellPack !== "undefined" && registeredCustomSpellPack?.packageId) {
+        return registeredCustomSpellPack.packageId;
+    }
+    if (typeof customSpellEditorState !== "undefined" && customSpellEditorState?.packageId) {
+        return customSpellEditorState.packageId;
+    }
+    if (typeof sheetCustomSpellPackRuntime !== "undefined" && sheetCustomSpellPackRuntime?.packageId) {
+        return sheetCustomSpellPackRuntime.packageId;
+    }
+    return null;
+}
+
+function resolveDcSessionFeatPackId() {
+    if (typeof registeredCustomFeatPack !== "undefined" && registeredCustomFeatPack?.packageId) {
+        return registeredCustomFeatPack.packageId;
+    }
+    if (typeof customFeatEditorState !== "undefined" && customFeatEditorState?.packageId) {
+        return customFeatEditorState.packageId;
+    }
+    if (typeof sheetCustomFeatPackRuntime !== "undefined" && sheetCustomFeatPackRuntime?.packageId) {
+        return sheetCustomFeatPackRuntime.packageId;
+    }
+    return null;
+}
+
+function mergeDcPackageDependencies(deps) {
+    const byType = new Map();
+    (Array.isArray(deps) ? deps : []).forEach(d => {
+        if (!d || !d.packageType) return;
+        if (d.packageType === "phbClass" || d.packageType === "phbFeat" || d.packageType === "phbSubclass") {
+            return;
+        }
+        const existing = byType.get(d.packageType);
+        if (!existing) {
+            byType.set(d.packageType, Object.assign({}, d));
+            return;
+        }
+        if (d.packageId && !existing.packageId) {
+            byType.set(d.packageType, Object.assign({}, existing, {
+                packageId: d.packageId,
+                verificationCode: d.verificationCode || existing.verificationCode
+            }));
+        }
+    });
+    return Array.from(byType.values());
+}
+
+/**
+ * Consumer → Zauberbibliothek bei referenzierten Custom-Spell-IDs.
  */
 function buildConsumerSpellPackDependencies(opts) {
     const o = opts || {};
     const refs = Array.isArray(o.referencedSpellIds) ? o.referencedSpellIds : [];
-    if (!refs.length) return [];
+    const labels = Array.isArray(o.referencedSpellLabels) ? o.referencedSpellLabels : [];
+    if (!refs.length && !labels.length) return [];
 
     let packageId = o.packageId || null;
     if (!packageId) {
-        if (typeof registeredCustomSpellPack !== "undefined" && registeredCustomSpellPack?.packageId) {
-            packageId = registeredCustomSpellPack.packageId;
-        } else if (typeof customSpellEditorState !== "undefined" && customSpellEditorState?.packageId) {
-            packageId = customSpellEditorState.packageId;
-        } else if (typeof sheetCustomSpellPackRuntime !== "undefined" && sheetCustomSpellPackRuntime?.packageId) {
-            packageId = sheetCustomSpellPackRuntime.packageId;
-        }
+        packageId = resolveDcSessionSpellPackId();
     }
 
     return [{
@@ -1231,54 +1740,188 @@ function buildConsumerSpellPackDependencies(opts) {
 }
 
 /**
- * Class → Bibliothek: keine Deps (Bib ist listenunabhängig).
+ * Consumer → Talentbibliothek bei referenzierten Custom-Feat-IDs/-Labels.
+ */
+function buildConsumerFeatPackDependencies(opts) {
+    const o = opts || {};
+    const ids = Array.isArray(o.referencedFeatIds) ? o.referencedFeatIds : [];
+    const labels = Array.isArray(o.referencedFeatLabels) ? o.referencedFeatLabels : [];
+    if (!ids.length && !labels.length) return [];
+
+    let packageId = o.packageId || null;
+    if (!packageId) {
+        packageId = resolveDcSessionFeatPackId();
+    }
+
+    return [{
+        packageType: DC_PACKAGE_TYPE.CUSTOM_FEAT_PACK,
+        packageId: packageId || null,
+        required: true
+    }];
+}
+
+/**
+ * Scan-Ergebnis → Envelope-Dependencies (direkt, Variante A).
+ */
+function buildDcPackageDepsFromCustomRefs(scanResult, opts) {
+    const o = opts || {};
+    const scan = scanResult || {};
+    const deps = [];
+    const spellIds = Array.isArray(scan.spellIds) ? scan.spellIds.slice() : [];
+    const featIds = Array.isArray(scan.featIds) ? scan.featIds.slice() : [];
+    const spellLabels = Array.isArray(scan.spellLabels) ? scan.spellLabels : [];
+    const featLabels = Array.isArray(scan.featLabels) ? scan.featLabels : [];
+    const payloadSpellLabels = [];
+
+    spellLabels.forEach(lab => {
+        if (!isDcPayloadSpellReference(lab)) return;
+        payloadSpellLabels.push(lab);
+        const sp = resolveDcSpellEntryByLabel(lab);
+        if (sp && sp.ID != null) spellIds.push(Number(sp.ID));
+    });
+    featLabels.forEach(lab => {
+        if (!isDcPayloadFeatReference(lab)) return;
+        const f = resolveDcFeatEntryByLabel(lab);
+        if (f && f.ID != null) featIds.push(Number(f.ID));
+    });
+
+    const uniqSpellIds = [...new Set(spellIds.filter(id => isDcCustomSpellId(id)))];
+    const uniqFeatIds = [...new Set(featIds.filter(id => isDcCustomFeatId(id)))];
+    const uniqPayloadSpellLabels = [...new Set(payloadSpellLabels)];
+
+    if (uniqSpellIds.length || uniqPayloadSpellLabels.length) {
+        deps.push(...buildConsumerSpellPackDependencies({
+            referencedSpellIds: uniqSpellIds,
+            referencedSpellLabels: uniqPayloadSpellLabels,
+            packageId: o.spellPackId || resolveDcSessionSpellPackId()
+        }));
+    }
+    if (uniqFeatIds.length || featLabels.some(lab => isDcPayloadFeatReference(lab))) {
+        deps.push(...buildConsumerFeatPackDependencies({
+            referencedFeatIds: uniqFeatIds,
+            referencedFeatLabels: featLabels.filter(lab => isDcPayloadFeatReference(lab)),
+            packageId: o.featPackId || resolveDcSessionFeatPackId()
+        }));
+    }
+    if (Array.isArray(o.extraDeps)) {
+        deps.push(...o.extraDeps);
+    }
+    return mergeDcPackageDependencies(deps);
+}
+
+/**
+ * Verschachtelte Deps aus hochgeladenem Paket (Import-Kette).
+ * Feat-Bib → Zauber-Bib; Envelope hat Vorrang, Payload-Scan ergänzt.
+ */
+function collectNestedDcPackageDependencies(envelope, payload, uploadedType) {
+    if (uploadedType === DC_PACKAGE_TYPE.CUSTOM_SPELL_PACK) {
+        return [];
+    }
+
+    let deps = mergeDcPackageDependencies(Array.isArray(envelope?.dependencies)
+        ? envelope.dependencies.slice()
+        : []);
+
+    const scanned = scanDcPayloadCustomReferences(payload);
+    const scannedDeps = buildDcPackageDepsFromCustomRefs(scanned, { forImport: true });
+
+    scannedDeps.forEach(d => {
+        if (!d || !d.packageType) return;
+        if (uploadedType === DC_PACKAGE_TYPE.CUSTOM_FEAT_PACK
+            && d.packageType !== DC_PACKAGE_TYPE.CUSTOM_SPELL_PACK) {
+            return;
+        }
+        if (!deps.some(x => x && x.packageType === d.packageType)) {
+            deps.push(d);
+        }
+    });
+
+    if (uploadedType === DC_PACKAGE_TYPE.CUSTOM_FEAT_PACK) {
+        deps = deps.filter(d =>
+            d && d.packageType === DC_PACKAGE_TYPE.CUSTOM_SPELL_PACK
+        );
+    }
+
+    return mergeDcPackageDependencies(deps);
+}
+
+/**
+ * Nach Dependency-Upload: verschachtelte Deps aus hochgeladenem Paket in Modal übernehmen.
+ */
+function mergeNestedDepsIntoPendingImport(envelope, payload, uploadedType) {
+    if (!dcPendingPackageImport || !uploadedType) return;
+    const nested = collectNestedDcPackageDependencies(envelope, payload, uploadedType);
+    if (!nested.length) return;
+    const byType = new Map();
+    const current = getPendingDcPackageRequiredDependencies();
+    current.forEach(d => {
+        if (d && d.packageType) byType.set(d.packageType, d);
+    });
+    nested.forEach(d => {
+        if (!d || !d.packageType || d.required === false) return;
+        if (d.packageType === "phbClass" || d.packageType === "phbFeat" || d.packageType === "phbSubclass") {
+            return;
+        }
+        if (!byType.has(d.packageType)) {
+            byType.set(d.packageType, d);
+        } else if (d.packageId && !byType.get(d.packageType).packageId) {
+            byType.set(d.packageType, Object.assign({}, byType.get(d.packageType), {
+                packageId: d.packageId,
+                verificationCode: d.verificationCode
+            }));
+        }
+    });
+    dcPendingPackageImport.requiredDeps = Array.from(byType.values());
+}
+
+/**
+ * Class → Bibliothek: Legacy-Alias (wird durch buildCustomClassPackageDependencies ersetzt).
  */
 function buildCustomClassSpellPackDependencies(state) {
+    if (typeof buildCustomClassPackageDependencies === "function") {
+        return buildCustomClassPackageDependencies(state);
+    }
     return [];
 }
 
 /**
- * Effektive Dependencies: Envelope + Fallback.
- * Class/UC/BG/Feat/Species → Bibliothek wird gestrippt (nur Sheet fordert Bib).
- * Bibliothek bleibt Blatt.
+ * Effektive Dependencies: Envelope + Payload-Scan-Fallback.
+ * Bibliothek bleibt Blatt (keine Consumer-Deps nach oben).
  */
 function collectEffectiveDcPackageDependencies(envelope, payload, detectedType) {
-    const deps = Array.isArray(envelope?.dependencies) ? envelope.dependencies.slice() : [];
+    let deps = mergeDcPackageDependencies(Array.isArray(envelope?.dependencies)
+        ? envelope.dependencies.slice()
+        : []);
 
-    const noSpellLibraryConsumers = [
-        DC_PACKAGE_TYPE.CUSTOM_CLASS,
-        DC_PACKAGE_TYPE.CUSTOM_SUBCLASS,
-        DC_PACKAGE_TYPE.CUSTOM_FEAT,
-        DC_PACKAGE_TYPE.CUSTOM_FEAT_PACK,
-        DC_PACKAGE_TYPE.CUSTOM_SPECIES,
-        DC_PACKAGE_TYPE.CUSTOM_BACKGROUND
-    ];
-    if (noSpellLibraryConsumers.includes(detectedType)) {
-        for (let i = deps.length - 1; i >= 0; i--) {
-            if (deps[i] && deps[i].packageType === DC_PACKAGE_TYPE.CUSTOM_SPELL_PACK) {
-                deps.splice(i, 1);
-            }
+    const scanned = scanDcPayloadCustomReferences(payload);
+    const scannedDeps = buildDcPackageDepsFromCustomRefs(scanned, {});
+
+    scannedDeps.forEach(d => {
+        if (!d || !d.packageType) return;
+        if (detectedType === DC_PACKAGE_TYPE.CUSTOM_SPELL_PACK
+            || detectedType === DC_PACKAGE_TYPE.CUSTOM_FEAT_PACK) {
+            return;
         }
-    }
+        if (!deps.some(x => x && x.packageType === d.packageType)) {
+            deps.push(d);
+        }
+    });
 
     if (detectedType === DC_PACKAGE_TYPE.CUSTOM_SPELL_PACK
         || detectedType === DC_PACKAGE_TYPE.CUSTOM_FEAT_PACK) {
-        // Bibliothek ist Blatt: keine Class-/UC-Deps nach oben (Legacy-Envelope strippen)
-        for (let i = deps.length - 1; i >= 0; i--) {
-            const pt = deps[i] && deps[i].packageType;
-            if (pt === DC_PACKAGE_TYPE.CUSTOM_CLASS
+        deps = deps.filter(d => {
+            const pt = d && d.packageType;
+            return !(pt === DC_PACKAGE_TYPE.CUSTOM_CLASS
                 || pt === DC_PACKAGE_TYPE.CUSTOM_CLASS_RUNTIME
                 || pt === DC_PACKAGE_TYPE.CUSTOM_SUBCLASS
                 || pt === DC_PACKAGE_TYPE.CUSTOM_FEAT
                 || pt === DC_PACKAGE_TYPE.CUSTOM_FEAT_PACK
                 || pt === DC_PACKAGE_TYPE.CUSTOM_SPECIES
-                || pt === DC_PACKAGE_TYPE.CUSTOM_BACKGROUND) {
-                deps.splice(i, 1);
-            }
-        }
+                || pt === DC_PACKAGE_TYPE.CUSTOM_BACKGROUND);
+        });
     }
 
-    return deps;
+    return mergeDcPackageDependencies(deps);
 }
 
 /**
@@ -1312,6 +1955,10 @@ function getMissingEmbeddedCharacterSheetDependencies(envelope, sheetPayload) {
             return;
         }
         if (type === DC_PACKAGE_TYPE.CUSTOM_SUBCLASS && !base.customSubclassRuntime) {
+            missing.push(d);
+            return;
+        }
+        if (type === DC_PACKAGE_TYPE.CUSTOM_SPECIES && !base.customSpeciesRuntime) {
             missing.push(d);
         }
     });
@@ -1412,6 +2059,10 @@ function detectLegacyDcPackageType(raw) {
     if ((raw.type === "customFeatPack" || raw.type === "customFeatPackRuntime")
         && Array.isArray(raw.feats)) {
         return DC_PACKAGE_TYPE.CUSTOM_FEAT_PACK;
+    }
+    if ((raw.type === "customSpecies" || raw.type === "customSpeciesRuntime")
+        && raw.slug && raw.compiledSpeciesListEntry) {
+        return DC_PACKAGE_TYPE.CUSTOM_SPECIES;
     }
     if (typeof raw.type === "string" && Object.values(DC_PACKAGE_TYPE).includes(raw.type)) {
         return raw.type;
@@ -1521,6 +2172,13 @@ function validateDcPackagePayload(packageType, payload) {
         const okType = payload.type === "customFeatPack" || payload.type === "customFeatPackRuntime";
         if (!okType || !Array.isArray(payload.feats)) {
             return { ok: false, errorCode: "invalidCustomFeatPack" };
+        }
+        return { ok: true };
+    }
+    if (packageType === DC_PACKAGE_TYPE.CUSTOM_SPECIES) {
+        const okType = payload.type === "customSpecies" || payload.type === "customSpeciesRuntime";
+        if (!okType || !payload.slug || !payload.compiledSpeciesListEntry) {
+            return { ok: false, errorCode: "invalidCustomSpecies" };
         }
         return { ok: true };
     }
@@ -1651,6 +2309,10 @@ function alertMessageForDcPackageError(errorCode, vars) {
         invalidCustomFeatPack: [
             "dcPackageInvalidCustomFeatPackLabel",
             "Die Datei ist keine gültige Talentbibliothek."
+        ],
+        invalidCustomSpecies: [
+            "dcPackageInvalidCustomSpeciesLabel",
+            "Die Datei ist kein gültiges Custom-Volk."
         ]
     };
     const entry = map[errorCode] || ["customClassImportErrorLabel", "Die Datei konnte nicht gelesen werden oder ist ungültig."];
@@ -1800,6 +2462,7 @@ function buildCharacterSheetDependencies(baseStorage) {
         const packageId = norm.envelope?.packageId || norm.payload?.packageId || null;
         const slug = norm.payload?.slug
             || norm.payload?.compiledBackgroundListEntry?.translationLabel
+            || norm.payload?.compiledSpeciesListEntry?.translationLabel
             || null;
         if (packageId || slug) {
             deps.push({
@@ -1864,6 +2527,13 @@ function buildCharacterSheetDependencies(baseStorage) {
         baseStorage.customBackgroundRuntime,
         DC_PACKAGE_TYPE.CUSTOM_BACKGROUND,
         DC_PACKAGE_TYPE.CUSTOM_BACKGROUND
+    );
+
+    // Custom Species Runtime → Abhängigkeit zum Species-Paket
+    pushFromRuntime(
+        baseStorage.customSpeciesRuntime,
+        DC_PACKAGE_TYPE.CUSTOM_SPECIES,
+        DC_PACKAGE_TYPE.CUSTOM_SPECIES
     );
 
     // Zauberbibliothek-Runtime → Abhängigkeit zur Bibliothek
@@ -1946,7 +2616,20 @@ function baseStorageHasCustomFeatIds(baseStorage) {
         : 1000;
     const ids = [];
     if (baseStorage.feat_background != null) ids.push(baseStorage.feat_background);
-    if (baseStorage.feat_species != null) ids.push(baseStorage.feat_species);
+    const speciesRaw = baseStorage.feat_species;
+    if (speciesRaw != null) {
+        let speciesIds = [];
+        try {
+            speciesIds = typeof speciesRaw === "string" ? JSON.parse(speciesRaw) : speciesRaw;
+        } catch (e) {
+            speciesIds = speciesRaw;
+        }
+        if (Array.isArray(speciesIds)) {
+            speciesIds.forEach(id => { if (id != null) ids.push(id); });
+        } else if (speciesIds != null) {
+            ids.push(speciesIds);
+        }
+    }
     const rawForm = baseStorage.classForm;
     if (rawForm) {
         let form;
@@ -2065,10 +2748,58 @@ function classDataRowHasSpellResources(entry) {
     return false;
 }
 
+/** Merkmals-Label ist Zauberwirken / Paktmagie (String oder Array). */
+function featureLabelIsSpellcastingOrPact(label) {
+    if (!label) return false;
+    const parts = Array.isArray(label) ? label : [label];
+    return parts.some(l => l === "spellcastingLabel" || l === "pactMagicLabel");
+}
+
+/**
+ * Klasse/UC hat bis zur Stufe ein spellcastingLabel oder pactMagicLabel
+ * (Scope: Basismerkmale subclass 0 und/oder gewählte UC).
+ * Kein SSpSL-Fallback — Fighter/Rogue denormalisieren EK-/AT-Slots auf Basiszeilen.
+ */
+function classDataHasSpellcastingOrPactMagic(classDataArray, characterLevel, subclassCategoryNumber) {
+    if (!Array.isArray(classDataArray)) return false;
+    const level = Number(characterLevel) || 0;
+    const sc = subclassCategoryNumber != null ? parseInt(subclassCategoryNumber, 10) : 0;
+    return classDataArray.some(r =>
+        r
+        && Number(r.level) <= level
+        && (r.subclassCategoryNumber === 0 || r.subclassCategoryNumber === sc)
+        && featureLabelIsSpellcastingOrPact(r.translationLabel)
+    );
+}
+
+/**
+ * Darf der Charakter Klassen-Zauberplätze anzeigen?
+ * — coreTraits.spellcastingLabel (Full-Caster-Basisklasse)
+ * — oder ClassData: spellcastingLabel / pactMagicLabel in Basis oder gewählter UC
+ * (PHB + Custom Class/UC). Talente allein gewähren keine Slot-Progression.
+ */
+function characterHasSpellSlotProgression(className, subclassCategoryNumber, characterLevel) {
+    if (!className) return false;
+    const level = Number(characterLevel) || 1;
+    const sc = subclassCategoryNumber != null ? parseInt(subclassCategoryNumber, 10) : 0;
+
+    if (typeof classCoreTraitsList !== "undefined" && Array.isArray(classCoreTraitsList)) {
+        const coreTrait = classCoreTraitsList.find(c =>
+            c && String(c.translationLabel || "").toLowerCase() === String(className).toLowerCase()
+        );
+        if (coreTrait && coreTrait.spellcastingLabel === 1) return true;
+    }
+
+    const classDataArray = (typeof getClassDataArray === "function")
+        ? getClassDataArray(className)
+        : (typeof getClassData === "function" ? getClassData(String(className).toLowerCase()) : null);
+    return classDataHasSpellcastingOrPactMagic(classDataArray, level, sc);
+}
+
 /**
  * Eine konsistente Slot-/Progressionszeile für Charakterstufe + gewählte UC.
- * UC-Caster zuerst (Custom-UC darf nicht Fighter-/Rogue-Basis-Slots erben);
- * PHB-EK/AT fallen auf Basis zurück, wenn die UC auf 19/20 keine eigene Zeile hat.
+ * UC-Caster zuerst; PHB-EK/AT fallen auf Basis zurück, wenn die UC auf 19/20 keine eigene Zeile hat.
+ * Nicht-Zauberwirker-UCs (z. B. Kampfmeister) erben keine denormalisierten Basis-Slots.
  */
 function resolveClassLevelSpellResourceRow(classDataArray, characterLevel, subclassCategoryNumber) {
     if (!Array.isArray(classDataArray)) return null;
@@ -2078,27 +2809,37 @@ function resolveClassLevelSpellResourceRow(classDataArray, characterLevel, subcl
         entry && Number(entry.level) === level && pred(entry)
     );
 
+    const baseIsCaster = classDataHasSpellcastingOrPactMagic(classDataArray, level, 0);
+    const ucIsCaster = sc > 0 && classDataArray.some(r =>
+        r
+        && Number(r.level) <= level
+        && r.subclassCategoryNumber === sc
+        && featureLabelIsSpellcastingOrPact(r.translationLabel)
+    );
+    const mayUseBaseSpellResources = baseIsCaster || ucIsCaster;
+
     if (sc > 0) {
         const scRow = atLevel(e =>
             e.subclassCategoryNumber === sc && classDataRowHasSpellResources(e)
         );
         if (scRow) return scRow;
+
+        if (mayUseBaseSpellResources) {
+            const baseRes = atLevel(e =>
+                (e.subclassCategoryNumber === 0 || !e.subclassCategoryNumber)
+                && classDataRowHasSpellResources(e)
+            );
+            if (baseRes) return baseRes;
+        }
+
+        const scAny = atLevel(e => e.subclassCategoryNumber === sc);
+        if (scAny) return scAny;
+        return atLevel(e => e.subclassCategoryNumber === 0 || !e.subclassCategoryNumber) || null;
     }
 
     let row = atLevel(e =>
-        (e.subclassCategoryNumber === 0 || e.subclassCategoryNumber === sc)
-        && classDataRowHasSpellResources(e)
-    );
-    if (row) return row;
-
-    row = atLevel(e =>
         (e.subclassCategoryNumber === 0 || !e.subclassCategoryNumber)
         && classDataRowHasSpellResources(e)
-    );
-    if (row) return row;
-
-    row = atLevel(e =>
-        e.subclassCategoryNumber === 0 || e.subclassCategoryNumber === sc
     );
     if (row) return row;
 

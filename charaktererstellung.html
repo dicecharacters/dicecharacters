@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">D&amp;D 5.5e Charakter erstellen | DiceCharacters</title>
+    <link rel="canonical" href="https://dicecharacters.com/charaktererstellung.html">
     <link rel="icon" type="image/webp" href="images/dcLogo_C.webp">
     <link rel="stylesheet" href="css/style.css">
 
@@ -13,6 +14,17 @@
 <body>
 
 <div id="stepBar">
+    <!-- LEVEL-UP: Pseudo-Step = normaler stepButton (Kupfer), innen kleinere Stepbar-Fläche + Label -->
+    <div id="levelUpModeBadge" class="stepButton level-up-mode-badge" aria-hidden="true" hidden>
+        <div class="level-up-mode-badge-inner">
+            <span class="level-up-badge-full">
+                <span id="levelUpModeBadgeLabel">Stufenaufstieg</span>
+                <span class="level-up-badge-icon" aria-hidden="true">↑</span>
+            </span>
+            <span class="level-up-badge-compact" aria-hidden="true">↑</span>
+        </div>
+    </div>
+
     <button id="step1Btn" class="stepButton" onclick="goToStep(1)">
         <span>Schritt 1</span>
         <small class="step-subtext">
@@ -98,10 +110,46 @@
     </button>
 </div>
 
-    <!-- Sprachumschalter -->
+    <!-- Sprachumschalter + Custom-Builder-Schnellzugriff (nur Schritt 1) -->
 <div id="languageSwitcher" style="display: none;">
-    <button onclick="setLanguage('de')"><img src="images/germany.png" alt="Deutsch" width="30" height="20"></button>
-    <button onclick="setLanguage('en')"><img src="images/usa.png" alt="Englisch" width="30" height="20"></button>
+    <div class="language-switcher-flags">
+        <button onclick="setLanguage('de')"><img src="images/germany.png" alt="Deutsch" width="30" height="20"></button>
+        <button onclick="setLanguage('en')"><img src="images/usa.png" alt="Englisch" width="30" height="20"></button>
+    </div>
+    <div id="step1CustomHub" class="step1-custom-hub" aria-hidden="true">
+        <button type="button" id="step1CustomHubToggle" class="step1-custom-hub-toggle"
+            onclick="toggleStep1CustomHub()" aria-expanded="false" aria-controls="step1CustomHubPanel">
+            <span class="step1-custom-hub-toggle-face" aria-hidden="true">
+                <span id="step1CustomHubArrow" class="cc-collapse-arrow is-collapsed">&#x25BC;<span class="step1-custom-hub-glyph">⊕</span></span>
+            </span>
+        </button>
+        <div id="step1CustomHubPanel" class="step1-custom-hub-panel collapsed" aria-hidden="true">
+            <div class="step1-custom-hub-row" data-hub="class" data-flag="customClassBuilder">
+                <button type="button" class="add-custom-class-btn" onclick="openCustomClassChooser()" aria-label="+">+</button>
+                <span class="step1-custom-hub-label" data-label-key="customClassModalTitleLabel">Eigene Klasse</span>
+            </div>
+            <div class="step1-custom-hub-row" data-hub="subclass" data-flag="customSubclassBuilder">
+                <button type="button" class="add-custom-subclass-btn" onclick="openCustomSubclassChooser()" aria-label="+">+</button>
+                <span class="step1-custom-hub-label" data-label-key="cscModalTitleLabel">Eigene Unterklasse</span>
+            </div>
+            <div class="step1-custom-hub-row" data-hub="background" data-flag="customBackgroundBuilder">
+                <button type="button" class="add-custom-background-btn" onclick="openCustomBackgroundChooser()" aria-label="+">+</button>
+                <span class="step1-custom-hub-label" data-label-key="cbgModalTitleLabel">Eigener Hintergrund</span>
+            </div>
+            <div class="step1-custom-hub-row" data-hub="species" data-flag="customSpeciesBuilder">
+                <button type="button" class="add-custom-species-btn" onclick="openCustomSpeciesChooser()" aria-label="+">+</button>
+                <span class="step1-custom-hub-label" data-label-key="cspcModalTitleLabel">Eigenes Volk</span>
+            </div>
+            <div class="step1-custom-hub-row" data-hub="feat" data-flag="customFeatsBuilder">
+                <button type="button" class="add-custom-feat-btn" onclick="openCustomFeatChooser()" aria-label="+">+</button>
+                <span class="step1-custom-hub-label" data-label-key="cffModalTitleLabel">Talentbibliothek</span>
+            </div>
+            <div class="step1-custom-hub-row" data-hub="spell" data-flag="customSpellBuilder">
+                <button type="button" class="add-custom-spell-btn" onclick="openCustomSpellChooser()" aria-label="+">+</button>
+                <span class="step1-custom-hub-label" data-label-key="cspModalTitleLabel">Zauberbibliothek</span>
+            </div>
+        </div>
+    </div>
 </div>
 
     <div id="mainContent">
@@ -279,6 +327,14 @@
                 <li><input type="radio" id="human" name="species" value="Human" onclick="showSpeciesDLabel('human')"><label for="human" id="humanLabel">Mensch</label></li>
                 <li><input type="radio" id="orc" name="species" value="Orc" onclick="showSpeciesDLabel('orc')"><label for="orc" id="orcLabel">Ork</label></li>
                 <li><input type="radio" id="tiefling" name="species" value="Tiefling" onclick="showSpeciesDLabel('tiefling')"><label for="tiefling" id="tieflingLabel">Tiefling</label></li>
+                <li id="customSpeciesListItem" class="custom-species-list-item" style="display: none;">
+                    <input type="radio" id="customSpeciesRadio" name="species" value="" onclick="selectCustomSpecies()">
+                    <label for="customSpeciesRadio" id="customSpeciesRadioLabel"></label>
+                    <span id="customSpeciesContentMarker" class="custom-content-marker" hidden></span>
+                </li>
+                <li id="addCustomSpeciesListItem" class="add-custom-species-item">
+                    <button type="button" id="addCustomSpeciesBtn" class="add-custom-species-btn" onclick="openCustomSpeciesChooser()" aria-label="+">+</button>
+                </li>
             </ul>
 
             <!-- Container für die Völkerbeschrereibung -->
@@ -293,6 +349,7 @@
                 <div id="humanD" class="speciesDLabel"></div>
                 <div id="orcD" class="speciesDLabel"></div>
                 <div id="tieflingD" class="speciesDLabel"></div>
+                <div id="customSpeciesD" class="speciesDLabel"></div>
             </div>
 
         <h3 id="speciesTraitsLabel">Volksmerkmale <span class="info-icon" onclick="toggleInfoBox('infoBoxStep3')">?</span></h3>
@@ -1018,6 +1075,59 @@
         </div>
     </div>
 
+    <!-- Custom Species Modal (Schritt 3) -->
+    <!-- Bewusst kein onclick auf dem Overlay: Klick außerhalb schließt nicht -->
+    <div id="customSpeciesOverlay" class="modal-overlay custom-class-overlay" style="display: none;">
+        <div class="custom-class-modal" onclick="event.stopPropagation()">
+            <span class="close-icon" onclick="requestCloseCustomSpeciesModal()">&times;</span>
+
+            <div id="customSpeciesChooserView">
+                <h3 id="customSpeciesModalTitleLabel" class="custom-class-title"></h3>
+                <div class="custom-class-chooser-actions">
+                    <button type="button" id="customSpeciesCreateNewBtn" class="custom-class-action-btn" onclick="startCustomSpeciesCreate()"></button>
+                    <button type="button" id="customSpeciesUploadBtn" class="custom-class-action-btn" onclick="triggerCustomSpeciesUpload()"></button>
+                    <input type="file" id="customSpeciesFileInput" accept=".json,application/json" style="display: none;" onchange="handleCustomSpeciesFile(event)">
+                </div>
+            </div>
+
+            <div id="customSpeciesEditorView" style="display: none;">
+                <h3 id="customSpeciesEditorTitleLabel" class="custom-class-title"></h3>
+
+                <div class="custom-class-tabs">
+                    <button type="button" class="custom-class-tab active" data-tab="1" id="customSpeciesTabStemBtn" onclick="switchCustomSpeciesTab(1)"></button>
+                    <button type="button" class="custom-class-tab custom-class-tab--locked" data-tab="2" id="customSpeciesTabAncestryBtn" onclick="switchCustomSpeciesTab(2)" disabled></button>
+                    <button type="button" class="custom-class-tab custom-class-tab--locked" data-tab="3" id="customSpeciesTabLineageBtn" onclick="switchCustomSpeciesTab(3)" disabled></button>
+                </div>
+
+                <div class="custom-class-tab-panels">
+                    <div id="customSpeciesTab1" class="custom-class-tab-panel active">
+                        <div id="customSpeciesTab1Content"></div>
+                    </div>
+                    <div id="customSpeciesTab2" class="custom-class-tab-panel">
+                        <div id="customSpeciesTab2Content"></div>
+                    </div>
+                    <div id="customSpeciesTab3" class="custom-class-tab-panel">
+                        <div id="customSpeciesTab3Content"></div>
+                    </div>
+                </div>
+
+                <div class="custom-class-footer">
+                    <button type="button" id="customSpeciesSaveBtn" class="custom-class-action-btn" onclick="saveCustomSpecies()"></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="cspcLfFloatOverlay" class="cc-lf-float-overlay" style="display: none;"
+             onclick="event.stopPropagation(); closeLfFloat()">
+            <div class="cc-lf-float" onclick="event.stopPropagation()">
+                <span class="close-icon" onclick="event.stopPropagation(); closeLfFloat()" aria-label="×">&times;</span>
+                <h4 id="cspcLfFloatTitle" class="cc-lf-float-title"></h4>
+                <p id="cspcLfFloatHint" class="cc-lf-float-hint" style="display:none;"></p>
+                <div id="cspcLfFloatBody" class="cc-lf-float-body"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="disclaimerLabel" class="permanent-disclaimer"></div>
 
     <!-- Fixierte Buttons -->
@@ -1060,6 +1170,10 @@
 <button id="back" class="fixed-button" type="button" onclick="goBack()">
     <img src="images/back.png" alt="Zurück" class="nav-icon">
 </button>
+<!-- LEVEL-UP: Abbruch nur in Schritt 5 (visuell Schritt 1) -->
+<button id="levelUpAbort" class="fixed-button" type="button" onclick="cancelLevelUpMode()">
+    <img src="images/break.png" alt="" class="nav-icon" id="levelUpAbortIcon">
+</button>
 
     <div id="swipeOnboarding" style="display: none;">
         <div class="onboarding-divider"></div>
@@ -1097,17 +1211,20 @@
     <script src="data/featData.js"></script>
     <script src="data/gearData.js"></script>
     <script src="data/coreData.js"></script>
+    <script src="data/abilityScoreCaps.js"></script>
     <script src="data/backgroundData.js"></script>
     <script src="data/spellData.js"></script>
     <script src="data/religionData.js"></script>
     <script src="main.js"></script>
     <script src="dcPackage.js"></script>
+    <script src="levelUpMode.js"></script>
     <script src="customFeatures/shared.js"></script>
     <script src="customFeatures/classBuilder.js"></script>
     <script src="customFeatures/subclassBuilder.js"></script>
     <script src="customFeatures/backgroundBuilder.js"></script>
     <script src="customFeatures/spellBuilder.js"></script>
     <script src="customFeatures/featBuilder.js"></script>
+    <script src="customFeatures/speciesBuilder.js"></script>
 
     <script src="translations/translationsCore.js"></script>
     <script src="translations/translationsDCPackage.js"></script>
@@ -1134,6 +1251,7 @@
     <script src="translations/translationsSpells.js"></script>
     <script src="translations/translationsSpellDesciptions.js"></script>
     <script src="translations/translationsReligion.js"></script>
+    <script src="translations/translationsLevelUpMode.js"></script>
 
     <script>
 
@@ -1180,6 +1298,8 @@
         // Dropdowns und dynamische Inhalte aktualisieren
         updateDropdownsForLanguage();
 
+        if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
+
         // --- DEINE BESTEHENDE LOGIK (UNVERÄNDERT) ---
         // Infos auf erster Seite schließen und Inhalt leeren
         const classDetailsContainer = document.getElementById("classDetailsContainer");
@@ -1224,8 +1344,25 @@
         setLanguage(savedLang, true); 
 
         checkLicense();
+
+        // --- LEVEL-UP: Stufenaufstieg aus Charakterbogen-Snapshot ---
+        if (typeof initLevelUpMode === "function" && initLevelUpMode()) {
+            const abortIcon = document.getElementById("levelUpAbortIcon");
+            if (abortIcon) {
+                abortIcon.alt = (typeof tLevelUp === "function")
+                    ? tLevelUp("levelUpAbortAriaLabel", "Stufenaufstieg abbrechen")
+                    : "Stufenaufstieg abbrechen";
+            }
+            const startStep5 = () => goToStep(5);
+            if (typeof beginLevelUpDependencyResolution === "function") {
+                beginLevelUpDependencyResolution(startStep5);
+            } else {
+                startStep5();
+            }
+            return;
+        }
         
-        // 3. Schritt 1 anzeigen
+        // 3. Schritt 1 anzeigen (Normal-Ersteller)
         goToStep(1); 
     });
 

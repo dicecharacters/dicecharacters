@@ -14,7 +14,8 @@ let character = {
     lineage: null,                    // Schritt 3: Volk
     ancestry: null,                   // Schritt 3: Volk
     spellcastingAbility_species: null, // Schritt 3: Volk
-    feat_species: null,               // Schritt 3: Volk
+    feat_species: [],                 // Schritt 3: Volk (Herkunftstalente, Array von IDs)
+    speciesFreeChoices: [],           // Schritt 3: Volk (Freie Optionen, Custom Species)
     strengthTotalScore: null,         // Schritt 4: Attribute
     dexterityTotalScore: null,        // Schritt 4: Attribute
     constitutionTotalScore: null,     // Schritt 4: Attribute
@@ -88,7 +89,7 @@ let tempInstrumentBackground = null;
 let tempGameBackground = null;
 let tempBackgroundSpellcasting = null;
 
-let tempFeatSpecies = null;
+let tempFeatSpecies = [];
 let tempAncestry = null;
 let tempLineage = null;
 let tempSpellAbilitySpecies = null; // Generell für Zauberattribut bei Elf, Tiefling, Gnom etc.
@@ -612,6 +613,78 @@ function resolveBackgroundMagicInitiateSpellListId(backgroundName, backgroundDat
     return fixedLists[bgLower] || null;
 }
 
+/**
+ * Magic Initiate: Klassen-Slug der gewählten Zauberliste (z. B. "druid").
+ * Reihenfolge: classForm.spellLists → spellcastingAbility_talent → Hintergrund-Fix.
+ * @returns {string|null}
+ */
+function resolveMagicInitiateSpellListClassKey(feature, charRef) {
+    if (!feature || feature.sourceFeatLabel !== "magicInitiateLabel") return null;
+    const ch = charRef || (typeof character !== "undefined" ? character : null);
+    if (!ch) return null;
+
+    const idx = feature.spellListIndex;
+    const normalizeSlug = (raw) => {
+        if (raw == null || raw === "" || raw === 0) return null;
+        return String(raw).replace(/Label$/i, "").toLowerCase();
+    };
+
+    // 1) classForm.spellLists[index] (Klassen-ID)
+    if (idx !== undefined && Array.isArray(ch.classForm?.spellLists)) {
+        const choice = ch.classForm.spellLists[idx];
+        if (choice != null && String(choice).trim() !== "") {
+            const classObj = (typeof classCoreTraitsList !== "undefined" ? classCoreTraitsList : [])
+                .find(c => c.ID === parseInt(choice, 10));
+            if (classObj) return normalizeSlug(classObj.translationLabel);
+        }
+    }
+
+    // 2) spellcastingAbility_talent (gleicher Magic-Initiate-Index)
+    const miEntries = (Array.isArray(ch.spellcastingAbility_talent) ? ch.spellcastingAbility_talent : [])
+        .filter(e => e && e.talent === "magicInitiateLabel");
+    const talentEntry = (idx !== undefined && miEntries[idx]) ? miEntries[idx] : miEntries[0];
+    if (talentEntry?.spellList) {
+        const fromTalent = normalizeSlug(talentEntry.spellList);
+        if (fromTalent) return fromTalent;
+    }
+
+    // 3) Feste Hintergrund-Liste (Wegfinder → Druide), wenn dieses MI der Hintergrund ist
+    const bgFeatId = parseInt(ch.feat_background, 10);
+    const bgFeat = (!isNaN(bgFeatId) && typeof featList !== "undefined")
+        ? featList.find(f => f.ID === bgFeatId)
+        : null;
+    const isBackgroundMi = bgFeat?.translationLabel === "magicInitiateLabel"
+        && (idx === 0 || idx === undefined);
+    if (isBackgroundMi && typeof resolveBackgroundMagicInitiateSpellListId === "function") {
+        const bgData = (typeof backgroundList !== "undefined")
+            ? backgroundList.find(bg =>
+                String(bg.translationLabel || "").toLowerCase() === String(ch.background || "").toLowerCase()
+            )
+            : null;
+        const listId = resolveBackgroundMagicInitiateSpellListId(ch.background, bgData);
+        if (listId != null) {
+            const classObj = (typeof classCoreTraitsList !== "undefined" ? classCoreTraitsList : [])
+                .find(c => c.ID === listId);
+            if (classObj) return normalizeSlug(classObj.translationLabel);
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Magic Initiate: Anzeigename der Zauberliste (übersetzt) oder null.
+ */
+function resolveMagicInitiateSpellListDisplayName(feature, charRef) {
+    const slug = resolveMagicInitiateSpellListClassKey(feature, charRef);
+    if (!slug) return null;
+    const lang = (typeof currentLang !== "undefined" && currentLang)
+        ? currentLang
+        : ((typeof currentLanguage !== "undefined" && currentLanguage) ? currentLanguage : "de");
+    const t = (typeof translations !== "undefined" && translations[lang]) ? translations[lang] : {};
+    return t[slug] || t[`${slug}Label`] || slug;
+}
+
 function updateBackgroundDetails(backgroundName) {
 
     // Setze das Hintergrundbild für die Seite
@@ -841,36 +914,42 @@ function saveSpecies() {
     character.ancestry = tempAncestry;
     console.log(`ancestry gespeichert: ${character.ancestry}`); // Konsolenausgabe
 
-    character.feat_species = tempFeatSpecies;
-    console.log(`feat_species gespeichert: ${character.feat_species}`); // Konsolenausgabe
+    if (typeof syncTempFeatSpecies === "function") syncTempFeatSpecies();
+    character.feat_species = normalizeFeatSpeciesIds(tempFeatSpecies);
+    console.log(`feat_species gespeichert: ${JSON.stringify(character.feat_species)}`);
+
+    if (typeof collectSpeciesFreeChoices === "function") {
+        character.speciesFreeChoices = collectSpeciesFreeChoices();
+    }
 
     // --- Talent-Wahl (z.B. Magic Initiate) auslesen ---
     tempSpeciesTalentSpellcasting = null; // Reset
 
-    const versatileSelect = document.getElementById('versatileDropdown');
-    if (versatileSelect) {
-        const featID = parseInt(versatileSelect.value, 10);
+    const resolveSpeciesMagicInitiate = (featSelectEl) => {
+        if (!featSelectEl?.value) return;
+        const featID = parseInt(featSelectEl.value, 10);
         const featData = featList.find(f => f.ID === featID);
-
-        // Prüfen, ob das gewählte Talent "Magiebegabt" ist
-        if (featData && featData.translationLabel === "magicInitiateLabel") {
-            const parent = versatileSelect.parentNode;
-            const abilityDropdown = parent.querySelector('select[id^="spellAbility"]');
-            const listDropdown = parent.querySelector('select[id^="spellList"]');
-
-            if (abilityDropdown?.value && listDropdown?.value) {
-                const attr = attributeList.find(a => a.ID == abilityDropdown.value);
-                const classObj = classCoreTraitsList.find(c => c.ID == listDropdown.value);
-
-                if (attr && classObj) {
-                    tempSpeciesTalentSpellcasting = {
-                        talent: "magicInitiateLabel",
-                        ability: attr.translationLabel,
-                        spellList: classObj.translationLabel
-                    };
-                }
+        if (!featData || featData.translationLabel !== "magicInitiateLabel") return;
+        const parent = featSelectEl.closest("li") || featSelectEl.parentNode;
+        const abilityDropdown = parent?.querySelector('select[id^="spellAbility"]');
+        const listDropdown = parent?.querySelector('select[id^="spellList"]');
+        if (abilityDropdown?.value && listDropdown?.value) {
+            const attr = attributeList.find(a => a.ID == abilityDropdown.value);
+            const classObj = classCoreTraitsList.find(c => c.ID == listDropdown.value);
+            if (attr && classObj) {
+                tempSpeciesTalentSpellcasting = {
+                    talent: "magicInitiateLabel",
+                    ability: attr.translationLabel,
+                    spellList: classObj.translationLabel
+                };
             }
         }
+    };
+
+    resolveSpeciesMagicInitiate(document.getElementById("versatileDropdown"));
+    if (!tempSpeciesTalentSpellcasting) {
+        document.querySelectorAll("#speciesTraitsContent select.cspc-feat-select, #speciesTraitsContent select.cspc-granted-feat-anchor")
+            .forEach(resolveSpeciesMagicInitiate);
     }
 
     console.log(`Species saved: ${character.species}`); // Debugging-Log
@@ -909,8 +988,10 @@ function updateSpeciesInfoBoxContent() {
         return;
     }
 
-    const speciesValue = selectedSpeciesInput.value; // z.B. "Aasimar"
-    const speciesData = speciesList.find(s => s.translationLabel.toLowerCase().startsWith(speciesValue.toLowerCase()));
+    const speciesValue = selectedSpeciesInput.value; // z.B. "Aasimar" oder Custom-Slug
+    const speciesData = (typeof findSpeciesBySelectionValue === "function")
+        ? findSpeciesBySelectionValue(speciesValue)
+        : speciesList.find(s => s.translationLabel.toLowerCase().startsWith(speciesValue.toLowerCase()));
 
     if (!speciesData) {
         console.error("Species data not found for:", speciesValue);
@@ -945,6 +1026,44 @@ function updateSpeciesInfoBoxContent() {
     }
 }
 
+/**
+ * Volk anhand Radio-Wert finden.
+ * PHB: "Human" → humanLabel; Custom: translationLabel (z. B. custom_species_fooLabel).
+ */
+function findSpeciesBySelectionValue(value) {
+    if (!value || typeof speciesList === "undefined" || !Array.isArray(speciesList)) return null;
+    const raw = String(value);
+    const exact = speciesList.find(s => s.translationLabel === raw);
+    if (exact) return exact;
+    const lower = raw.toLowerCase();
+    const byLower = speciesList.find(s => String(s.translationLabel).toLowerCase() === lower);
+    if (byLower) return byLower;
+    const legacy = raw.charAt(0).toLowerCase() + raw.slice(1) + "Label";
+    const byLegacy = speciesList.find(s => s.translationLabel === legacy);
+    if (byLegacy) return byLegacy;
+    const lowerPlus = lower + "label";
+    const byPlus = speciesList.find(s => String(s.translationLabel).toLowerCase() === lowerPlus);
+    if (byPlus) return byPlus;
+    return speciesList.find(s => String(s.translationLabel).toLowerCase().startsWith(lower)) || null;
+}
+
+/**
+ * Anzeigename des Volks (PHB „Mensch“ / Custom „Neues Volk“) — nicht den translationLabel-Slug.
+ */
+function getSpeciesDisplayTranslation(speciesValue, lang) {
+    if (!speciesValue) return "";
+    const language = lang
+        || (typeof currentLang !== "undefined" ? currentLang : null)
+        || "de";
+    const t = (typeof translations !== "undefined" && translations[language]) ? translations[language] : {};
+    const entry = findSpeciesBySelectionValue(speciesValue);
+    const key = entry?.translationLabel
+        || (String(speciesValue).toLowerCase().endsWith("label")
+            ? speciesValue
+            : String(speciesValue).charAt(0).toLowerCase() + String(speciesValue).slice(1) + "Label");
+    return t[key] || speciesValue;
+}
+
 function showSpeciesTraits(speciesValue) {
     const traitsContainer = document.getElementById("speciesTraitsContainer");
     const traitsContent = document.getElementById("speciesTraitsContent");
@@ -954,13 +1073,12 @@ function showSpeciesTraits(speciesValue) {
         return;
     }
 
-    const speciesTranslationLabel = speciesValue.charAt(0).toLowerCase() + speciesValue.slice(1) + "Label";
-
-    const species = speciesList.find(species => species.translationLabel === speciesTranslationLabel);
+    const species = findSpeciesBySelectionValue(speciesValue);
     if (!species) {
         console.error("Species not found for Value:", speciesValue);
         return;
     }
+    const speciesTranslationLabel = species.translationLabel;
 
     const elements = translations[currentLang];
 
@@ -979,8 +1097,15 @@ function showSpeciesTraits(speciesValue) {
         const trait = speciesTraitList.find(trait => trait.speciesTraitLabel === traitLabel);
         if (trait) {
             if (!specialTraits.includes(traitLabel)) {
-                const traitName = elements[trait.speciesTraitLabel] || trait.speciesTraitLabel;
-                traitsHTML += `<li>${traitName}</li>`;
+                const hasCustomChoice = species.isCustom && trait && (
+                    (trait.skillLabel && trait.skillLabel !== 0)
+                    || (trait.featLabel && trait.featLabel !== 0)
+                    || (Array.isArray(trait.freeChoiceOptions) && trait.freeChoiceOptions.length > 0)
+                );
+                if (!hasCustomChoice) {
+                    const traitName = elements[trait.speciesTraitLabel] || trait.speciesTraitLabel;
+                    traitsHTML += `<li>${traitName}</li>`;
+                }
             }
 
             const ancestries = ancestryList.filter(ancestry => ancestry.species === speciesTranslationLabel && ancestry.speciesTraitLabel === traitLabel);
@@ -1060,6 +1185,10 @@ function showSpeciesTraits(speciesValue) {
                 </li>
             `;
         }
+
+        if (typeof renderCspcCustomTraitChoices === "function") {
+            traitsHTML += renderCspcCustomTraitChoices(species, trait, traitLabel, elements);
+        }
     });
 
     traitsHTML += `</ul>`;
@@ -1089,19 +1218,48 @@ function showSpeciesTraits(speciesValue) {
 
             if (!isNaN(selectedFeatID)) {
                 updateFeatDynamicContent(selectedFeatID, 1, this);
-                tempFeatSpecies = selectedFeatID;
             } else {
-                tempFeatSpecies = null;
                 const existingFeatContent = this.parentNode.querySelector('.feat-content');
                 if (existingFeatContent) {
                     existingFeatContent.remove();
                 }
             }
-
+            if (typeof syncTempFeatSpecies === "function") syncTempFeatSpecies();
             setupFeatSelection();
+            if (typeof cspcUpdateOriginFeatPickLimits === "function") {
+                cspcUpdateOriginFeatPickLimits(this);
+            }
         });
     }
 
+    document.querySelectorAll("select.cspc-skill-select").forEach(sel => {
+        sel.addEventListener("change", function () {
+            updateSkills();
+        });
+    });
+    document.querySelectorAll("select.cspc-feat-select").forEach(sel => {
+        sel.addEventListener("change", function () {
+            const selectedFeatID = parseInt(this.value, 10);
+            if (!isNaN(selectedFeatID)) {
+                updateFeatDynamicContent(selectedFeatID, 1, this);
+            } else {
+                const existingFeatContent = this.parentNode.querySelector(".feat-content");
+                if (existingFeatContent) existingFeatContent.remove();
+            }
+            if (typeof syncTempFeatSpecies === "function") syncTempFeatSpecies();
+            setupFeatSelection();
+            if (typeof cspcUpdateOriginFeatPickLimits === "function") {
+                cspcUpdateOriginFeatPickLimits(this);
+            }
+        });
+    });
+    if (typeof cspcApplyGrantedSpeciesFeatDynamics === "function") {
+        cspcApplyGrantedSpeciesFeatDynamics();
+    }
+    if (typeof syncTempFeatSpecies === "function") syncTempFeatSpecies();
+    if (typeof cspcUpdateOriginFeatPickLimits === "function") {
+        cspcUpdateOriginFeatPickLimits(null);
+    }
     traitsContainer.style.display = "block";
 
     const infoBox1 = document.getElementById('infoBoxStep3');
@@ -1111,18 +1269,37 @@ function showSpeciesTraits(speciesValue) {
 }
 
 function showSpeciesImage(speciesName) {
-    const imagePath = `images/${speciesName.toLowerCase()}.webp`; 
+    const raw = String(speciesName || "").trim();
+    const isCustom = (typeof isRegisteredCustomSpeciesSlug === "function" && isRegisteredCustomSpeciesSlug(raw))
+        || (typeof findSpeciesBySelectionValue === "function" && !!findSpeciesBySelectionValue(raw)?.isCustom)
+        || /^custom_species_/i.test(raw)
+        || raw.toLowerCase() === "customspecies";
+    const imagePath = isCustom
+        ? "images/customSpecies.webp"
+        : `images/${raw.toLowerCase()}.webp`;
     const speciesImageBox = document.getElementById("speciesImageBox");
 
     if (speciesImageBox) {
         // Wir nutzen ein Template-Literal für das Bild mit einem Fallback-Handling
         speciesImageBox.innerHTML = `
             <img src="${imagePath}" 
-                 alt="${speciesName} Bild" 
+                 alt="${raw} Bild" 
                  onerror="this.src='images/default_species.webp'; this.onerror=null;">
         `;
         speciesImageBox.style.display = "block";
     }
+}
+
+/**
+ * Entfernt den Volkszauber-CHOICE_LIST-Block für die Erblinien-Infobox im Ersteller.
+ * Auf dem Charakterbogen bleibt lineageTraitDSheet unverändert.
+ */
+function stripLineageSpellChoiceBlockForCreatorUI(text) {
+    if (!text) return "";
+    return String(text).replace(
+        /(?:<br\s*\/?>\s*){2}\s*(?:Du beherrscht folgende Zauber|You know the following spells)\s*:\s*(?:<br\s*\/?>\s*)?\[CHOICE_LIST\]preparedSpells\.source\.name\.speciesSpellsLabel\[\/CHOICE_LIST\]\s*$/i,
+        ""
+    ).trim();
 }
 
 function showLineageDetails(lineageLabel) {
@@ -1144,7 +1321,8 @@ function showLineageDetails(lineageLabel) {
     const elements = translations[currentLang];
     const title = elements[lineageLevel1.lineageLabel] || lineageLevel1.lineageLabel;
     const description = elements[lineageLevel1.lineageDLabel] || lineageLevel1.lineageDLabel;
-    const subspeciesDescription = elements[lineageLevel1.lineageTraitDLabel] || lineageLevel1.lineageTraitDLabel;
+    const subspeciesDescriptionRaw = elements[lineageLevel1.lineageTraitDLabel] || lineageLevel1.lineageTraitDLabel;
+    const subspeciesDescription = stripLineageSpellChoiceBlockForCreatorUI(subspeciesDescriptionRaw);
 
     // Tabelle (Original-Struktur)
     let tableHTML = `<table style="width: 100%; margin-top: 10px;">
@@ -1165,6 +1343,8 @@ function showLineageDetails(lineageLabel) {
     tableHTML += `</tbody></table>`;
 
     const imagePath = `images/${lineageLabel}.webp`;
+    const existingSpellAbility = document.getElementById("spellAbility");
+    const spellAbilityOutsideLineage = !!(existingSpellAbility && !lineageDetailBox.contains(existingSpellAbility));
 
     // 1. TEXT-INHALT (Ohne Bild, mit Klassen für Breakpoints)
     lineageDetailBox.innerHTML = `
@@ -1174,19 +1354,31 @@ function showLineageDetails(lineageLabel) {
             <h4 class="lineage-traits-header">${elements.subspeciesTraitsLabel}</h4>
             <div class="lineage-sub-desc"><p>${subspeciesDescription}</p></div>
             <div class="lineage-table-container">${tableHTML}</div>
-            <div style="text-align: left;">
+            ${spellAbilityOutsideLineage ? "" : `<div style="text-align: left;">
                 <label for="spellAbility" style="margin-top: 20px; display: block;">${elements.spellcastingAbilityLabel} - ${elements.chooseOptionLabel}:</label>
                 <select id="spellAbility" class="dropdown" style="width: 150px;">
                     <option value="">${elements.pleaseSelectLabel}</option>
                     ${createSpellAbilityOptions()}
                 </select>
-            </div>
+            </div>`}
         </div>
     `;
 
-    // 2. BILD-INHALT (Externer Container)
+    // 2. BILD-INHALT (Externer Container) – Custom-Volk: keine Erblinie-Bilder
+    const speciesEntry = (typeof findSpeciesBySelectionValue === "function")
+        ? findSpeciesBySelectionValue(character.species)
+        : null;
+    const hideLineageImage = !!(speciesEntry?.isCustom
+        || (typeof isRegisteredCustomSpeciesSlug === "function"
+            && isRegisteredCustomSpeciesSlug(character.species)));
     if (lineageImageBox) {
-        lineageImageBox.innerHTML = `<img src="${imagePath}" alt="${title} Bild">`;
+        if (hideLineageImage) {
+            lineageImageBox.innerHTML = "";
+            lineageImageBox.style.display = "none";
+        } else {
+            lineageImageBox.innerHTML = `<img src="${imagePath}" alt="${title} Bild">`;
+            lineageImageBox.style.display = "block";
+        }
     }
 
     lineageDetailBox.style.display = "block";
@@ -1258,7 +1450,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 4. Lineage-Resets
             tempLineage = null;
             tempAncestry = null;
-            tempFeatSpecies = null;
+            tempFeatSpecies = [];
             tempSpellAbilitySpecies = null;
             
             const lineageDetailBox = document.getElementById("lineageDetailBox");
@@ -1694,23 +1886,18 @@ function updatePointBuy() {
  * @param {number} totalScore - Der berechnete Gesamtwert (Basis + Bonus).
  */
 function updateModifier(stringId, totalScore) {
-    // Berechnet den Modifikator mit der Standard-D&D-Formel.
-    // Math.floor() rundet das Ergebnis immer ab.
-    const modifier = Math.floor((totalScore - 10) / 2);
-
-    // Holt das Anzeige-Element aus dem DOM.
     const modDisplay = document.getElementById(`${stringId}Mod`);
+    if (!modDisplay) return;
 
-    if (modDisplay) {
-        // Prüfen, ob der Modifikator unter dem erlaubten Minimum von -4 liegt.
-        // Dies trifft auch auf den Default-Fall (totalScore=0 -> modifier=-5) zu.
-        if (modifier < -4) {
-            modDisplay.textContent = '?';
-        } else {
-            // Ihre bestehende Logik für die korrekte Anzeige
-            modDisplay.textContent = (modifier >= 0) ? `+${modifier}` : modifier;
-        }
+    const parsed = parseInt(totalScore, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        modDisplay.textContent = "?";
+        return;
     }
+
+    modDisplay.textContent = typeof formatModifierForScore === "function"
+        ? formatModifierForScore(parsed)
+        : formatModifierDisplay(getModifierForScore(parsed));
 }
 
 function attachAttributeDragListeners(scoreInput) {
@@ -1835,8 +2022,15 @@ function updateLiveAttributes() {
         
         const backgroundBonus = character.backgroundAttributeBonuses[attr.translationLabel] || 0;
         const featBonus = featBonuses[stringId] || 0; // Verwende den berechneten Bonus
-        
-        const totalScore = baseScore + backgroundBonus + featBonus + classBonus;
+
+        const totalScore = typeof computeClampedAttributeTotal === "function"
+            ? computeClampedAttributeTotal({
+                base: baseScore,
+                background: backgroundBonus,
+                feat: featBonus,
+                class: classBonus
+            }, stringId, character)
+            : (baseScore + backgroundBonus + featBonus + classBonus);
 
         // Fülle die Felder im Live-Container
         document.getElementById(`live-${stringId}Score`).value = baseScore;
@@ -1844,13 +2038,14 @@ function updateLiveAttributes() {
         document.getElementById(`live-${stringId}FeatBonus`).value = featBonus;
         document.getElementById(`live-${stringId}ClassBonus`).value = classBonus;
         document.getElementById(`live-${stringId}TotalScore`).value = totalScore;
-        
-        const modifier = Math.floor((totalScore - 10) / 2);
+
         const modDisplay = document.getElementById(`live-${stringId}Mod`);
         if (baseScore === 0 && backgroundBonus === 0 && featBonus === 0 && classBonus === 0) {
-             modDisplay.textContent = "?";
+            modDisplay.textContent = "?";
         } else {
-            modDisplay.textContent = (modifier >= 0) ? `+${modifier}` : modifier;
+            modDisplay.textContent = typeof formatModifierForScore === "function"
+                ? formatModifierForScore(totalScore)
+                : formatModifierDisplay(getModifierForScore(totalScore));
         }
 
 	// Nach der Berechnung aller Werte rufen wir die Validierung der Talente auf
@@ -1924,6 +2119,159 @@ function calculateFeatBonuses() {
 // SCHRITT 5: STUFE
 //=======================================================================
 
+/** Hard-Reset von Schritt 6 (Spezialisierung) – bisheriges Verhalten bei Levelwechsel */
+function resetStep6SpecializationHard() {
+    const subclassDetailBox = document.getElementById("subclassDetailBox");
+    if (subclassDetailBox) subclassDetailBox.style.display = "none";
+
+    populateClassFormOptions(character.class);
+    resetDynamicSubclassContent();
+    currentExpertises = [];
+    character.featSelections = {};
+    character.customAttributeDistributions = {};
+
+    document.querySelectorAll('select[name^="feats"]').forEach(select => {
+        select.selectedIndex = 0;
+    });
+
+    resetSubclassUI();
+}
+
+/** Snapshot der Step-6-Formularwerte (für Soft-Refresh bei Level-Up) */
+function snapshotStep6FormValues() {
+    const root = document.getElementById("step6");
+    if (!root) return { byId: {}, radios: {} };
+
+    const byId = {};
+    root.querySelectorAll("select, input[type='text'], input[type='number'], textarea").forEach(el => {
+        if (!el.id) return;
+        byId[el.id] = el.type === "checkbox" ? el.checked : el.value;
+    });
+
+    const radios = {};
+    root.querySelectorAll("input[type='radio']:checked").forEach(el => {
+        if (el.name) radios[el.name] = el.value;
+    });
+
+    return { byId, radios };
+}
+
+/** Stellt Step-6-Werte wieder her, sofern Elemente/Optionen noch existieren */
+function restoreStep6FormValues(snapshot) {
+    if (!snapshot) return;
+    const root = document.getElementById("step6");
+    if (!root) return;
+
+    Object.keys(snapshot.byId || {}).forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const val = snapshot.byId[id];
+        if (el.tagName === "SELECT") {
+            const match = Array.from(el.options).some(opt => opt.value === String(val));
+            if (val === "" || match) el.value = val;
+        } else if (el.type === "checkbox") {
+            el.checked = !!val;
+        } else {
+            el.value = val;
+        }
+    });
+
+    Object.keys(snapshot.radios || {}).forEach(name => {
+        const val = snapshot.radios[name];
+        const radio = Array.from(root.querySelectorAll(`input[type="radio"][name="${name}"]`))
+            .find(r => r.value === String(val));
+        if (radio) radio.checked = true;
+    });
+}
+
+/** Barbar: Primal Knowledge (skill0) bei Level-Up nachrüsten, ohne Skills zu wipen */
+function ensureBarbarianPrimalKnowledgeSkill0() {
+    if (!character.class || character.class.toLowerCase() !== "barbarian") return;
+    if ((character.level || 1) < 3) return;
+    if (document.getElementById("skill0")) return;
+
+    const elements = translations[currentLang];
+    const classData = getClassData("barbarian", "class") || getClassData("barbarian");
+    if (!classData) return;
+
+    const level1Data = classData.find(data => data.level === 1 && Array.isArray(data.skillCategoryNumber));
+    const skills = level1Data ? createSkillOptions(level1Data.skillCategoryNumber) : "";
+    const section = document.querySelector("#step6 .class-section") || document.querySelector(".class-section");
+    if (!section) return;
+
+    const skill0Label = document.createElement("label");
+    skill0Label.id = "skill0Label";
+    skill0Label.setAttribute("for", "skill0");
+    skill0Label.innerText = `${elements.primalKnowledge} - ${elements.chooseSkillLabel} (${elements.levelLabel} 3):`;
+    section.appendChild(skill0Label);
+
+    const skill0Select = document.createElement("select");
+    skill0Select.id = "skill0";
+    skill0Select.name = "skill0";
+    skill0Select.className = "dropdown";
+    skill0Select.innerHTML = `<option value="">${elements.pleaseSelectLabel}</option>` + skills;
+    skill0Select.setAttribute("onchange", "updateSkills()");
+    section.appendChild(skill0Select);
+}
+
+/**
+ * Soft-Refresh bei Level-Up: Sichtbarkeit/neue Optionen ohne Spezialisierungs-Wipe.
+ * Custom-Class-Sections werden ggf. neu gebaut – Werte per Snapshot wiederhergestellt.
+ */
+function refreshStep6ForLevelUp() {
+    const snapshot = snapshotStep6FormValues();
+
+    displayClassSectionsBasedOnLevel(character.level);
+    ensureBarbarianPrimalKnowledgeSkill0();
+
+    if (character.class && character.class.toLowerCase() === "warlock") {
+        updateInvocationDropdowns();
+    }
+
+    // Unterklasse behalten: dynamischen Inhalt nur aktualisieren (keine Radio-Wipe)
+    const checkedSubclass = document.querySelector('#step6 input[name="subclass"]:checked')
+        || document.querySelector('input[name="subclass"]:checked');
+    if (checkedSubclass) {
+        const scNum = parseInt(checkedSubclass.value, 10) || 0;
+        if (scNum && typeof updateSubclassDynamicContent === "function") {
+            updateSubclassDynamicContent(scNum, character.level);
+        }
+        if (scNum && typeof showSubclassDetails === "function") {
+            showSubclassDetails(scNum);
+        }
+    }
+
+    restoreStep6FormValues(snapshot);
+
+    if (typeof updateSkills === "function") {
+        updateSkills();
+    }
+    if (typeof populateExpertiseOptions === "function") {
+        populateExpertiseOptions();
+    }
+    if (typeof reapplyFeatRadioDropdowns === "function") {
+        reapplyFeatRadioDropdowns();
+    }
+    // Level-Up: Expertise/Skills aus classForm nach Options-Rebuild erneut setzen
+    if (typeof reapplyClassFormDependentStep6Selects === "function") {
+        reapplyClassFormDependentStep6Selects();
+    }
+    if (typeof setupFeatSelection === "function") {
+        setupFeatSelection();
+    }
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()) {
+        if (typeof reapplyClassFormDependentStep6Selects === "function") {
+            reapplyClassFormDependentStep6Selects();
+        }
+        setTimeout(() => {
+            if (typeof reapplyLevelUpFeatWeaponMasteryDropdowns === "function") {
+                reapplyLevelUpFeatWeaponMasteryDropdowns();
+            }
+        }, 0);
+        if (typeof applyLevelUpStep6Locks === "function") applyLevelUpStep6Locks();
+    }
+}
+
 // Speichert das gewählte Level und wechselt zum nächsten Schritt
 function saveLevel() {
     let levelInputString = document.getElementById("level").value;
@@ -1945,6 +2293,19 @@ function saveLevel() {
         return;
     }
 
+    // --- LEVEL-UP: Stufe darf nicht unter Ausgangsstufe fallen ---
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()
+        && typeof getLevelUpEntryLevel === "function") {
+        const entryLevel = getLevelUpEntryLevel();
+        if (levelInput < entryLevel) {
+            document.getElementById("level").value = String(entryLevel);
+            levelInput = entryLevel;
+        }
+        if (typeof setLevelUpTargetLevel === "function") {
+            setLevelUpTargetLevel(levelInput);
+        }
+    }
+
     // Überprüfen, ob das Level geändert wurde
     if (lastSavedLevel === levelInput) {
         console.log("Level hat sich nicht geändert. Schritt 6 wird nicht zurückgesetzt.");
@@ -1952,32 +2313,55 @@ function saveLevel() {
         return;
     }
 
-    // Level speichern und Schritt 5 zurücksetzen
+    const previousLevel = lastSavedLevel;
+    const isLevelDown = previousLevel !== null && levelInput < previousLevel;
+    const isLevelUp = previousLevel === null || levelInput > previousLevel;
+
+    // --- LEVEL-UP: Kein Level-Down-Wipe (Minimum ist entryLevel) ---
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()) {
+        if (isLevelUp) {
+            refreshStep6ForLevelUp();
+        }
+        lastSavedLevel = levelInput;
+        character.level = levelInput;
+        displayClassFeatures(character.level);
+        updateProgress();
+        goToStep(6);
+        return;
+    }
+
+    // Level absenken: Warnung – Spezialisierung geht verloren
+    if (isLevelDown) {
+        const confirmMsg = translations[currentLang].levelDownResetStep6ConfirmLabel
+            || "Stufe absenken setzt die Spezialisierung in Schritt 6 zurück. Fortfahren?";
+        if (!confirm(confirmMsg)) {
+            // Abbruch: Stufe zurücksetzen, auf Schritt 5 bleiben
+            document.getElementById("level").value = String(previousLevel);
+            character.level = previousLevel;
+            displayClassFeatures(previousLevel);
+            if (character.class) updateInfoBoxContent(character.class);
+            applyPassiveClassFeatures();
+            updateLiveAttributes();
+            return;
+        }
+    }
+
+    // Level speichern
     lastSavedLevel = levelInput;
-    character.level = levelInput; // Hier wird jetzt entweder die Eingabe oder 1 gespeichert
-    subclassDetailBox.style.display = "none";
-
-    console.log(`Level gespeichert: ${character.level}`); // Debugging-Log
-    displayClassFeatures(character.level); // Verwende character.level, da es jetzt den korrekten Wert hat
+    character.level = levelInput;
+    console.log(`Level gespeichert: ${character.level}`);
+    displayClassFeatures(character.level);
     updateProgress();
-    populateClassFormOptions(character.class); // Optionen basierend auf neuem Level neu laden
 
-    // Schritt 5 zurücksetzen, wenn das Level geändert wurde
-    console.log("Level wurde geändert. Schritt 5 wird zurückgesetzt.");
-    resetDynamicSubclassContent(); // Subklasseninhalte zurücksetzen
-    currentExpertises = []; // Expertise zurücksetzen
-    
-    // character.feats = []; // Diese Zeile ist nicht standardmäßig in deinem Code, aber wenn du Feats so speicherst, dann auch zurücksetzen
-    character.featSelections = {}; // Gespeicherte Feats löschen (deine vorhandene Logik)
-    character.customAttributeDistributions = {};
+    if (isLevelDown) {
+        console.log("Level abgesenkt. Schritt 6 wird hart zurückgesetzt.");
+        resetStep6SpecializationHard();
+    } else if (isLevelUp) {
+        console.log("Level erhöht (oder Erstspeicherung). Schritt 6 Soft-Refresh.");
+        refreshStep6ForLevelUp();
+    }
 
-    // Aktualisiere Feat-Dropdowns in Schritt 5 (die mit name^="feats")
-    document.querySelectorAll('select[name^="feats"]').forEach(select => {
-        select.selectedIndex = 0; // Auswahl zurücksetzen
-    });
-
-    resetSubclassUI();
-    goToStep(6); // Zu Schritt 6 wechseln
+    goToStep(6);
 }
 
 // Aktualisiert die Levelinformationen dynamisch
@@ -2417,6 +2801,7 @@ function displayClassFeatures(level) {
 
 // Existing logic for displaying sections based on level
 function displayClassSectionsBasedOnLevel(level) {
+    if (!character?.class) return;
 
     const classData = getClassData(character.class.toLowerCase());
 
@@ -2661,29 +3046,44 @@ function populateExpertiseOptions() {
     const isWizardScholar = character.class && character.class.toLowerCase() === "wizard";
 
     if (expertise1Select) {
-        // Magier: Scholar-Whitelist; Barde/Schurke/Waldläufer: alle geübten Fertigkeiten
+        const prev = expertise1Select.value;
         expertise1Select.innerHTML = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>` + (isWizardScholar ? scholarOptions : skillOptions);
+        if (prev && expertise1Select.querySelector(`option[value="${prev}"]`)) expertise1Select.value = prev;
     }
     if (expertise2Select) {
+        const prev = expertise2Select.value;
         expertise2Select.innerHTML = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>` + skillOptions;
+        if (prev && expertise2Select.querySelector(`option[value="${prev}"]`)) expertise2Select.value = prev;
     }
     if (expertise3Select) {
+        const prev = expertise3Select.value;
         expertise3Select.innerHTML = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>` + skillOptions;
+        if (prev && expertise3Select.querySelector(`option[value="${prev}"]`)) expertise3Select.value = prev;
     }
     if (expertise4Select) {
+        const prev = expertise4Select.value;
         expertise4Select.innerHTML = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>` + skillOptions;
+        if (prev && expertise4Select.querySelector(`option[value="${prev}"]`)) expertise4Select.value = prev;
     }
     if (expertise5Select) {
-        expertise5Select.innerHTML = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>` + keenMindOptions; // Nur erlaubte für keenMind
+        const prev = expertise5Select.value;
+        expertise5Select.innerHTML = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>` + keenMindOptions;
+        if (prev && expertise5Select.querySelector(`option[value="${prev}"]`)) expertise5Select.value = prev;
     }
     if (expertise6Select) {
-        expertise6Select.innerHTML = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>` + observantOptions; // Nur erlaubte für keenMind
+        const prev = expertise6Select.value;
+        expertise6Select.innerHTML = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>` + observantOptions;
+        if (prev && expertise6Select.querySelector(`option[value="${prev}"]`)) expertise6Select.value = prev;
     }
     if (expertise7Select) {
+        const prev = expertise7Select.value;
         expertise7Select.innerHTML = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>` + skillOptions;
+        if (prev && expertise7Select.querySelector(`option[value="${prev}"]`)) expertise7Select.value = prev;
     }
     if (expertise8Select) {
+        const prev = expertise8Select.value;
         expertise8Select.innerHTML = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>` + skillOptions;
+        if (prev && expertise8Select.querySelector(`option[value="${prev}"]`)) expertise8Select.value = prev;
     }
 
     // Custom-Talente / weitere Expertise-Dropdowns (expertise9+, data-cff-expertise-pool)
@@ -2782,8 +3182,11 @@ function populateAbilityImprovementOptions(classData, currentLevel) {
 function createFeatOptions(currentLevel, allowedCategories = [], selectedFeatLabel = null) {
     const elements = translations[currentLang];
 
-    // 1. Liste sortieren (deine neue Logik - perfekt!)
-    const sortedFeats = sortTranslatedArray(featList);
+    // 1. Liste sortieren (PHB + Session-Talentbibliothek)
+    const sourceFeats = (typeof getEffectiveFeatList === "function")
+        ? getEffectiveFeatList()
+        : featList;
+    const sortedFeats = sortTranslatedArray(sourceFeats);
 
     // 2. Die Optionen generieren
     const optionsHtml = sortedFeats.map(feat => {
@@ -2854,6 +3257,9 @@ function setupFeatSelection() {
 
 function validateFeatSelection(featSelectElements) {
     const selectedFeats = Array.from(featSelectElements).map(el => el.value).filter(Boolean);
+    if (typeof appendCharacterOwnedFeatIdsForOptionLocking === "function") {
+        appendCharacterOwnedFeatIdsForOptionLocking(selectedFeats);
+    }
     const selectedCategory4Feat = selectedFeats.find(featID => {
         const feat = featList.find(f => f.ID == featID);
         return feat && feat.featCategoryNumber === 4;
@@ -4037,23 +4443,126 @@ function createSpellAbilityOptions() {
         .join('');
 }
 
-function createSpellListOptions() {
+function createSpellListOptions(excludeSelect) {
     const elements = translations[currentLang];
     const allowedClassIDs = [3, 4, 12]; // IDs für cleric, druid, wizard
-
-    // Sammle alle bereits ausgewählten Optionen
-    const dropdowns = document.querySelectorAll('select.dropdown[name^=spellList]');
-    const selectedClasses = Array.from(dropdowns).map(dropdown => dropdown.value).filter(Boolean);
+    const taken = (typeof getTakenMagicInitiateSpellListIds === "function")
+        ? getTakenMagicInitiateSpellListIds(excludeSelect || null)
+        : new Set(
+            Array.from(document.querySelectorAll('select[id^="spellList"]'))
+                .filter(d => !excludeSelect || d !== excludeSelect)
+                .map(d => d.value)
+                .filter(Boolean)
+        );
 
     return classCoreTraitsList
         .filter(cls => allowedClassIDs.includes(cls.ID))
         .map(cls => {
             const className = elements[cls.translationLabel] || cls.translationLabel;
-            const isDisabled = selectedClasses.includes(cls.ID.toString());
-            return `<option value="${cls.ID}" ${isDisabled ? 'disabled' : ''}>${className}</option>`;
+            const isDisabled = taken.has(String(cls.ID));
+            return `<option value="${cls.ID}" ${isDisabled ? "disabled" : ""}>${className}</option>`;
         })
-        .join('');
+        .join("");
 }
+
+/**
+ * Bereits belegte Magic-Initiate-Zauberlisten (Klassen-IDs als String).
+ * @param {HTMLSelectElement|null} excludeSelect – aktuelles Dropdown bleibt wählbar
+ */
+function getTakenMagicInitiateSpellListIds(excludeSelect) {
+    const taken = new Set();
+
+    document.querySelectorAll('select[id^="spellList"]').forEach(sel => {
+        if (excludeSelect && (sel === excludeSelect || sel.id === excludeSelect.id)) return;
+        if (sel.value) taken.add(String(sel.value));
+    });
+
+    // Level-Up: BG/Volk- und gesperrte Klassen-MI-Listen aus classForm (Selects fehlen oft im DOM)
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()
+        && typeof character !== "undefined" && character?.classForm) {
+        const lists = Array.isArray(character.classForm.spellLists)
+            ? character.classForm.spellLists
+            : [];
+        const preClass = (typeof countLevelUpPreClassMagicInitiateSlots === "function")
+            ? countLevelUpPreClassMagicInitiateSlots(character)
+            : 0;
+        lists.slice(0, preClass).forEach(id => {
+            if (id != null && String(id).trim() !== "" && String(id) !== "0") {
+                taken.add(String(id));
+            }
+        });
+
+        const entry = (typeof getLevelUpEntryLevel === "function") ? getLevelUpEntryLevel() : 0;
+        let miIndex = preClass;
+        (character.classForm.feats || []).forEach(featEntry => {
+            const featId = parseInt(featEntry?.feat, 10);
+            const featData = (!isNaN(featId) && typeof featList !== "undefined")
+                ? featList.find(f => f.ID === featId)
+                : null;
+            if (featData?.translationLabel !== "magicInitiateLabel") return;
+            const featLvl = parseInt(featEntry.level, 10);
+            if (Number.isFinite(featLvl) && featLvl <= entry) {
+                const listId = lists[miIndex];
+                if (listId != null && String(listId).trim() !== "" && String(listId) !== "0") {
+                    taken.add(String(listId));
+                }
+            }
+            miIndex++;
+        });
+
+        // Fallback über spellcastingAbility_talent (Slug → Klassen-ID)
+        const miTalent = (Array.isArray(character.spellcastingAbility_talent)
+            ? character.spellcastingAbility_talent
+            : []
+        ).filter(e => e && e.talent === "magicInitiateLabel");
+        miTalent.slice(0, preClass).forEach(talentEntry => {
+            const slug = String(talentEntry.spellList || "").replace(/Label$/i, "").toLowerCase();
+            if (!slug) return;
+            const cls = (typeof classCoreTraitsList !== "undefined" ? classCoreTraitsList : [])
+                .find(c => String(c.translationLabel || "").toLowerCase() === slug);
+            if (cls) taken.add(String(cls.ID));
+        });
+    }
+
+    return taken;
+}
+
+/** Alle Magic-Initiate-Zauberlisten-Dropdowns neu befüllen (gesperrte Optionen aktualisieren). */
+function refreshAllMagicInitiateSpellListDropdowns() {
+    const please = (translations[currentLang] && translations[currentLang].pleaseSelectLabel) || "—";
+    document.querySelectorAll('select[id^="spellList"]').forEach(sel => {
+        const current = sel.value;
+        const locked = sel.disabled;
+        sel.innerHTML = `<option value="">${please}</option>` + createSpellListOptions(sel);
+        if (current) {
+            sel.value = current;
+            if (sel.value !== String(current)) {
+                const cls = (typeof classCoreTraitsList !== "undefined" ? classCoreTraitsList : [])
+                    .find(c => String(c.ID) === String(current));
+                const label = cls
+                    ? ((translations[currentLang] && translations[currentLang][cls.translationLabel])
+                        || cls.translationLabel)
+                    : current;
+                const opt = document.createElement("option");
+                opt.value = String(current);
+                opt.textContent = label;
+                opt.selected = true;
+                sel.appendChild(opt);
+                sel.value = String(current);
+            }
+        }
+        sel.disabled = locked;
+    });
+}
+
+// Eventlistener für bestehende Dropdowns (dynamische werden in createSelectionDropdowns gebunden)
+document.querySelectorAll('select.dropdown[name^=spellList]').forEach(dropdown => {
+    dropdown.addEventListener("change", () => {
+        if (typeof refreshAllMagicInitiateSpellListDropdowns === "function") {
+            refreshAllMagicInitiateSpellListDropdowns();
+        }
+    });
+});
 
 function createDamageTypeOptions(allowedCategories = [], allowedIds = []) {
     const elements = translations[currentLang];
@@ -4070,16 +4579,6 @@ function createDamageTypeOptions(allowedCategories = [], allowedIds = []) {
         })
         .join('');
 }
-
-// Eventlistener für das Dropdown hinzufügen, um die Optionen bei Änderung zu aktualisieren
-document.querySelectorAll('select.dropdown[name^=spellList]').forEach(dropdown => {
-    dropdown.addEventListener('change', () => {
-        // Aktualisiere alle Dropdowns bei einer Änderung
-        document.querySelectorAll('select.dropdown[name^=spellList]').forEach(d => {
-            d.innerHTML = `<option value="">${translations[currentLang].pleaseSelectLabel}</option>` + createSpellListOptions();
-        });
-    });
-});
 
 function createEldritchInvocationOptions(characterLevel, alreadySelectedInvocations = []) {
     const elements = translations[currentLang];
@@ -4317,17 +4816,18 @@ function updateSubclassDynamicContent(subclassCategoryNumber, characterLevel) {
     }
 
     subclassInfo.forEach(feature => {
+        const featLvlOpt = { featureLevel: feature.level };
 
 	//bard
         if (feature.translationLabel === "bonusProficienciesLabel") {
             const label = elements.bonusProficienciesLabel || "Bonus-Proficiencies";
-            createSelectionDropdowns(dynamicSubclassContentDiv, feature.skillCategoryNumber, label, 3, 5, "skill"); // 3 Dropdowns / "skill5", "skill6", "skill7"
+            createSelectionDropdowns(dynamicSubclassContentDiv, feature.skillCategoryNumber, label, 3, 5, "skill", featLvlOpt); // 3 Dropdowns / "skill5", "skill6", "skill7"
         }
 
 	//druid
         if (feature.translationLabel === "circleOfTheLandSpellsLabel") {
             const label = elements.circleOfTheLandSpellsLabel || "Circle of the land Spells";
-            createSelectionDropdowns(dynamicSubclassContentDiv, feature.landCategoryNumber, label, 1, 1, "land"); // "land1"
+            createSelectionDropdowns(dynamicSubclassContentDiv, feature.landCategoryNumber, label, 1, 1, "land", featLvlOpt); // "land1"
         }
 
         if (feature.translationLabel === "starMapLabel") {
@@ -4335,7 +4835,7 @@ function updateSubclassDynamicContent(subclassCategoryNumber, characterLevel) {
             
             // Schritt 1: Das Dropdown wie gewohnt erstellen lassen.
             // Der startIndex "1" sorgt dafür, dass die ID "starMap1" lautet.
-            createSelectionDropdowns(dynamicSubclassContentDiv, null, label, 1, 1, "starMap");
+            createSelectionDropdowns(dynamicSubclassContentDiv, null, label, 1, 1, "starMap", featLvlOpt);
 
             // Schritt 2: Das gerade erstellte Dropdown über seine ID holen.
             const starMapSelect = document.getElementById('starMap1');
@@ -4373,42 +4873,42 @@ function updateSubclassDynamicContent(subclassCategoryNumber, characterLevel) {
         if (feature.translationLabel === "studentOfWarLabel") {
             const label = elements.studentOfWarLabel || "Student of War";
 	    const skillPLabel = elements.skillProfAbbr || "skill prof.";
-            createSelectionDropdowns(dynamicSubclassContentDiv, feature.skillCategoryNumber, `${label} (${skillPLabel})`, 1, 5, "skill"); // "skill5"
+            createSelectionDropdowns(dynamicSubclassContentDiv, feature.skillCategoryNumber, `${label} (${skillPLabel})`, 1, 5, "skill", featLvlOpt); // "skill5"
         }
 
         if (feature.translationLabel === "studentOfWarLabel") {
             const label = elements.studentOfWarLabel || "Student of War";
  	    const toolLabel = elements.toolProfAbbr || "tool prof.";
-            createSelectionDropdowns(dynamicSubclassContentDiv, [1], `${label} (${toolLabel})`, 1, 5, "tool"); // "tool5"
+            createSelectionDropdowns(dynamicSubclassContentDiv, [1], `${label} (${toolLabel})`, 1, 5, "tool", featLvlOpt); // "tool5"
         }
 
         if (feature.translationLabel === "combatSuperiorityLabel") {
             const label = elements.combatSuperiorityLabel || "Combat Superiority";
  	    const maneuverLabel = elements.maneuverLabel || "maneuver";
-            createSelectionDropdowns(dynamicSubclassContentDiv, feature.maneuverCategoryNumber, `${label} (${maneuverLabel})`, 3, 1, "maneuver"); // "maneuver1", "maneuver2", "maneuver3"
+            createSelectionDropdowns(dynamicSubclassContentDiv, feature.maneuverCategoryNumber, `${label} (${maneuverLabel})`, 3, 1, "maneuver", featLvlOpt); // "maneuver1", "maneuver2", "maneuver3"
         }
 
         if (feature.translationLabel === "combatSuperiority2Label") {
             const label = elements.combatSuperiority2Label || "Combat Superiority (2)";
  	    const maneuverLabel = elements.maneuverLabel || "maneuver";
-            createSelectionDropdowns(dynamicSubclassContentDiv, feature.maneuverCategoryNumber, `${label} (${maneuverLabel})`, 2, 4, "maneuver"); // "maneuver4", "maneuver5"
+            createSelectionDropdowns(dynamicSubclassContentDiv, feature.maneuverCategoryNumber, `${label} (${maneuverLabel})`, 2, 4, "maneuver", featLvlOpt); // "maneuver4", "maneuver5"
         }
 
         if (feature.translationLabel === "combatSuperiority3Label") {
             const label = elements.combatSuperiority3Label || "Combat Superiority (3)";
  	    const maneuverLabel = elements.maneuverLabel || "maneuver";
-            createSelectionDropdowns(dynamicSubclassContentDiv, feature.maneuverCategoryNumber, `${label} (${maneuverLabel})`, 2, 6, "maneuver"); // "maneuver6", "maneuver7"
+            createSelectionDropdowns(dynamicSubclassContentDiv, feature.maneuverCategoryNumber, `${label} (${maneuverLabel})`, 2, 6, "maneuver", featLvlOpt); // "maneuver6", "maneuver7"
         }
 
         if (feature.translationLabel === "combatSuperiority4Label") {
             const label = elements.combatSuperiority4Label || "Combat Superiority (4)";
  	    const maneuverLabel = elements.maneuverLabel || "maneuver";
-            createSelectionDropdowns(dynamicSubclassContentDiv, feature.maneuverCategoryNumber, `${label} (${maneuverLabel})`, 2, 8, "maneuver"); // "maneuver8", "maneuver9"
+            createSelectionDropdowns(dynamicSubclassContentDiv, feature.maneuverCategoryNumber, `${label} (${maneuverLabel})`, 2, 8, "maneuver", featLvlOpt); // "maneuver8", "maneuver9"
         }
 
         if (feature.translationLabel === "additionalFightingStyleLabel") {
             const label = elements.additionalFightingStyleLabel || "Additional Fighting Style";
-            createSelectionDropdowns(dynamicSubclassContentDiv, [3], label, 1, 7, "feats");
+            createSelectionDropdowns(dynamicSubclassContentDiv, [3], label, 1, 7, "feats", featLvlOpt);
         }
 
 
@@ -4418,7 +4918,7 @@ if (feature.translationLabel === "implementsOfMercyLabel") {
     const skillPLabel = elements.skillProfAbbr || "skill prof.";
 
     // 1. Skill: Insight (ID 7) auf skill5 erzeugen, Text korrigieren und locken
-    createSelectionDropdowns(dynamicSubclassContentDiv, [7], `${label} (${skillPLabel})`, 1, 5, "skill");
+    createSelectionDropdowns(dynamicSubclassContentDiv, [7], `${label} (${skillPLabel})`, 1, 5, "skill", featLvlOpt);
     const s5 = document.getElementById("skill5");
     if (s5) {
         const label5 = document.querySelector(`label[for="skill5"]`);
@@ -4428,7 +4928,7 @@ if (feature.translationLabel === "implementsOfMercyLabel") {
     }
 
     // 2. Skill: Medicine (ID 10) auf skill6 erzeugen, Text korrigieren und locken
-    createSelectionDropdowns(dynamicSubclassContentDiv, [10], `${label} (${skillPLabel})`, 1, 6, "skill");
+    createSelectionDropdowns(dynamicSubclassContentDiv, [10], `${label} (${skillPLabel})`, 1, 6, "skill", featLvlOpt);
     const s6 = document.getElementById("skill6");
     if (s6) {
         const label6 = document.querySelector(`label[for="skill6"]`);
@@ -4456,14 +4956,14 @@ if (feature.translationLabel === "implementsOfMercyLabel") {
             const label = elements.otherworldlyGlamourLabel || "Otherworldly Glamour";
 	    const skillPLabel = elements.skillProfAbbr || "skill prof.";
             const allowedCategories = [5, 13, 14];  // Deception, Performance, Persuasion.
-            createSelectionDropdowns(dynamicSubclassContentDiv, allowedCategories, `${label} (${skillPLabel})`, 1, 5, "skill"); // "skill5"
+            createSelectionDropdowns(dynamicSubclassContentDiv, allowedCategories, `${label} (${skillPLabel})`, 1, 5, "skill", featLvlOpt); // "skill5"
         }
 
         if (feature.translationLabel === "feyWandererSpellsLabel") {
             const label = elements.feywildGiftsLabel || "Feywild Gift";
             
             // 1. Dropdown erstellen (mit eindeutiger ID, z.B. "feywildGift1")
-            createSelectionDropdowns(dynamicSubclassContentDiv, null, label, 1, 1, "feywildGift");
+            createSelectionDropdowns(dynamicSubclassContentDiv, null, label, 1, 1, "feywildGift", featLvlOpt);
 
             // 2. Referenz auf das erstellte Dropdown holen
             const giftSelect = document.getElementById('feywildGift1');
@@ -4497,7 +4997,7 @@ if (feature.translationLabel === "implementsOfMercyLabel") {
         const label = elements.manifestationsOfOrderLabel || "Manifestation of Order";
         
         // 1. Dropdown mit dem neuen Typ "manifestation" erstellen
-        createSelectionDropdowns(dynamicSubclassContentDiv, null, label, 1, 1, "manifestation");
+        createSelectionDropdowns(dynamicSubclassContentDiv, null, label, 1, 1, "manifestation", featLvlOpt);
 
         // 2. Referenz auf das erstellte Dropdown holen
         const manifestationSelect = document.getElementById('manifestation1');
@@ -4547,7 +5047,7 @@ if (feature.translationLabel === "implementsOfMercyLabel") {
     // sorcerer
     if (feature.translationLabel === "elementalAffinityLabel") {
        const label = elements.elementalAffinityLabel || "Elemental Affinity";
-       createSelectionDropdowns(dynamicSubclassContentDiv, [4, 5, 6, 7, 8], label, 1, 1, "damageType_D");
+       createSelectionDropdowns(dynamicSubclassContentDiv, [4, 5, 6, 7, 8], label, 1, 1, "damageType_D", featLvlOpt);
     }
 
     // warlock
@@ -4555,7 +5055,7 @@ if (feature.translationLabel === "implementsOfMercyLabel") {
     const label = elements.fiendishResilienceLabel || "Fiendish Resilience";
     // Alle IDs ausser 10 (Force)
     const allowedIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13]; 
-    createSelectionDropdowns(dynamicSubclassContentDiv, allowedIds, label, 1, 1, "damageType_fR");
+    createSelectionDropdowns(dynamicSubclassContentDiv, allowedIds, label, 1, 1, "damageType_fR", featLvlOpt);
     }
 	
         // Weitere Merkmale können hier hinzugefügt werden
@@ -4564,9 +5064,14 @@ if (feature.translationLabel === "implementsOfMercyLabel") {
     dynamicSubclassContentDiv.style.display = subclassInfo.length > 0 ? 'block' : 'none';
 }
 
-function createSelectionDropdowns(container, categoryNumbers, label, numSelections, startIndex = 0, type = "skill") {
+function createSelectionDropdowns(container, categoryNumbers, label, numSelections, startIndex = 0, type = "skill", opts = null) {
     const elements = translations[currentLang];
     let options;
+    // Optionales 7. Argument: { featureLevel } (Zahl als 7. Arg = Legacy Skilled-Index, ignorieren)
+    const featureLevel = (opts && typeof opts === "object" && !Array.isArray(opts)
+        && opts.featureLevel != null)
+        ? parseInt(opts.featureLevel, 10)
+        : null;
 
     if (type === "skill") {
         options = createSkillOptions(categoryNumbers);
@@ -4593,7 +5098,7 @@ function createSelectionDropdowns(container, categoryNumbers, label, numSelectio
     } else if (type === "feywildGift") {
         options = createFeywildGiftsOptions();
     } else if (type === "spellList") {
-        options = createSpellListOptions();
+        options = null; // pro Select mit excludeSelect befüllen
     } else if (type === "manifestation") {
         options = createManifestationsOfOrderOptions();
     } else if (type === "spellAbility") {
@@ -4621,10 +5126,27 @@ function createSelectionDropdowns(container, categoryNumbers, label, numSelectio
         selectElement.id = selectId;
         selectElement.name = selectId;
         selectElement.className = "dropdown";
-        selectElement.innerHTML = `<option value="">${elements.pleaseSelectLabel}</option>` + options;
+        if (Number.isFinite(featureLevel) && featureLevel > 0) {
+            selectElement.dataset.featureLevel = String(featureLevel);
+        }
+        if (type === "spellList") {
+            selectElement.innerHTML = `<option value="">${elements.pleaseSelectLabel}</option>`
+                + createSpellListOptions(selectElement);
+            selectElement.addEventListener("change", () => {
+                if (typeof refreshAllMagicInitiateSpellListDropdowns === "function") {
+                    refreshAllMagicInitiateSpellListDropdowns();
+                }
+                updateSkills();
+                setupFeatSelection();
+                updateLiveAttributes();
+            });
+        } else {
+            selectElement.innerHTML = `<option value="">${elements.pleaseSelectLabel}</option>` + options;
+        }
 
         // console.log(`Dropdown created with ID ${selectId}`); // Debug-Ausgabe
 
+        if (type !== "spellList") {
         selectElement.addEventListener('change', () => {
         //    console.log(`${selectId} changed to ${event.target.value}`); // Debug-Ausgabe
             updateSkills();
@@ -4635,6 +5157,7 @@ function createSelectionDropdowns(container, categoryNumbers, label, numSelectio
         	toggleInfoBox('feat-info-box-container', true); // Box automatisch öffnen
     	    }
         });
+        }
 
         container.appendChild(selectElement);
     }
@@ -4676,11 +5199,48 @@ function updateAsiPoints(event) {
     const inputs = Array.from(container.querySelectorAll('.asi-point-input'));
     const remainingEl = container.querySelector('.asi-points-remaining');
 
+    const featSelect = document.querySelector(`select[name="feats${featLevel}"]`);
+    const featId = featSelect ? parseInt(featSelect.value, 10) : 0;
+    const featData = featId && typeof featList !== "undefined"
+        ? featList.find(f => f.ID === featId)
+        : null;
+    const asiScoreCap = typeof getFeatAsiScoreCap === "function"
+        ? getFeatAsiScoreCap(featData)
+        : ABILITY_SCORE_DEFAULT_CAP;
+
+    const featBonusesBefore = typeof calculateFeatBonuses === "function"
+        ? calculateFeatBonuses()
+        : {};
+    const distBonuses = typeof calculateCustomAttributeDistributionBonuses === "function"
+        ? calculateCustomAttributeDistributionBonuses()
+        : {};
+
     let totalPoints = 0;
     inputs.forEach(input => {
         let value = parseInt(input.value, 10) || 0;
-        if (value < 0) { value = 0; }
-        if (value > 2) { value = 2; } // Max +2 auf ein Attribut
+        if (value < 0) value = 0;
+        if (value > 2) value = 2;
+
+        const attributeId = input.dataset.attribute;
+        const attr = attributeList.find(a => a.translationLabel.replace("Label", "") === attributeId);
+        const baseScore = parseInt(document.getElementById(`${attributeId}Score`)?.value, 10) || 0;
+        const backgroundBonus = attr
+            ? (character.backgroundAttributeBonuses?.[attr.translationLabel] || 0)
+            : 0;
+        const classBonus = (classAttributeBonuses[attributeId] || 0) + (distBonuses[attributeId] || 0);
+        const otherFeatBonus = (featBonusesBefore[attributeId] || 0)
+            - (parseInt(input.value, 10) || 0);
+
+        if (typeof getRemainingAbilityScoreRoom === "function") {
+            const room = getRemainingAbilityScoreRoom({
+                base: baseScore,
+                background: backgroundBonus,
+                feat: otherFeatBonus,
+                class: classBonus
+            }, attributeId, character, asiScoreCap);
+            value = Math.min(value, Math.min(2, room));
+        }
+
         input.value = value;
         totalPoints += value;
     });
@@ -4688,7 +5248,7 @@ function updateAsiPoints(event) {
     // Verhindern, dass mehr als 2 Punkte vergeben werden
     if (totalPoints > 2) {
         const overage = totalPoints - 2;
-        changedInput.value = parseInt(changedInput.value, 10) - overage;
+        changedInput.value = Math.max(0, parseInt(changedInput.value, 10) - overage);
         totalPoints = 2;
     }
 
@@ -4732,8 +5292,11 @@ function updateFeatDynamicContent(featID, featLevel, selectElement) {
 
     const featContentContainer = selectElement.parentNode;
 
-    // Entferne den bestehenden Inhalt für das spezifische Feat-Level
-    const existingFeatContent = selectElement.parentNode.querySelector(`.feat-content[data-feat-level="${featLevel}"]`);
+    // Entferne den bestehenden Inhalt für dieses Auswahl-Element
+    const anchorId = selectElement.id || "";
+    const existingFeatContent = anchorId
+        ? selectElement.parentNode.querySelector(`.feat-content[data-feat-anchor-id="${anchorId}"]`)
+        : selectElement.parentNode.querySelector(`.feat-content[data-feat-level="${featLevel}"]`);
     if (existingFeatContent) {
         existingFeatContent.remove();
     }
@@ -4756,6 +5319,7 @@ function updateFeatDynamicContent(featID, featLevel, selectElement) {
     const featContentDiv = document.createElement('div');
     featContentDiv.className = 'feat-content';
     featContentDiv.dataset.featLevel = featLevel;
+    if (selectElement.id) featContentDiv.dataset.featAnchorId = selectElement.id;
 
     const attributeExceptions = ["resilientLabel", "abilityScoreImprovementLabel"];
 
@@ -4838,26 +5402,25 @@ function updateFeatDynamicContent(featID, featLevel, selectElement) {
     }
 
     if (feat.translationLabel === "musicianLabel") {
-        createSelectionDropdowns(featContentDiv, null, elements.instrumentLabel, 3, 10, "instrument");
-        selectElement.parentNode.insertBefore(featContentDiv, selectElement.nextSibling);
+        createSelectionDropdowns(featContentDiv, null, elements.instrumentLabel, 3, currentInstrumentIndex, "instrument");
+        currentInstrumentIndex += 3;
     }
 
     if (feat.translationLabel === "crafterLabel") {
-        createSelectionDropdowns(featContentDiv, [3], elements.toolLabel, 3, 10, "tool");
-        selectElement.parentNode.insertBefore(featContentDiv, selectElement.nextSibling);
+        createSelectionDropdowns(featContentDiv, [3], elements.toolLabel, 3, currentToolIndex, "tool");
+        currentToolIndex += 3;
     }
 
     if (feat.translationLabel === "elementalAdeptLabel") {
         createSelectionDropdowns(featContentDiv, null, elements.energyMasteryLabel, 1, currentEnergyIndex++, "energyMastery");
-        selectElement.parentNode.insertBefore(featContentDiv, selectElement.nextSibling);
     }
 
     if (feat.translationLabel === "magicInitiateLabel") {
         createSelectionDropdowns(featContentDiv, null, elements.spellListLabel, 1, currentSpellListIndex++, "spellList");
-        selectElement.parentNode.insertBefore(featContentDiv, selectElement.nextSibling);
-
         createSelectionDropdowns(featContentDiv, null, elements.spellcastingAbilityLabel, 1, currentSpellAbilityIndex++, "spellAbility");
-        selectElement.parentNode.insertBefore(featContentDiv, selectElement.nextSibling);
+        if (typeof refreshAllMagicInitiateSpellListDropdowns === "function") {
+            refreshAllMagicInitiateSpellListDropdowns();
+        }
     }
 
     if (feat.translationLabel === "skilledLabel") {
@@ -5313,14 +5876,22 @@ if (feat.takeChoice === 4) {
     featContentDiv.innerHTML += `<p class="magic-feat-notice">${formattedNote}</p>`;
 }
 
-    selectElement.parentNode.insertBefore(featContentDiv, selectElement.nextSibling);
-    updateSkills();
+    if (featContentDiv.childNodes.length > 0) {
+        selectElement.parentNode.insertBefore(featContentDiv, selectElement.nextSibling);
+        updateSkills();
 
-featContentDiv.querySelectorAll('select').forEach(dynamicSelect => {
-    dynamicSelect.addEventListener('change', () => {
-    updateSkills();
-    });
-});
+        featContentDiv.querySelectorAll('select').forEach(dynamicSelect => {
+            dynamicSelect.addEventListener('change', () => {
+                updateSkills();
+            });
+        });
+    }
+
+    // Level-Up only: New-Choice-Icons nach dynamischem Feat-Inhalt neu setzen
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()
+        && typeof syncLevelUpStep6NewChoiceIcons === "function") {
+        setTimeout(() => syncLevelUpStep6NewChoiceIcons(), 0);
+    }
 }
 
 function updateToolDynamicContent(toolID, selectElement) {
@@ -5445,14 +6016,25 @@ function updateSkills() {
         document.getElementById("skill75")
     ].filter(Boolean);
 
+    document.querySelectorAll("select.cspc-skill-select").forEach(sel => {
+        if (sel && !skillSelects.includes(sel)) skillSelects.push(sel);
+    });
+
     // Speichere die gewählten Skills
     selectedSkills = skillSelects.map(select => select.value).filter(Boolean);
+    // Bereits vergebene Skills (classForm / Snapshot / BG-Daten) — auch ohne DOM-Selects (Level-Up)
+    if (typeof appendCharacterOwnedSkillIdsForOptionLocking === "function") {
+        appendCharacterOwnedSkillIdsForOptionLocking(selectedSkills);
+    }
     // Einfach→Fertigkeiten der Custom Class ab Merkmalsstufe ergänzen
     if (typeof appendGrantedCustomClassSkillIds === "function") {
         appendGrantedCustomClassSkillIds(selectedSkills);
     }
     if (typeof appendGrantedCustomFeatSkillIds === "function") {
         appendGrantedCustomFeatSkillIds(selectedSkills);
+    }
+    if (typeof appendGrantedCustomSpeciesSkillIds === "function") {
+        appendGrantedCustomSpeciesSkillIds(selectedSkills);
     }
 
    // Deaktiviere die bereits ausgewählten skills
@@ -5461,7 +6043,9 @@ function updateSkills() {
     // Deaktiviere die bereits ausgewählten skills in den anderen Dropdown-Listen
     skillSelects.forEach(select => {
         Array.from(select.options).forEach(option => {
-            const shouldBeDisabled = selectedSkills.includes(option.value) && option.value !== "";
+            const shouldBeDisabled = selectedSkills.includes(option.value)
+                && option.value !== ""
+                && option.value !== select.value;
             option.disabled = shouldBeDisabled;
 
             if (isSmallScreen && option.disabled && option.value !== select.value) {
@@ -5479,7 +6063,125 @@ function updateSkills() {
         updateExpertiseSelections();
 }
 
+/**
+ * Skills die der Charakter bereits besitzt → Options-Sperre (Ersteller + Level-Up).
+ * classForm / Snapshot / feste BG-Skills — unabhängig davon, ob skill65/Volk-Selects im DOM sind.
+ */
+function appendCharacterOwnedSkillIdsForOptionLocking(skillIds) {
+    if (!Array.isArray(skillIds) || typeof character === "undefined") return;
+    const push = (raw) => {
+        const v = String(raw ?? "").trim();
+        if (!v || v === "0" || v === "null") return;
+        if (!skillIds.includes(v)) skillIds.push(v);
+    };
+
+    (character.classForm?.skills || []).forEach(push);
+
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()
+        && typeof getLevelUpSnapshotClassForm === "function") {
+        const prev = getLevelUpSnapshotClassForm();
+        (prev?.skills || []).forEach(push);
+    }
+
+    // Feste Hintergrund-Fertigkeiten aus Daten (skill65/66 oft disabled, Werte ggf. nur hier)
+    if (character.background && typeof backgroundList !== "undefined") {
+        const bg = backgroundList.find(b =>
+            String(b.translationLabel || "").toLowerCase() === String(character.background || "").toLowerCase()
+        );
+        if (bg?.bgSkillProf) {
+            const list = Array.isArray(bg.bgSkillProf) ? bg.bgSkillProf : [bg.bgSkillProf];
+            list.forEach(push);
+        }
+    }
+
+    if (typeof appendBackgroundSkillSelections === "function") {
+        appendBackgroundSkillSelections(skillIds);
+    }
+    if (typeof appendSpeciesSkillSelections === "function") {
+        appendSpeciesSkillSelections(skillIds);
+    }
+}
+
+/**
+ * Talent-IDs die bereits vergeben sind (BG, Volk, Klassen-Feats, Snapshot).
+ * Für validateFeatSelection — multipleSelection-Talente bleiben über Flag wählbar.
+ */
+function appendCharacterOwnedFeatIdsForOptionLocking(featIds) {
+    if (!Array.isArray(featIds) || typeof character === "undefined") return;
+    const push = (raw) => {
+        const v = String(raw ?? "").trim();
+        if (!v || v === "0" || v === "null") return;
+        if (!featIds.includes(v)) featIds.push(v);
+    };
+
+    const bgFeat = parseInt(character.feat_background, 10);
+    if (!isNaN(bgFeat) && bgFeat > 0) push(bgFeat);
+
+    const speciesIds = (typeof normalizeFeatSpeciesIds === "function")
+        ? normalizeFeatSpeciesIds(character.feat_species)
+        : [];
+    speciesIds.forEach(push);
+
+    (character.classForm?.feats || []).forEach(entry => {
+        if (entry?.feat != null) push(entry.feat);
+    });
+
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()) {
+        if (typeof getLevelUpSnapshotClassForm === "function") {
+            const prev = getLevelUpSnapshotClassForm();
+            (prev?.feats || []).forEach(entry => {
+                if (entry?.feat != null) push(entry.feat);
+            });
+        }
+        const snap = typeof getLevelUpSnapshot === "function" ? getLevelUpSnapshot() : null;
+        const locked = snap?.lockedContent?.featIds;
+        if (Array.isArray(locked)) locked.forEach(push);
+        const bgSnap = parseInt(snap?.base?.feat_background, 10);
+        if (!isNaN(bgSnap) && bgSnap > 0) push(bgSnap);
+        if (typeof parseFeatSpeciesIds === "function") {
+            parseFeatSpeciesIds(snap?.base?.feat_species).forEach(push);
+        }
+    }
+}
+
 // Funktion zum Speichern der dynamischen Feat-Auswahlen
+/**
+ * Schritt-6-Sammlung: Dropdowns aus Schritt 2 (Hintergrund) und Schritt 3 (Volk) ausschließen.
+ * Sie werden dort separat gespeichert (tool_background, feat_species usw.).
+ * Ausnahme: spellList* (Magic Initiate) muss in classForm.spellLists – Schritt 7 nutzt
+ * spellListIndex parallel zu Hintergrund → Volk → Klasse (DOM-Reihenfolge).
+ */
+function shouldCollectSelectForClassForm(select) {
+    if (!select || !select.id) return false;
+    if (select.id.startsWith("spellList")) return true;
+    if (select.id === "toolBackground" || select.id === "instrumentBackground" || select.id === "gameBackground") {
+        return false;
+    }
+    if (select.id === "backgroundFeatDropdown") return false;
+    if (select.closest("#backgroundDetailsContent") || select.closest("#speciesTraitsContent")) {
+        return false;
+    }
+    return true;
+}
+
+/** Freie Klassen-/Talent-Optionen aus Schritt-6-DOM in character.classForm übernehmen. */
+function syncClassFormFreeChoicesFromDom() {
+    if (typeof character === "undefined") return;
+    const root = document.getElementById("step6");
+    if (!root) return;
+
+    const selectedFreeChoices = [];
+    root.querySelectorAll('select[id^="freeChoice"]').forEach(select => {
+        if (!shouldCollectSelectForClassForm(select)) return;
+        const value = select.value;
+        if (value) selectedFreeChoices.push(value);
+    });
+    if (!selectedFreeChoices.length) return;
+
+    if (!character.classForm) character.classForm = {};
+    character.classForm.freeChoices = selectedFreeChoices;
+}
+
 function saveClassForm() {
 
     // Stellen Sie sicher, dass classForm initialisiert ist
@@ -5499,20 +6201,27 @@ function saveClassForm() {
     });
 
     // ----- TALENT SPELLCASTING ABILITY ---- 
-    // 1. Reset des Arrays für Talente
+    // 1. Vorherigen Stand merken (Level-Up: Hintergrund/Volk ohne DOM-Dropdowns)
+    const priorTalentSpellcasting = Array.isArray(character.spellcastingAbility_talent)
+        ? JSON.parse(JSON.stringify(character.spellcastingAbility_talent))
+        : [];
+
+    // 2. Reset des Arrays für Talente
     character.spellcastingAbility_talent = [];
 
-    // 2. Hintergrund-Talent einfügen (Schritt 2)
+    // 3. Hintergrund-Talent einfügen (Schritt 2)
     if (tempBackgroundSpellcasting) {
         character.spellcastingAbility_talent.push(tempBackgroundSpellcasting);
+    } else if (typeof mergeLevelUpPreservedTalentSpellcasting === "function") {
+        mergeLevelUpPreservedTalentSpellcasting(priorTalentSpellcasting);
     }
 
-    // 3. Volks-Talent einfügen (Schritt 3 - jetzt mit neuem Namen)
+    // 4. Volks-Talent einfügen (Schritt 3 - jetzt mit neuem Namen)
     if (tempSpeciesTalentSpellcasting) {
         character.spellcastingAbility_talent.push(tempSpeciesTalentSpellcasting);
     }
 
-    // 4. Klassen-Talente aus Schritt 6 erfassen (Schleife durch alle Dropdowns)
+    // 5. Klassen-Talente aus Schritt 6 erfassen (Schleife durch alle Dropdowns)
     const talentMagicFeats = [
         "magicInitiateLabel", "feyTouchedLabel", "ritualCasterLabel", 
         "shadowTouchedLabel", "telekineticLabel", "telepathicLabel"
@@ -5564,12 +6273,17 @@ function saveClassForm() {
     const selectedPrimalOrders = [], selectedElementalFuries = [], selectedLands = [], selectedStarMaps = [], selectedSpellLists = [], selectedSpellcastingAbilities = [];
     const selectedFeywildGifts = [], selectedMetamagics = [], selectedManifestations = [], selectedInvocations = [], selectedDamageTypes_Dragon = [], selectedDamageTypes_fiendRes = [], selectedDamageTypes_Boon = [];
     const selectedFreeChoices = [];
+    let primalKnowledgeSkill = character.classForm?.primalKnowledgeSkill || null;
 
     document.querySelectorAll('select').forEach(select => {
+        if (!shouldCollectSelectForClassForm(select)) return;
         const value = select.value;
         if (!value) return;
 
-        if (select.id.startsWith('skill')) {
+        if (select.id === "skill0") {
+            // Barbar Urwissen: eigener Slot, nicht in classForm.skills mischen
+            primalKnowledgeSkill = value;
+        } else if (select.id.startsWith('skill')) {
             selectedSkills.push(value);
         } else if (select.id.startsWith('maneuver')) {
             selectedManeuvers.push(value);
@@ -5630,6 +6344,34 @@ function saveClassForm() {
     }
     if (typeof appendGrantedCustomFeatSkillIds === "function") {
         appendGrantedCustomFeatSkillIds(selectedSkills);
+    }
+    if (typeof appendGrantedCustomSpeciesSkillIds === "function") {
+        appendGrantedCustomSpeciesSkillIds(selectedSkills);
+    }
+    if (typeof appendBackgroundSkillSelections === "function") {
+        appendBackgroundSkillSelections(selectedSkills);
+    }
+    if (typeof appendSpeciesSkillSelections === "function") {
+        appendSpeciesSkillSelections(selectedSkills);
+    }
+    if (typeof appendBackgroundFeatContentProficiencies === "function") {
+        appendBackgroundFeatContentProficiencies(selectedTools, selectedInstruments, selectedGames);
+    }
+    if (typeof appendSpeciesFeatContentProficiencies === "function") {
+        appendSpeciesFeatContentProficiencies(selectedTools, selectedInstruments, selectedGames);
+    }
+    // Level-Up: Schritt-2-Fertigkeiten/Werkzeuge (Begabt, Hintergrund) aus Snapshot nachziehen
+    if (typeof mergeLevelUpPreservedClassFormProficiencies === "function") {
+        mergeLevelUpPreservedClassFormProficiencies(
+            selectedSkills,
+            selectedTools,
+            selectedInstruments,
+            selectedGames
+        );
+    }
+    // Level-Up: Magic-Initiate-Zauberlisten (Schritt 2) behalten, wenn Dropdowns fehlen
+    if (typeof mergeLevelUpPreservedSpellListFields === "function") {
+        mergeLevelUpPreservedSpellListFields(selectedSpellLists, selectedSpellcastingAbilities);
     }
     // Einfach→Rettungswürfe (Custom Class): gewährte Attribute ohne Dropdown ergänzen
     if (typeof appendGrantedCustomClassSavingThrowIds === "function") {
@@ -5751,18 +6493,49 @@ function saveClassForm() {
         const level = select.name.replace('feats', '');
         if (select.value) {
             const featId = parseInt(select.value, 10);
-            feats.push({ level: parseInt(level, 10), feat: featId });
+            const prevSel = character.featSelections[level] || {};
+            const featEntry = {
+                level: parseInt(level, 10),
+                feat: featId,
+                dynamicChoices: [],
+                asiChoices: (prevSel.asiChoices && typeof prevSel.asiChoices === "object")
+                    ? { ...prevSel.asiChoices }
+                    : null,
+                attributeChoice: prevSel.attributeChoice || null
+            };
 
             character.featSelections[level] = {
                 featId: featId,
-                dynamicChoices: []
+                dynamicChoices: [],
+                asiChoices: featEntry.asiChoices || {},
+                attributeChoice: featEntry.attributeChoice
             };
+
+            // ASI-Punkte aus dem Live-UI nachziehen (falls featSelections noch leer)
+            const asiBox = select.parentNode.querySelector(`.asi-container[data-feat-level="${level}"]`);
+            if (asiBox) {
+                const asiChoices = {};
+                asiBox.querySelectorAll(".asi-point-input").forEach(input => {
+                    const value = parseInt(input.value, 10) || 0;
+                    if (value > 0 && input.dataset.attribute) {
+                        asiChoices[input.dataset.attribute] = value;
+                    }
+                });
+                if (Object.keys(asiChoices).length) {
+                    featEntry.asiChoices = asiChoices;
+                    character.featSelections[level].asiChoices = asiChoices;
+                }
+            }
 
             // Durchsuche alle dynamischen Inhalte nach Dropdowns
             const dynamicContent = select.parentNode.querySelectorAll('.feat-content select');
             dynamicContent.forEach(dynamicSelect => {
                 const selectedValue = dynamicSelect.value;
                 if (selectedValue) {
+                    featEntry.dynamicChoices.push({
+                        id: dynamicSelect.id,
+                        value: selectedValue
+                    });
                     character.featSelections[level].dynamicChoices.push({
                         id: dynamicSelect.id,
                         value: selectedValue
@@ -5773,11 +6546,17 @@ function saveClassForm() {
             // Speichern der Radio-Inputs
             const radioInputs = select.parentNode.querySelectorAll(`.radio-container input[type="radio"]:checked`);
             radioInputs.forEach(radio => {
+                featEntry.dynamicChoices.push({
+                    id: radio.id,
+                    value: radio.value
+                });
                 character.featSelections[level].dynamicChoices.push({
                     id: radio.id,
                     value: radio.value
                 });
             });
+
+            feats.push(featEntry);
         }
     });
 
@@ -5786,6 +6565,7 @@ function saveClassForm() {
 
         character.classForm = {
         skills: selectedSkills,
+        primalKnowledgeSkill: primalKnowledgeSkill || null,
         maneuvers: selectedManeuvers,
         expertise: selectedExpertises,
         weaponMastery: selectedWeaponMasteries,
@@ -5854,6 +6634,10 @@ function saveSpells() {
         favored: character.favoredSpells
     });
 
+    const levelUpPriorFavored = (typeof isLevelUpMode === "function" && isLevelUpMode())
+        ? JSON.parse(JSON.stringify(character.favoredSpells || []))
+        : null;
+
     character.spellbookSpells = [];
     character.cantrips = [];
     character.spells = [];
@@ -5873,24 +6657,34 @@ function saveSpells() {
     const createSourceInfo = (feature) => {
         let sourceInfo = { type: 'Klasse', name: 'unbekannt' };
 
-        if (feature.ID === 'speciesSpells') {
+        if (isSpeciesSpellFeature(feature)) {
             sourceInfo.type = 'Volk';
-            sourceInfo.name = feature.translationLabel[0];
+            // Trait-feste Zauber: Merkmalslabel für CHOICE_LIST; Erblinie/Legacy → speciesSpellsLabel
+            const id = String(feature.ID || "");
+            if (id.startsWith("speciesTrait-")) {
+                sourceInfo.name = resolveMagicFeatureTranslationLabel(feature)
+                    || id.slice("speciesTrait-".length)
+                    || "speciesSpellsLabel";
+            } else {
+                sourceInfo.name = "speciesSpellsLabel";
+            }
+        } else if (feature.isCustomSpecies) {
+            sourceInfo.type = 'Volk';
+            sourceInfo.name = resolveMagicFeatureTranslationLabel(feature);
         } else if (feature.sourceFeatLabel) {
             sourceInfo.type = 'Talent';
             sourceInfo.name = feature.sourceFeatLabel;
 
             // SONDERFALL: Magic Initiate -> spellList hinzufügen
             if (feature.sourceFeatLabel === "magicInitiateLabel") {
-                const spellListChoice = character.classForm?.spellLists?.[feature.spellListIndex];
-                if (spellListChoice) {
-                    const classObj = classCoreTraitsList.find(c => c.ID === parseInt(spellListChoice, 10));
-                    sourceInfo.spellList = classObj ? classObj.translationLabel : "unknown";
-                }
+                const listKey = (typeof resolveMagicInitiateSpellListClassKey === "function")
+                    ? resolveMagicInitiateSpellListClassKey(feature, character)
+                    : null;
+                if (listKey) sourceInfo.spellList = listKey;
             }
         } else {
             sourceInfo.type = 'Klasse';
-            sourceInfo.name = feature.translationLabel.length > 1 ? feature.translationLabel[1] : feature.translationLabel[0];
+            sourceInfo.name = resolveMagicFeatureTranslationLabel(feature);
         }
         return sourceInfo;
     };
@@ -5944,6 +6738,10 @@ function saveSpells() {
             });
         }
     }
+
+    if (levelUpPriorFavored && typeof mergeLevelUpPreservedFavoredSpellEntries === "function") {
+        mergeLevelUpPreservedFavoredSpellEntries(finalFavored, levelUpPriorFavored);
+    }
     
     // 4. Schreibe die gesammelten Daten in das character-Objekt
     // Jetzt werden auch Cantrips als Objekte { spellId, source } gespeichert
@@ -5972,7 +6770,16 @@ function saveSpells() {
         character.spellsChanged = true; // <--- Flagge setzen
     }
 
+    if (typeof syncCharacterLevelUpReconstructionBlob === "function") {
+        syncCharacterLevelUpReconstructionBlob();
+    }
+
     updateProgress();
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()
+        && typeof finishLevelUp === "function") {
+        finishLevelUp();
+        return;
+    }
     goToStep(8);
 }
 
@@ -6167,6 +6974,12 @@ function populateSpells() {
         return;
     }
 
+    // Level-Up: leere spellLists aus Talent/Hintergrund nachziehen (Magic Initiate)
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()
+        && typeof ensureLevelUpMagicInitiateSpellLists === "function") {
+        ensureLevelUpMagicInitiateSpellLists(character);
+    }
+
     const classData = getClassData(character.class.toLowerCase());
     const selectedSubclassNumber = character.classForm?.subclass ? parseInt(character.classForm.subclass, 10) : null;
     // Eine Slot-Zeile: gewählte UC vor Basis (Fighter/Rogue denormalisieren EK/AT-Slots auf 0)
@@ -6179,7 +6992,11 @@ function populateSpells() {
         );
 
     const unlockedSpellLevels = new Set(["cantripLabel"]);
-    if (levelData) {
+    // Klassen-Slot-Progression nur für echte Zauberwirker (nicht bei Talent-only wie Schattenberührt)
+    const isCasterForUnlock = (typeof classDataHasSpellcastingOrPactMagic === "function")
+        ? classDataHasSpellcastingOrPactMagic(classData, character.level, selectedSubclassNumber || 0)
+        : false;
+    if (isCasterForUnlock && levelData) {
         if (character.class.toLowerCase() === 'warlock') {
             let maxSpellLevel = 0;
             for (let i = 1; i <= 9; i++) { if (levelData[`SSpSL${i}`] > 0) { maxSpellLevel = i; } }
@@ -6197,6 +7014,7 @@ function populateSpells() {
         }
     }
     
+    const speciesSpellGroups = getSpeciesSpellFeatureGroups(character);
     const speciesSpells = getSpeciesSpells(character);
     speciesSpells.forEach(spell => unlockedSpellLevels.add(spell.spellLevel));
 
@@ -6236,6 +7054,10 @@ function populateSpells() {
 
     const featMagicFeatures = getMagicFeaturesFromFeats(character);
     applicableMagicFeatures.push(...featMagicFeatures);
+    const speciesMagicFeatures = (typeof getMagicFeaturesFromCustomSpecies === "function")
+        ? getMagicFeaturesFromCustomSpecies(character)
+        : [];
+    applicableMagicFeatures.push(...speciesMagicFeatures);
 
     if (character.class.toLowerCase() === 'wizard') {
         const dynamicSavantFeatures = createSavantFeatures(character, classData);
@@ -6243,6 +7065,13 @@ function populateSpells() {
     }
     
     featMagicFeatures.forEach(feature => {
+        if (feature.chooseNonSpecific_sl) [feature.chooseNonSpecific_sl].flat().forEach(level => unlockedSpellLevels.add(level));
+        if (feature.getSpecificSpell) {
+            const spellLabels = Array.isArray(feature.getSpecificSpell) ? feature.getSpecificSpell : [feature.getSpecificSpell];
+            spellList.forEach(spell => { if (spellLabels.includes(spell.translationLabel)) unlockedSpellLevels.add(spell.spellLevel); });
+        }
+    });
+    speciesMagicFeatures.forEach(feature => {
         if (feature.chooseNonSpecific_sl) [feature.chooseNonSpecific_sl].flat().forEach(level => unlockedSpellLevels.add(level));
         if (feature.getSpecificSpell) {
             const spellLabels = Array.isArray(feature.getSpecificSpell) ? feature.getSpecificSpell : [feature.getSpecificSpell];
@@ -6312,9 +7141,14 @@ function populateSpells() {
     }
     
     const allDisplayFeatures = [...applicableMagicFeatures];
-    if (speciesSpells.length > 0) {
-        allDisplayFeatures.unshift({ ID: 'speciesSpells', translationLabel: ['speciesSpellsLabel'], chooseType: 3, getSpecificSpell: speciesSpells.map(s => s.translationLabel) });
-    }
+    speciesSpellGroups.slice().reverse().forEach(group => {
+        allDisplayFeatures.unshift({
+            ID: group.id,
+            translationLabel: [group.translationLabel],
+            chooseType: 3,
+            getSpecificSpell: group.spellLabels.slice()
+        });
+    });
 
 
     // Logik für "Verbesserte Illusionen"
@@ -6374,12 +7208,10 @@ function populateSpells() {
         } else if (feature.chooseNonSpecificSpell_a > 0) {
             let spellSource = feature.chooseNonSpecificSpell_c;
             if (feature.sourceFeatLabel === "magicInitiateLabel" && feature.spellListIndex !== undefined) {
-                const spellListChoice = character.classForm?.spellLists?.[feature.spellListIndex];
-                if (spellListChoice) {
-                    const chosenClassId = parseInt(spellListChoice, 10);
-                    const chosenClass = classCoreTraitsList.find(c => c.ID === chosenClassId);
-                    if (chosenClass) { spellSource = [chosenClass.translationLabel.replace('Label', '')]; }
-                }
+                const listKey = (typeof resolveMagicInitiateSpellListClassKey === "function")
+                    ? resolveMagicInitiateSpellListClassKey(feature, character)
+                    : null;
+                if (listKey) { spellSource = [listKey]; }
             }
             const levelSource = feature.chooseNonSpecific_sl;
             if (levelSource !== undefined) {
@@ -6467,8 +7299,8 @@ function populateSpells() {
         
         if (type === '1') {
             const featuresBySource = {
-                species: allSectionFeatures.filter(f => f.ID === 'speciesSpells'),
-                class: allSectionFeatures.filter(f => !f.sourceFeatLabel && f.ID !== 'speciesSpells'),
+                species: allSectionFeatures.filter(f => isSpeciesSpellFeature(f) || f.isCustomSpecies),
+                class: allSectionFeatures.filter(f => !f.sourceFeatLabel && !isSpeciesSpellFeature(f) && !f.isCustomSpecies),
                 feat: allSectionFeatures.filter(f => f.sourceFeatLabel)
             };
             const sourceOrder = ['species', 'class', 'feat'];
@@ -6492,7 +7324,9 @@ function populateSpells() {
                     sectionDiv.appendChild(subHeaderDiv);
                     const uniqueFeatures = [...new Map(features.map(item => [item['ID'], item])).values()];
                     uniqueFeatures.forEach(feature => {
-                        const featureNameLabel = feature.sourceFeatLabel ? feature.sourceFeatLabel : (feature.translationLabel.length > 1 ? feature.translationLabel[1] : feature.translationLabel[0]);
+                        const featureNameLabel = feature.sourceFeatLabel
+                            ? feature.sourceFeatLabel
+                            : resolveMagicFeatureTranslationLabel(feature);
 
                         let featureName = translations[currentLang][featureNameLabel] || featureNameLabel;
 
@@ -6500,12 +7334,9 @@ function populateSpells() {
                     if (feature.sourceFeatLabel === "magicInitiateLabel") {
                         const isCantrip = [feature.chooseNonSpecific_sl].flat().includes('cantripLabel');
                         const typeLabel = isCantrip ? (translations[currentLang].cantripsLabel || "Cantrips") : (translations[currentLang].spellsLabel || "Spell");
-                        const spellListChoice = character.classForm?.spellLists?.[feature.spellListIndex];
-                        let className = "???";
-                        if (spellListChoice) {
-                            const classObj = classCoreTraitsList.find(c => c.ID === parseInt(spellListChoice, 10));
-                            if (classObj) className = translations[currentLang][classObj.translationLabel] || classObj.translationLabel;
-                        }
+                        const className = (typeof resolveMagicInitiateSpellListDisplayName === "function"
+                            && resolveMagicInitiateSpellListDisplayName(feature, character))
+                            || "???";
                         featureName = `${featureName} (${typeLabel}) - ${className}`;
                     }
 		    // Talent Magiebegabt - Spezialanzeige (ENDE)
@@ -6515,7 +7346,7 @@ function populateSpells() {
                         if (feature.chooseNonSpecificSpell_a > 0) {
                             featureDiv.innerHTML = `<label><input type="radio" name="spellChoice" value="${feature.ID}"><span>${featureName}</span></label><div class="spell-choice-details" id="details-for-${feature.ID}"></div>`;
                             featureDiv.querySelector('input').addEventListener('change', () => handleSpellChoiceSelection(feature, sections));
-                        } else if (showGrantedFeaturesInUI && feature.ID !== 'speciesSpells') {
+                        } else if (showGrantedFeaturesInUI) {
                             featureDiv.innerHTML = `<span>${featureName}</span>`;
                         }
                         if (featureDiv.innerHTML) sectionDiv.appendChild(featureDiv);
@@ -6526,7 +7357,9 @@ function populateSpells() {
         } else {
             const uniqueFeatures = [...new Map(allSectionFeatures.map(item => [item['ID'], item])).values()];
             uniqueFeatures.forEach(feature => {
-                const featureNameLabel = feature.sourceFeatLabel ? feature.sourceFeatLabel : (feature.translationLabel.length > 1 ? feature.translationLabel[1] : feature.translationLabel[0]);
+                const featureNameLabel = feature.sourceFeatLabel
+                    ? feature.sourceFeatLabel
+                    : resolveMagicFeatureTranslationLabel(feature);
 
                 let featureName = translations[currentLang][featureNameLabel] || featureNameLabel;
 
@@ -6534,12 +7367,9 @@ function populateSpells() {
             if (feature.sourceFeatLabel === "magicInitiateLabel") {
                 const isCantrip = [feature.chooseNonSpecific_sl].flat().includes('cantripLabel');
                 const typeLabel = isCantrip ? (translations[currentLang].cantripsLabel || "Cantrips") : (translations[currentLang].spellsLabel || "Spell");
-                const spellListChoice = character.classForm?.spellLists?.[feature.spellListIndex];
-                let className = "???";
-                if (spellListChoice) {
-                    const classObj = classCoreTraitsList.find(c => c.ID === parseInt(spellListChoice, 10));
-                    if (classObj) className = translations[currentLang][classObj.translationLabel] || classObj.translationLabel;
-                }
+                const className = (typeof resolveMagicInitiateSpellListDisplayName === "function"
+                    && resolveMagicInitiateSpellListDisplayName(feature, character))
+                    || "???";
                 featureName = `${featureName} (${typeLabel}) - ${className}`;
             }
             // Talent Magiebegabt - Spezialanzeige (ENDE)
@@ -6580,10 +7410,20 @@ function populateSpells() {
         if (typeof insertCustomSpellStep7Button === "function") {
             insertCustomSpellStep7Button(spellListDiv);
         }
+
+        if (typeof isLevelUpMode === "function" && isLevelUpMode()
+            && typeof restoreLevelUpSpellChoices === "function") {
+            restoreLevelUpSpellChoices();
+        }
+
         const masterSpellListContainer = document.createElement('div');
         masterSpellListContainer.id = 'master-spell-list';
         spellListDiv.appendChild(masterSpellListContainer);
         renderFullSpellList(masterSpellListContainer, Array.from(allPossibleSpells), sections);
+
+        if (typeof isLevelUpMode === "function" && isLevelUpMode()) {
+            if (typeof applyLevelUpStep7Locks === "function") applyLevelUpStep7Locks();
+        }
 
     } else {
         // Fall B: KEINE Zauber
@@ -6609,11 +7449,17 @@ function populateSpells() {
     }
 
     function isCharacterCaster(classData, subclassId, level) {
-        return classData.some(f => 
-            f.level <= level &&
-            (f.subclassCategoryNumber === 0 || f.subclassCategoryNumber === selectedSubclassNumber) &&
-            (f.translationLabel === 'spellcastingLabel' || f.translationLabel === 'pactMagicLabel')
-        );
+        if (typeof classDataHasSpellcastingOrPactMagic === "function") {
+            return classDataHasSpellcastingOrPactMagic(classData, level, subclassId || 0);
+        }
+        const sc = subclassId != null ? parseInt(subclassId, 10) : 0;
+        return classData.some(f => {
+            if (!f || f.level > level) return false;
+            if (!(f.subclassCategoryNumber === 0 || f.subclassCategoryNumber === sc)) return false;
+            const label = f.translationLabel;
+            const parts = Array.isArray(label) ? label : [label];
+            return parts.some(l => l === "spellcastingLabel" || l === "pactMagicLabel");
+        });
     }
 }
 
@@ -6647,12 +7493,20 @@ function handleSpellChoiceSelection(feature, sections) {
     renderFullSpellList(document.getElementById('master-spell-list'), null, sections);
 
     updateSpellInfoBox();
+
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()
+        && typeof syncLevelUpStep7NewChoiceIcons === "function") {
+        syncLevelUpStep7NewChoiceIcons();
+    }
 }
 
 /**
  * Verarbeitet den Klick auf einen auswählbaren Zauber.
  */
 function handleSpellClick(spellElement, spellId, feature, sections) {
+    if (typeof isLevelUpLockedSpellFeature === "function" && isLevelUpLockedSpellFeature(feature)) {
+        return;
+    }
     const selections = spellChoicesByFeature[feature.ID];
     const isSelected = selections.has(spellId);
 
@@ -6693,6 +7547,11 @@ function handleSpellClick(spellElement, spellId, feature, sections) {
     
     renderFullSpellList(document.getElementById('master-spell-list'), null, sections);
     updateSpellInfoBox();
+
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()
+        && typeof syncLevelUpStep7NewChoiceIcons === "function") {
+        syncLevelUpStep7NewChoiceIcons();
+    }
 }
 
 
@@ -6782,7 +7641,7 @@ function renderFullSpellList(container, spellsToRender = null, sections) {
         if (sections['2'].spells.has(spellId) && !isCantrip) icons.present = 'present.png';
         if (sections['1'].spells.has(spellId)) {
             const sourceFeature = grantedSpellSources.get(spellId);
-            if (sourceFeature?.ID === 'speciesSpells') {
+            if (sourceFeature && (isSpeciesSpellFeature(sourceFeature) || sourceFeature.isCustomSpecies)) {
                 icons.flag = 'flag_green.png';
             } else if (sourceFeature?.sourceFeatLabel) {
                 icons.flag = 'flag_blue.png';
@@ -6805,7 +7664,7 @@ function renderFullSpellList(container, spellsToRender = null, sections) {
                     if (feature.chooseType === 1 || feature.chooseType === 3) {
                         if (feature.sourceFeatLabel) {
                             icons.flag = 'flag_blue.png';
-                        } else if (feature.ID === 'speciesSpells') {
+                        } else if (isSpeciesSpellFeature(feature) || feature.isCustomSpecies) {
                             icons.flag = 'flag_green.png';
                         } else {
                             icons.flag = 'flag_red.png';
@@ -6877,12 +7736,10 @@ function renderFullSpellList(container, spellsToRender = null, sections) {
                     // Für alle anderen Merkmale (inkl. "spellcastingLabel")
                     let classSource = activeFeature.chooseNonSpecificSpell_c;
                     if (activeFeature.sourceFeatLabel === "magicInitiateLabel" && activeFeature.spellListIndex !== undefined) {
-                        const spellListChoice = character.classForm?.spellLists?.[activeFeature.spellListIndex];
-                        if (spellListChoice) {
-                            const chosenClassId = parseInt(spellListChoice, 10);
-                            const chosenClass = classCoreTraitsList.find(c => c.ID === chosenClassId);
-                            if (chosenClass) { classSource = [chosenClass.translationLabel.replace('Label', '')]; }
-                        }
+                        const listKey = (typeof resolveMagicInitiateSpellListClassKey === "function")
+                            ? resolveMagicInitiateSpellListClassKey(activeFeature, character)
+                            : null;
+                        if (listKey) { classSource = [listKey]; }
                     }
                     const standardChecksPassed = (typeof spellPassesStep7FreeChoiceFilters === "function")
                         ? spellPassesStep7FreeChoiceFilters(spellData, {
@@ -6922,32 +7779,91 @@ function renderFullSpellList(container, spellsToRender = null, sections) {
 }
 
 /**
- * Sammelt alle Zauber, die ein Charakter durch sein Volk und seine Erblinie erhält.
+ * Translation-Key eines Magic-Features (PHB: Array, Custom Species: String).
  */
-function getSpeciesSpells(character) {
-    if (!character.species) return [];
-    const searchLabel = (character.species.toLowerCase() + 'label');
-    const speciesData = speciesList.find(s => s.translationLabel.toLowerCase() === searchLabel);
+function resolveMagicFeatureTranslationLabel(feature) {
+    if (!feature?.translationLabel) return "";
+    const tl = feature.translationLabel;
+    if (Array.isArray(tl)) return tl.length > 1 ? tl[1] : tl[0];
+    return String(tl);
+}
+
+/**
+ * Feste Volks-/Erblinien-Zauber (virtuelle Schritt-7-Features, nicht Custom-Wahlzauber).
+ */
+function isSpeciesSpellFeature(feature) {
+    if (!feature) return false;
+    const id = String(feature.ID || "");
+    return id === "speciesSpells"
+        || id.startsWith("speciesTrait-")
+        || id.startsWith("speciesLineage-");
+}
+
+/**
+ * Gruppen fester Volkszauber pro Trait bzw. Erblinie (Anzeige in Schritt 7).
+ * Persistenz bleibt über source.name = speciesSpellsLabel.
+ */
+function getSpeciesSpellFeatureGroups(character) {
+    if (!character?.species) return [];
+    const speciesData = (typeof findSpeciesBySelectionValue === "function")
+        ? findSpeciesBySelectionValue(character.species)
+        : speciesList.find(s => s.translationLabel.toLowerCase() === (character.species.toLowerCase() + "label"));
     if (!speciesData) return [];
-    const grantedSpellLabels = new Set();
-    if (speciesData.speciesTraitLabel) {
+
+    const groups = [];
+    if (Array.isArray(speciesData.speciesTraitLabel)) {
         speciesData.speciesTraitLabel.forEach(traitLabel => {
             const trait = speciesTraitList.find(t => t.speciesTraitLabel === traitLabel);
-            if (trait && trait.spellLabel && trait.spellLabel !== 0) {
-                grantedSpellLabels.add(trait.spellLabel);
-            }
+            if (!trait || !trait.spellLabel || trait.spellLabel === 0) return;
+            const spellLabels = (Array.isArray(trait.spellLabel) ? trait.spellLabel : [trait.spellLabel])
+                .filter(Boolean);
+            if (!spellLabels.length) return;
+            groups.push({
+                id: `speciesTrait-${traitLabel}`,
+                translationLabel: traitLabel,
+                spellLabels
+            });
         });
     }
     if (character.lineage) {
-        const lineageEntries = lineageList.filter(entry => entry.lineageLabel === character.lineage);
-        lineageEntries.forEach(lineageEntry => {
-            if (character.level >= lineageEntry.level && lineageEntry.spellLabel && lineageEntry.spellLabel !== 0) {
-                const spells = Array.isArray(lineageEntry.spellLabel) ? lineageEntry.spellLabel : [lineageEntry.spellLabel];
-                spells.forEach(spell => grantedSpellLabels.add(spell));
-            }
-        });
+        const lineageSpellLabels = [];
+        lineageList
+            .filter(entry => entry.lineageLabel === character.lineage)
+            .forEach(lineageEntry => {
+                if (character.level >= lineageEntry.level
+                    && lineageEntry.spellLabel
+                    && lineageEntry.spellLabel !== 0) {
+                    const labels = Array.isArray(lineageEntry.spellLabel)
+                        ? lineageEntry.spellLabel
+                        : [lineageEntry.spellLabel];
+                    labels.filter(Boolean).forEach(lab => {
+                        if (!lineageSpellLabels.includes(lab)) lineageSpellLabels.push(lab);
+                    });
+                }
+            });
+        if (lineageSpellLabels.length) {
+            groups.push({
+                id: `speciesLineage-${character.lineage}`,
+                translationLabel: character.lineage,
+                spellLabels: lineageSpellLabels
+            });
+        }
     }
-    return spellList.filter(spell => grantedSpellLabels.has(spell.translationLabel));
+    return groups;
+}
+
+/**
+ * Sammelt alle Zauber, die ein Charakter durch sein Volk und seine Erblinie erhält.
+ */
+function getSpeciesSpells(character) {
+    const runtimeSpellList = (typeof getEffectiveSpellList === "function")
+        ? getEffectiveSpellList()
+        : spellList;
+    const labelSet = new Set();
+    getSpeciesSpellFeatureGroups(character).forEach(group => {
+        group.spellLabels.forEach(lab => labelSet.add(lab));
+    });
+    return runtimeSpellList.filter(spell => labelSet.has(spell.translationLabel));
 }
 
 /**
@@ -6957,18 +7873,20 @@ function getMagicFeaturesFromFeats(character) {
     const featMagicFeatures = [];
     const classFeats = character.classForm?.feats || [];
     const backgroundFeatId = character.feat_background || null;
-    const speciesFeatId = character.feat_species || null;
+    const speciesFeatIds = normalizeFeatSpeciesIds(character.feat_species);
     
     const allSelectedFeatsOrdered = [];
 
-    // Baue die Liste in der korrekten Reihenfolge auf
+    // Baue die Liste in der korrekten Reihenfolge auf (BG → Volk → Klasse)
     if (backgroundFeatId) {
-        allSelectedFeatsOrdered.push({ feat: backgroundFeatId });
+        allSelectedFeatsOrdered.push({ feat: backgroundFeatId, origin: "background" });
     }
-    if (speciesFeatId) {
-        allSelectedFeatsOrdered.push({ feat: speciesFeatId });
-    }
-    allSelectedFeatsOrdered.push(...classFeats);
+    speciesFeatIds.forEach(featId => {
+        allSelectedFeatsOrdered.push({ feat: featId, origin: "species" });
+    });
+    classFeats.forEach(entry => {
+        allSelectedFeatsOrdered.push(Object.assign({}, entry, { origin: "class" }));
+    });
 
     let magicInitiateCounter = 0;
 
@@ -6982,6 +7900,10 @@ function getMagicFeaturesFromFeats(character) {
             const newFeature = { ...magicEntry };
             newFeature.sourceFeatLabel = feat.translationLabel;
             newFeature.ID = `feat-${feat.ID}-${magicEntry.ID}-${index}`;
+            newFeature.featOrigin = featSelection.origin || "class";
+            newFeature.featLevel = featSelection.level != null
+                ? parseInt(featSelection.level, 10)
+                : null;
 
             if (feat.translationLabel === "magicInitiateLabel") {
                 newFeature.spellListIndex = magicInitiateCounter;
@@ -9785,7 +10707,9 @@ function initializeAppearanceView() {
     }
 
     // 5. Durchschnittswerte (⌀) aus speciesList
-    const spec = speciesList.find(s => s.translationLabel === speciesKey);
+    const spec = (typeof findSpeciesBySelectionValue === "function")
+        ? findSpeciesBySelectionValue(character.species)
+        : speciesList.find(s => s.translationLabel === speciesKey);
     
     // Alter Info
     const ageInfo = document.getElementById('ageOrientationInfo');
@@ -9908,8 +10832,20 @@ function initializeSummaryView() {
 
     const classVal = character.class ? (elements[character.class.toLowerCase()] || character.class) : "-";
     const bgVal = character.background ? (elements[character.background.toLowerCase()] || character.background) : "-";
-    const specKey = character.species ? (character.species.toLowerCase() + "Label") : "";
-    const specVal = character.species ? (elements[specKey] || character.species) : "-";
+    const specEntry = (typeof findSpeciesBySelectionValue === "function")
+        ? findSpeciesBySelectionValue(character.species)
+        : null;
+    const specKey = specEntry?.translationLabel
+        || (character.species
+            ? (String(character.species).toLowerCase().endsWith("label")
+                ? character.species
+                : character.species.toLowerCase() + "Label")
+            : "");
+    const specVal = character.species
+        ? ((typeof getSpeciesDisplayTranslation === "function")
+            ? getSpeciesDisplayTranslation(character.species, currentLang)
+            : (elements[specKey] || character.species))
+        : "-";
 
     let alignAbbr = "-";
     if (character.alignment) {
@@ -9980,6 +10916,10 @@ function initializeSummaryView() {
 // Speichert den gesamten Charakter und leitet zur Charakterbogen-Seite weiter
 function finishCharacter() {
 
+    if (typeof syncClassFormFreeChoicesFromDom === "function") {
+        syncClassFormFreeChoicesFromDom();
+    }
+
     // Spracheinstellung
     localStorage.setItem("currentLanguage", currentLang);
     const savedLang = localStorage.getItem("currentLanguage");
@@ -10000,13 +10940,26 @@ function finishCharacter() {
     localStorage.setItem("tool_background", character.tool_background);
     localStorage.setItem("instrument_background", character.instrument_background);
     localStorage.setItem("game_background", character.game_background);
+    localStorage.setItem(
+        "backgroundAttributeBonuses",
+        JSON.stringify(character.backgroundAttributeBonuses || {})
+    );
+
+    // LEVEL-UP RECONSTRUCTION ONLY — stumm, Bogen zeigt das nicht
+    if (typeof buildLevelUpReconstructionPayload === "function") {
+        localStorage.setItem(
+            "levelUpReconstruction",
+            JSON.stringify(buildLevelUpReconstructionPayload())
+        );
+    }
 
     // Volk
     localStorage.setItem("species", character.species);
     localStorage.setItem("lineage", character.lineage);
     localStorage.setItem("ancestry", character.ancestry);
-    localStorage.setItem("feat_species", character.feat_species);
-    localStorage.setItem("spellcastingAbility_species", character.spellcastingAbility_species);
+    localStorage.setItem("feat_species", JSON.stringify(normalizeFeatSpeciesIds(character.feat_species)));
+    localStorage.setItem("speciesFreeChoices", JSON.stringify(character.speciesFreeChoices || []));
+    localStorage.setItem("spellcastingAbility_species", character.spellcastingAbility_species);
 
     // Attribute
     localStorage.setItem("strengthScore", character.strengthTotalScore);
@@ -10016,8 +10969,9 @@ function finishCharacter() {
     localStorage.setItem("wisdomScore", character.wisdomTotalScore);
     localStorage.setItem("charismaScore", character.charismaTotalScore);
 
-    // Stufe
-    localStorage.setItem("level", character.level);
+    // Stufe (Regel-Stufe + Anzeige-Basis)
+    localStorage.setItem("level", character.level);
+    localStorage.setItem("ruleLevel", character.level);
 
     // Spezilaisierung
     localStorage.setItem("classForm", JSON.stringify(character.classForm));
@@ -10091,6 +11045,13 @@ function finishCharacter() {
         && characterUsesRegisteredCustomFeatPack(character)
         && typeof persistCustomFeatPackRuntimeToLocalStorage === "function") {
         persistCustomFeatPackRuntimeToLocalStorage();
+    }
+
+    // Custom-Volk-Runtime für den Charakterbogen
+    if (typeof isRegisteredCustomSpeciesSlug === "function"
+        && isRegisteredCustomSpeciesSlug(character.species)
+        && typeof persistCustomSpeciesRuntimeToLocalStorage === "function") {
+        persistCustomSpeciesRuntimeToLocalStorage();
     }
 
     // Weiterleitung
@@ -10269,6 +11230,11 @@ function updateFeatInfoBox() {
     renderSpecialInfoBoxContent('feat-info-box-container', mappedFeats);
 }
 
+/** Zeilenumbrüche in Infobox-Beschreibungen als HTML-Absätze (Custom Feat/Spell). */
+function formatInfoBoxDescriptionHtml(text) {
+    return String(text ?? "").replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
+}
+
 function renderSpecialInfoBoxContent(containerId, items) {
     const container = document.getElementById(containerId);
     const contentDiv = container.querySelector('.spell-info-box-content');
@@ -10296,7 +11262,8 @@ function renderSpecialInfoBoxContent(containerId, items) {
 
         const descDiv = document.createElement('div');
         descDiv.className = 'info-spell-description';
-        descDiv.innerHTML = item.description;
+        // Zeilenumbrüche aus Builder-Textareas (wie Charakterbogen) als Absätze zeigen
+        descDiv.innerHTML = formatInfoBoxDescriptionHtml(item.description);
 
         nameDiv.onclick = (e) => {
             e.stopPropagation();
@@ -10364,7 +11331,12 @@ function updateProgress() {
     // 3. Volk
     const v3 = document.getElementById("valStep3");
     if (v3) {
-        let txt = character.species ? (elements[character.species.toLowerCase() + 'Label'] || character.species) : "";
+        let txt = "";
+        if (character.species) {
+            txt = (typeof getSpeciesDisplayTranslation === "function")
+                ? getSpeciesDisplayTranslation(character.species, currentLang)
+                : (elements[character.species.toLowerCase() + "Label"] || character.species);
+        }
         if (character.lineage) txt += ` (${elements[character.lineage] || character.lineage})`;
         v3.innerText = txt ? divider + txt : "";
     }
@@ -10395,6 +11367,15 @@ function updateProgress() {
 //=======================================================================
 
 function goBack() {
+    // --- LEVEL-UP: Nur 6→5 und 7→6 (Schritt 5: Abbruch-Button) ---
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()) {
+        const currentVisible = document.querySelector(".step[style*='display: block']");
+        const currentId = currentVisible?.id;
+        if (currentId === "step6") goToStep(5);
+        else if (currentId === "step7") goToStep(6);
+        return;
+    }
+
     const currentStep = document.querySelector(".step[style*='display: block']").id;
     if (currentStep === "step2") {
         goToStep(1);
@@ -10424,7 +11405,21 @@ function goBack() {
 
 function goToStep(step) {
 
-    document.body.className = `active-step-${step}`;
+    // --- LEVEL-UP: Nur Schritte 5–7 erlaubt ---
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()) {
+        if (typeof guardLevelUpGoToStep === "function" && !guardLevelUpGoToStep(step)) {
+            return;
+        }
+    }
+
+    // active-step setzen, ohne andere Body-Klassen (z. B. level-up-mode) zu verwerfen
+    Array.from(document.body.classList).forEach(cls => {
+        if (cls.startsWith("active-step-")) document.body.classList.remove(cls);
+    });
+    document.body.classList.add(`active-step-${step}`);
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()) {
+        document.body.classList.add("level-up-mode");
+    }
 
     currentStep = step; // für mobile version
 
@@ -10436,6 +11431,12 @@ function goToStep(step) {
     
     // Überprüfen, ob ein sichtbarer Schritt gefunden wird
     const currentStepNumber = currentVisibleStep ? parseInt(currentVisibleStep.id.replace('step', ''), 10) : 1;
+
+    // Schritt 6 verlassen: Freiwahlen aus DOM in classForm sichern (auch ohne erneutes „Speichern & weiter“)
+    if (currentStepNumber === 6 && step !== 6
+        && typeof syncClassFormFreeChoicesFromDom === "function") {
+        syncClassFormFreeChoicesFromDom();
+    }
 
     // Logik für die Transparenz des Hintergrundbildes
     if (step === 2) {
@@ -10450,7 +11451,15 @@ function goToStep(step) {
     for (let i = 1; i <= 12; i++) { // i = Schrittanzahl
         document.getElementById(`step${i}`).style.display = (i === step) ? "block" : "none";
         document.getElementById(`step${i}Btn`).classList.remove("active");
-        document.getElementById(`step${i}Btn`).disabled = (i > step);
+        const stepBtn = document.getElementById(`step${i}Btn`);
+        // --- LEVEL-UP: Nur Schritte 5–7 in der Leiste ---
+        if (typeof isLevelUpMode === "function" && isLevelUpMode()) {
+            if (i >= 5 && i <= 7) {
+                stepBtn.disabled = (i > step);
+            }
+        } else {
+            stepBtn.disabled = (i > step);
+        }
     }
     document.getElementById(`step${step}Btn`).classList.add("active");
 
@@ -10466,7 +11475,7 @@ function goToStep(step) {
     document.getElementById("saveAlignment").style.display = "none";
     document.getElementById("saveAppearance").style.display = "none";
     document.getElementById("finish").style.display = "none";
-    document.getElementById("back").style.display = "block";
+    document.getElementById("back").style.display = "flex";
 
 
         if (step === 1) { //Class
@@ -10523,14 +11532,21 @@ function goToStep(step) {
     } else if (step === 5) { //Level
         languageSwitcher.style.display = "none"; // Sprachumschalter ausblenden
         document.getElementById("saveLevel").style.display = "block";
-        if (selectedClassName) {
-            updateInfoBoxContent(selectedClassName);
+        const classKey = character.class || selectedClassName;
+        if (classKey) {
+            updateInfoBoxContent(classKey);
         }
         displayClassFeatures(character.level);
 
         const liveContainer = document.getElementById('liveAttributesContainer');
         initializeLiveAttributes();
         liveContainer.style.display = 'block';
+        if (typeof isLevelUpMode === "function" && isLevelUpMode()) {
+            if (typeof applyPassiveClassFeatures === "function") applyPassiveClassFeatures();
+            if (typeof seedLevelUpAttributeBasesFromTotals === "function") {
+                seedLevelUpAttributeBasesFromTotals();
+            }
+        }
 	updateLiveAttributes();
         setupMobileLevelUI();
 
@@ -10539,6 +11555,16 @@ function goToStep(step) {
         languageSwitcher.style.display = "none"; // Sprachumschalter ausblenden
         document.getElementById("saveClassForm").style.display = "block";
         displayClassSectionsBasedOnLevel(character.level);
+
+        // Nach UI-Rebuild gespeicherte classForm-Werte wiederherstellen (auch Custom-Freiwahlen)
+        if (typeof reapplyStep6ClassFormSelections === "function") {
+            reapplyStep6ClassFormSelections();
+            setTimeout(() => {
+                if (typeof reapplyLevelUpFeatWeaponMasteryDropdowns === "function") {
+                    reapplyLevelUpFeatWeaponMasteryDropdowns();
+                }
+            }, 0);
+        }
 
 	currentSkillIndex = 10; //für skilled
 	currentToolIndex = 20; //für skilled
@@ -10556,10 +11582,13 @@ function goToStep(step) {
 
         buildFeatInfoUI();
 
+        if (typeof onLevelUpStep6Ready === "function") onLevelUpStep6Ready();
+
     } else if (step === 7) { //Spells
         languageSwitcher.style.display = "none"; // Sprachumschalter ausblenden
         document.getElementById("saveSpells").style.display = "block";
         populateSpells(); // Zauber für Schritt 4 laden
+        if (typeof applyLevelUpStep7Navigation === "function") applyLevelUpStep7Navigation();
 
     } else if (step === 8) { //Equipment
         languageSwitcher.style.display = "none"; // Sprachumschalter ausblenden
@@ -10587,6 +11616,17 @@ function goToStep(step) {
         initializeSummaryView();
     }
 
+    // --- LEVEL-UP: Navigation Schritt 5 = Abbruch statt Zurück ---
+    if (typeof isLevelUpMode === "function" && isLevelUpMode()) {
+        document.body.classList.add("level-up-mode");
+        if (typeof applyLevelUpModeChrome === "function") applyLevelUpModeChrome();
+        if (step === 5 && typeof applyLevelUpStep5Navigation === "function") {
+            applyLevelUpStep5Navigation();
+        } else if (typeof applyLevelUpDefaultNavigation === "function") {
+            applyLevelUpDefaultNavigation();
+        }
+    }
+
 }
 
 //=======================================================================
@@ -10611,6 +11651,7 @@ function selectClass(className) {
     showClassText(className);
     document.getElementById("level").value = "1";
     character.level = 1;
+    lastSavedLevel = null; // Stufen-UP/DOWN-Logik nach Klassenwechsel neu anbinden
     document.getElementById("step2Btn").disabled = true;
     document.getElementById("step3Btn").disabled = true;
     document.getElementById("step4Btn").disabled = true;
@@ -10627,6 +11668,8 @@ function selectClass(className) {
 
     spellChoicesByFeature = {};
     activeSpellChoice = { feature: null };
+
+    if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
 }
 
 // Charakterdaten zurücksetzen
@@ -10644,7 +11687,8 @@ character = {
     lineage: null,
     ancestry: null,
     spellcastingAbility_species: null,
-    feat_species: null,
+    feat_species: [],
+    speciesFreeChoices: [],
     strengthTotalScore: null,
     dexterityTotalScore: null,
     constitutionTotalScore: null,
@@ -10702,7 +11746,7 @@ character = {
     tempInstrumentBackground = null;
     tempGameBackground = null;
     tempBackgroundSpellcasting = null;
-    tempFeatSpecies = null;
+    tempFeatSpecies = [];
     tempAncestry = null;
     tempLineage = null;
     tempSpellAbilitySpecies = null;

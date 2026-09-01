@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.dicecharacters.com/sitemap.xml
+Sitemap: https://dicecharacters.com/sitemap.xml

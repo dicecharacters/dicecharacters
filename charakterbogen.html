@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="sheetPageTitle">D&amp;D 5.5e Charakterbogen | DiceCharacters</title>
+    <link rel="canonical" href="https://dicecharacters.com/charakterbogen.html">
     <link rel="icon" type="image/webp" href="images/dcLogo_C.webp">
     <link rel="stylesheet" href="css/sheet_style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
@@ -34,8 +35,10 @@
     <script src="translations/translationsSpells.js"></script>
     <script src="translations/translationsSpellDesciptions.js"></script>
     <script src="translations/translationsReligion.js"></script>
+    <script src="translations/translationsLevelUpMode.js"></script>
 
     <script src="data/coreData.js"></script>
+    <script src="data/abilityScoreCaps.js"></script>
     <script src="data/backgroundData.js"></script>
     <script src="data/speciesData.js"></script>
     <script src="data/weaponAndArmorData.js"></script>
@@ -60,6 +63,7 @@
     <script src="data/imageData.js"></script>
     <script src="featureHandlers.js"></script>
     <script src="dcPackage.js"></script>
+    <script src="levelUpMode.js"></script>
     <script src="customFeatures/shared.js"></script>
     <script src="customFeatures/customFeaturesSheet.js"></script>
 </head>
@@ -74,6 +78,11 @@
 
         <button id="editModeBtn" class="fab-btn btn-edit" onclick="toggleEditMode()">
             <span id="editModeBtnText"></span>
+        </button>
+
+        <button id="levelUpBtn" class="fab-btn btn-levelup" onclick="startLevelUpFromSheet()">
+            <span id="levelUpBtnText"></span>
+            <span class="level-up-btn-icon" aria-hidden="true">↑</span>
         </button>
 
         <button id="exportJsonBtn" class="fab-btn btn-export" onclick="exportCharacterJSON()">
@@ -104,16 +113,16 @@
 
             <header class="sheet-header">
                 <div class="char-name-group">
-                    <input type="text" id="characterName" name="characterName" class="character-name-input" placeholder="Dein Charaktername">
+                    <input type="text" id="characterName" name="characterName" class="character-name-input">
                     <label for="characterName" class="character-name-label" id="characterNameLabel"></label>
                 </div>
                 <div class="level-xp">
                     <div class="field-group">
-                        <input type="text" id="level" name="level" placeholder="Stufe" readonly>
+                        <input type="text" id="level" name="level" readonly>
                         <label id="levelLabel" for="level">Stufe</label>
                     </div>
                     <div class="field-group">
-                        <input type="text" id="xp" name="xp" placeholder="XP" readonly>
+                        <input type="text" id="xp" name="xp" readonly>
                         <label id="xpLabel" for="xp">XP</label>
                     </div>
                 </div>
@@ -121,27 +130,30 @@
                     <div class="field-group">
                         <label id="classLabel" for="class">Klasse</label>
                         <div class="field-value-row">
-                            <input type="text" id="class" name="class" placeholder="Klasse" readonly>
+                            <input type="text" id="class" name="class" readonly>
                             <span id="classCustomContentMarker" class="custom-content-marker" hidden></span>
                         </div>
                     </div>
                     <div class="field-group">
                         <label id="backgroundLabel" for="background">Hintergrund</label>
                         <div class="field-value-row">
-                            <input type="text" id="background" name="background" placeholder="Hintergrund" readonly>
+                            <input type="text" id="background" name="background" readonly>
                             <span id="backgroundCustomContentMarker" class="custom-content-marker" hidden></span>
                         </div>
                     </div>
                     <div class="field-group">
                         <label id="subclassLabel" for="subclass">Unterklasse</label>
                         <div class="field-value-row">
-                            <input type="text" id="subclass" name="subclass" placeholder="Unterklasse" readonly>
+                            <input type="text" id="subclass" name="subclass" readonly>
                             <span id="subclassCustomContentMarker" class="custom-content-marker" hidden></span>
                         </div>
                     </div>
                     <div class="field-group">
                         <label id="speciesLabel" for="species">Volk</label>
-                        <input type="text" id="species" name="species" placeholder="Volk" readonly>
+                        <div class="field-value-row">
+                            <input type="text" id="species" name="species" readonly>
+                            <span id="speciesCustomContentMarker" class="custom-content-marker" hidden></span>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -413,12 +425,12 @@
                             <hr class="section-divider">
                             <div class="trainings-section">
                                 <h4 class="trainings-subheader" id="weaponPropertiesLabel"></h4>
-                                <textarea id="weaponProperties" rows="2" placeholder="z.B. Finesse, Reichweite, ..."></textarea>
+                                <textarea id="weaponProperties" rows="2"></textarea>
                             </div>
                             <hr class="section-divider">
                             <div class="trainings-section">
                                 <h4 class="trainings-subheader" id="weaponMasteriesLabel"></h4>
-                                <textarea id="weaponMasteries" rows="2" placeholder="z.B. Stoßen, Ansturm, ..."></textarea>
+                                <textarea id="weaponMasteries" rows="2"></textarea>
                             </div>
                         </div>
                         <div class="trainings-box">
@@ -437,7 +449,7 @@
                             <div class="box-header" id="masteredToolsLabel"></div>
                             <div class="box-divider"></div>
                             <div class="trainings-section">
-                                <textarea id="masteredTools" rows="2" placeholder="z.B. Schmiedewerkzeug, Diebeswerkzeug..."></textarea>
+                                <textarea id="masteredTools" rows="2"></textarea>
                             </div>
                         </div>
                     </div>
@@ -478,7 +490,7 @@
                     <div class="box-header" id="physicalAttacksLabel"></div>
                     <div class="box-divider"></div>
                     
-                      <table class="attack-table">
+                      <table class="attack-table" data-dc-table-id="physical_attacks">
                         <thead>
                             <tr>
                                 <th id="th_weapon_attack" style="width: 18%;" class="align-left"></th>
@@ -560,7 +572,7 @@
                         <div class="stat-info-box inventory-box">
                             <div class="box-header" id="weaponsLabel"></div>
                             <div class="box-divider"></div>
-                            <table class="attack-table inventory-table">
+                            <table class="attack-table inventory-table" data-dc-table-id="inv_weapons">
                                 <thead>
                                     <tr>
                                         <th id="th_amount_1" style="width: 15%;" class="align-center"></th>
@@ -586,7 +598,7 @@
                         <div class="stat-info-box inventory-box">
                             <div class="box-header" id="armorLabel"></div>
                             <div class="box-divider"></div>
-                            <table class="attack-table inventory-table">
+                            <table class="attack-table inventory-table" data-dc-table-id="inv_armor">
                                 <thead>
                                     <tr>
                                         <th id="th_amount_2" style="width: 15%;" class="align-center"></th>
@@ -608,7 +620,7 @@
                         <div class="stat-info-box inventory-box">
                             <div class="box-header" id="mountAndVehicleLabel"></div>
                             <div class="box-divider"></div>
-                            <table class="attack-table inventory-table">
+                            <table class="attack-table inventory-table" data-dc-table-id="inv_mount">
                                 <thead>
                                     <tr>
                                         <th id="th_amount_3" style="width: 15%;" class="align-center"></th>
@@ -632,7 +644,7 @@
                         <div class="stat-info-box inventory-box">
                             <div class="box-header" id="toolsLabel"></div>
                             <div class="box-divider"></div>
-                            <table class="attack-table inventory-table">
+                            <table class="attack-table inventory-table" data-dc-table-id="inv_tools">
                                 <thead>
                                     <tr>
                                         <th id="th_amount_4" style="width: 15%;" class="align-center"></th>
@@ -651,7 +663,7 @@
                         <div class="stat-info-box inventory-box flex-grow-box">
                             <div class="box-header" id="gearLabel"></div>
                             <div class="box-divider"></div>
-                            <table class="attack-table inventory-table">
+                            <table class="attack-table inventory-table" data-dc-table-id="inv_gear">
                                 <thead>
                                     <tr>
                                         <th id="th_amount_5" style="width: 15%;" class="align-center"></th>
@@ -702,7 +714,7 @@
 
         <footer class="sheet-footer">
             <div class="footer-left">
-		<a href="https://www.dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
+		<a href="https://dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
                 </div>
             <div class="footer-right">
 		<span id="pageNumberLabel"></span>
@@ -757,7 +769,7 @@
 
         <footer class="sheet-footer">
             <div class="footer-left">
-		<a href="https://www.dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
+		<a href="https://dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
             </div>
             <div class="footer-right">
 		<span id="pageNumberLabel"></span>
@@ -859,7 +871,7 @@
                     <div class="stat-info-box faith-box">
                         <div class="box-header" id="faithLabel"></div>
                         <div class="box-divider"></div>
-                        <table class="attack-table faith-table">
+                        <table class="attack-table faith-table" data-dc-table-id="faith_table">
                             <thead>
                                 <tr>
                                     <th id="th_deity" style="width: 35%;" class="align-left"></th>
@@ -898,7 +910,7 @@
 
         <footer class="sheet-footer">
             <div class="footer-left">
-		<a href="https://www.dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
+		<a href="https://dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
             </div>
             <div class="footer-right">
                 <span id="pageNumberLabel"></span>
@@ -943,7 +955,7 @@
 
         <footer class="sheet-footer">
             <div class="footer-left">
-		<a href="https://www.dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
+		<a href="https://dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
             </div>
             <div class="footer-right">
 		<span id="pageNumberLabel"></span>
@@ -1069,7 +1081,7 @@
 
         <footer class="sheet-footer">
             <div class="footer-left">
-		<a href="https://www.dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
+		<a href="https://dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
             </div>
             <div class="footer-right">
 		<span id="pageNumberLabel"></span>
@@ -1100,6 +1112,14 @@ const PDF_OPTION = 1;
 /* ==========================================================================
    AREAL 1: INITIALISIERUNG (CONTROLLER)
    ========================================================================== */
+
+/* Nach Stufenaufstieg: bfcache-Restore vermeiden (sonst alter Bogen bis F5) */
+window.addEventListener("pageshow", function (event) {
+    if (event.persisted) {
+        window.location.reload();
+    }
+});
+
 window.onload = function() {
     console.log('Initialisierung gestartet...');
 
@@ -1240,7 +1260,10 @@ window.onload = function() {
     // 5. Überprüfung von Import-Daten
     setTimeout(() => {
         applyImportOverrides();
+        updateLevelUpButtonState();
     }, 100); // Kleiner Timeout sorgt dafür, dass alle async-Prozesse fertig sind
+
+    updateLevelUpButtonState();
 
     console.log('Initialisierung abgeschlossen.');
 };
@@ -1259,6 +1282,22 @@ function loadCharacterDataFromStorage() {
         const val = ls.getItem(key);
         if (!val) return fallback;
         try { return JSON.parse(val); } catch(e) { return fallback; }
+    };
+
+    // feat_species: Array (JSON) oder Legacy-Einzelwert
+    const parseFeatSpeciesStorage = (raw) => {
+        if (raw == null || raw === "") return [];
+        try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                return parsed.map(id => parseInt(id, 10)).filter(n => !isNaN(n) && n > 0);
+            }
+            const n = parseInt(parsed, 10);
+            return (!isNaN(n) && n > 0) ? [n] : [];
+        } catch (e) {
+            const n = parseInt(raw, 10);
+            return (!isNaN(n) && n > 0) ? [n] : [];
+        }
     };
 
     return {
@@ -1289,6 +1328,8 @@ function loadCharacterDataFromStorage() {
             bg_games: safeParse("game_background", []),
             bg_feat: ls.getItem("feat_background"),
 
+            species_free_choices: safeParse("speciesFreeChoices", []),
+
             // Klasse (Leere Arrays, werden in processTools aus classForm geholt, falls nötig)
             class_tools: [],       
             class_instruments: [], 
@@ -1304,7 +1345,7 @@ function loadCharacterDataFromStorage() {
 	// Talente
         feats: {
 	    background: parseInt(ls.getItem("feat_background")) || null,
-            species: parseInt(ls.getItem("feat_species")) || null
+            species: parseFeatSpeciesStorage(ls.getItem("feat_species"))
             // Hinweis: Klassen-Talente in classForm.feats
         },
         spells: {
@@ -1352,15 +1393,13 @@ function processHeader(data) {
     const characterSubclass = getSubclassTranslation(basic.class, subclassCategoryNumber);
 
     // Übersetzungen (ABSTURZ-FIX & FLEXIBILITÄT)
-    // Wir prüfen, ob basic.class existiert, bevor wir toLowerCase machen.
     const safeClassKey = basic.class ? basic.class.toLowerCase() : "";
     const safeBgKey = basic.background ? basic.background.toLowerCase() : "";
-    const safeSpeciesKey = basic.species ? basic.species.toLowerCase() + "Label" : "";
-
-    // Zugriff über currentLanguage
     const tClass = (translations[currentLanguage][safeClassKey]) || basic.class;
     const tBg = (translations[currentLanguage][safeBgKey]) || basic.background;
-    const tSpecies = (translations[currentLanguage][safeSpeciesKey]) || basic.species;
+    const tSpecies = (typeof getSpeciesDisplayTranslation === "function")
+        ? getSpeciesDisplayTranslation(basic.species, currentLanguage)
+        : basic.species;
     const tLineage = (basic.lineage && basic.lineage !== "null") ? (translations[currentLanguage][basic.lineage] || basic.lineage) : '';
 
     const speciesDisplay = tLineage ? `${tSpecies} (${tLineage})` : tSpecies;
@@ -1382,6 +1421,9 @@ function processHeader(data) {
     if (typeof updateSheetCustomSubclassMarker === "function") {
         updateSheetCustomSubclassMarker(basic.class, subclassCategoryNumber);
     }
+    if (typeof updateSheetCustomSpeciesMarker === "function") {
+        updateSheetCustomSpeciesMarker(basic.species);
+    }
 
     // Name auf alle Folgeseiten synchronisieren
     document.querySelectorAll('.sync-char-name').forEach(input => {
@@ -1397,6 +1439,55 @@ function processHeader(data) {
         setVal("xp", basic.xp || 0);
     }
 
+    updateLevelUpButtonState();
+}
+
+/**
+ * Stufenaufstieg nur, wenn der Bogen aus dem Ersteller stammt (class + classForm in LS).
+ * Rein manuelle Bögen (isManualMode) sind ausgeschlossen.
+ */
+function isCharacterSheetLevelUpAllowed() {
+    const charData = loadCharacterDataFromStorage();
+    if (charData.isManualMode) return false;
+
+    const ls = localStorage;
+    if (!ls.getItem("class") || !ls.getItem("classForm")) return false;
+
+    try {
+        const cf = JSON.parse(ls.getItem("classForm"));
+        return cf && typeof cf === "object";
+    } catch (e) {
+        return false;
+    }
+}
+
+function updateLevelUpButtonState() {
+    const btn = document.getElementById('levelUpBtn');
+    if (!btn) return;
+
+    const fromLs = (typeof getSheetRuleLevel === "function") ? getSheetRuleLevel() : localStorage.getItem('level');
+    let level = typeof fromLs === "number" ? fromLs : parseInt(fromLs, 10);
+    if (!Number.isFinite(level) || level < 1) level = 1;
+    if (level > 20) level = 20;
+
+    const atMaxLevel = level >= 20;
+    const creatorRequired = !isCharacterSheetLevelUpAllowed();
+    const blocked = atMaxLevel || creatorRequired;
+
+    btn.disabled = blocked;
+    btn.setAttribute('aria-disabled', blocked ? 'true' : 'false');
+
+    const t = (typeof translations !== 'undefined' && translations[currentLanguage])
+        ? translations[currentLanguage]
+        : {};
+    if (creatorRequired) {
+        btn.title = t.levelUpUnavailableManualSheetLabel
+            || "Stufenaufstieg nur für Charaktere aus dem Ersteller.";
+    } else if (atMaxLevel) {
+        btn.title = t.levelUpUnavailableMaxLevelLabel || "Maximale Stufe (20) erreicht.";
+    } else {
+        btn.title = "";
+    }
 }
 
 function updateLevelFromXP() {
@@ -1434,6 +1525,8 @@ function updateLevelFromXP() {
         // Falls gewünscht, müsste man processClassBasics(charData) neu aufrufen, 
         // was aber ein Reload der Daten erfordert. Fürs Erste reicht ProfBonus.
     }
+
+    updateLevelUpButtonState();
 }
 
 /**
@@ -1457,6 +1550,100 @@ function updateXPFromLevel() {
         
         // Auch hier: Prof Bonus updaten
         updateProficiencyBonus();
+    }
+
+    updateLevelUpButtonState();
+}
+
+/** true nach Stufenaufstieg-Abschluss (?fromLevelUp=… in der URL). */
+function isSheetFromLevelUpNavigation() {
+    try {
+        return !!new URLSearchParams(window.location.search).get("fromLevelUp");
+    } catch (e) {
+        return false;
+    }
+}
+
+/** Regel-abgeleitete Felder — Overrides werden ignoriert; Werte kommen aus Regel-Handler/Neuberechnung. */
+const SHEET_RULE_DERIVED_INPUT_IDS = new Set([
+    "level", "maxHP", "maxHD", "xp",
+    "initiative", "speed", "armorClass"
+]);
+
+/**
+ * Wendet alle automatisierten Merkmals-Handler neu an (Spezies → Klasse → Talent).
+ * Muss nach Overrides und Inventar-Anlege-Status laufen (RK/Speed/Initiative hängen davon ab).
+ * @param {object} [charData]
+ */
+function reapplyAllSheetFeatureHandlers(charData) {
+    if (!charData && typeof loadCharacterDataFromStorage === "function") {
+        charData = loadCharacterDataFromStorage();
+    }
+    if (!charData) return;
+
+    if (typeof applySpeciesFeatureLogic === "function") {
+        applySpeciesFeatureLogic(charData);
+    }
+    if (typeof applyClassFeatureLogic === "function") {
+        applyClassFeatureLogic(charData);
+    }
+    if (typeof applyTalentFeatureLogic === "function") {
+        applyTalentFeatureLogic(charData);
+    }
+}
+
+/** Stufenabhängige Stats — Snapshot-Overrides sind nach Level-Up veraltet. */
+const LEVEL_UP_STALE_OVERRIDE_INPUT_IDS = new Set([
+    "maxHP", "maxHD", "currentHP", "xp"
+]);
+
+/**
+ * TP/TW/XP aus Regeln neu berechnen; aktuelle TP relativ zum alten Maximum anpassen.
+ * @param {object} [snapshotInputs] – overrides.inputs für currentHP-Merge (optional)
+ */
+function refreshSheetRuleDerivedStats(snapshotInputs) {
+    const snap = snapshotInputs && typeof snapshotInputs === "object" ? snapshotInputs : {};
+    const oldCurrentHP = parseInt(snap.currentHP, 10);
+    const oldMaxHP = parseInt(snap.maxHP, 10);
+
+    if (typeof updateXPFromLevel === "function") {
+        updateXPFromLevel();
+    }
+
+    const hpInput = document.getElementById("maxHP");
+    if (typeof updateHitPointsAndDice === "function") {
+        updateHitPointsAndDice();
+    }
+
+    const newMaxHP = parseInt(document.getElementById("maxHP")?.value, 10);
+    const currentEl = document.getElementById("currentHP");
+    if (!currentEl || !Number.isFinite(newMaxHP)) return;
+
+    if (!Number.isFinite(oldCurrentHP) || snap.currentHP === "" || snap.currentHP == null) {
+        currentEl.value = String(newMaxHP);
+    } else if (Number.isFinite(oldMaxHP) && oldCurrentHP >= oldMaxHP) {
+        currentEl.value = String(newMaxHP);
+    } else if (Number.isFinite(oldMaxHP)) {
+        const hpGain = newMaxHP - oldMaxHP;
+        currentEl.value = String(Math.max(1, oldCurrentHP + Math.max(0, hpGain)));
+    } else {
+        currentEl.value = String(newMaxHP);
+    }
+}
+
+/**
+ * TP/TW/XP nach Stufenaufstieg neu berechnen (inkl. Talent-/Spezies-Boni wie Tough/Zwergische Zähigkeit).
+ * @param {object} snapshotInputs – alte overrides.inputs für aktuelle-TP-Logik
+ */
+function applyLevelUpSheetStatRefresh(snapshotInputs) {
+    refreshSheetRuleDerivedStats(snapshotInputs);
+
+    // RK nach Attributänderung (z. B. ASI KON/GES → Ungerüstete Verteidigung)
+    if (typeof updateArmorClass === "function") {
+        updateArmorClass();
+    }
+    if (typeof applyClassFeatureLogic === "function") {
+        applyClassFeatureLogic(loadCharacterDataFromStorage());
     }
 }
 
@@ -1515,17 +1702,15 @@ function updateHitPointsAndDice() {
     if (hpInput) {
         hpInput.value = newMaxHP;
 
-        // --- C. FLAGS RESETTEN ---
-        // WICHTIG: Damit Talente wie 'Tough' oder 'Boon' ihren Bonus NEU berechnen können,
-        // müssen wir die Markierungen löschen, dass sie schon angewendet wurden.
+        // Flags löschen, damit Talent-/Spezies-Boni (Tough, Zwergische Zähigkeit, …) neu addiert werden
         delete hpInput.dataset.toughApplied;
         delete hpInput.dataset.boonFortitudeApplied;
+        delete hpInput.dataset.dwarvenToughnessApplied;
     }
 
-    // --- D. TALENTE NEU ANWENDEN ---
-    // Das fügt Boni (wie +2 pro Level durch Tough) wieder oben drauf
+    // --- D. TALENT- & SPEZIES-BONI NEU ANWENDEN ---
     applyTalentFeatureLogic(charData);
-    processSpeciesTraits(charData);
+    applySpeciesFeatureLogic(charData);
     applyTalentFeatureLogic(charData);
 }
 
@@ -1542,10 +1727,11 @@ function calculateFinalSpeed() {
         baseSpeedFT = window.baseSpeedOverride; 
     } else {
         // Normale Berechnung für alle anderen Spezies
-        const rawSpecies = charData.basic.species || ""; 
-        const searchTerm = rawSpecies.toLowerCase() + "Label";
+        const rawSpecies = charData.basic.species || "";
         if (typeof speciesList !== 'undefined') {
-            const sData = speciesList.find(s => s.translationLabel === searchTerm);
+            const sData = (typeof findSpeciesBySelectionValue === "function")
+                ? findSpeciesBySelectionValue(rawSpecies)
+                : speciesList.find(s => s.translationLabel === (rawSpecies.toLowerCase() + "Label"));
             if (sData) baseSpeedFT = sData.speedFT;
         }
     }
@@ -1669,7 +1855,10 @@ function processAttributesAndSkills(data) {
     });
 
     // 3. Checkboxen aktivieren
-    const skills = data.classForm.skills || [];
+    const skills = (data.classForm.skills || []).slice();
+    if (data.classForm.primalKnowledgeSkill) {
+        skills.push(String(data.classForm.primalKnowledgeSkill));
+    }
     activateSkills(skills);
     activateSavingThrows(data.basic.class, data.classForm?.attributes);
 
@@ -1768,20 +1957,12 @@ function activateSavingThrows(className, extraAttributes) {
 
 // --- Rechen-Logik für 3b ---
 function calculateModifier(score) {
-    let modifier;
-    if (score <= 3) modifier = -4;
-    else if (score <= 5) modifier = -3;
-    else if (score <= 7) modifier = -2;
-    else if (score <= 9) modifier = -1;
-    else if (score <= 11) modifier = 0;
-    else if (score <= 13) modifier = 1;
-    else if (score <= 15) modifier = 2;
-    else if (score <= 17) modifier = 3;
-    else if (score <= 19) modifier = 4;
-    else if (score == 20) modifier = 5;
-    else modifier = ''; // Original Logik
-    
-    return modifier >= 1 ? `+${modifier}` : `${modifier}`;
+    if (typeof formatModifierForScore === "function") {
+        return formatModifierForScore(score);
+    }
+    const modifier = getModifierForScore(score);
+    if (modifier === null) return "";
+    return formatModifierDisplay(modifier);
 }
 
 function calculateProficiencyBonus(level) {
@@ -1872,6 +2053,9 @@ function updateSkillValues() {
     
     // Hol die Expertise-IDs aus dem globalen Speicher
     const expertiseIDs = window.activeExpertiseIDs || [];
+    const joatHalfPb = Math.floor(proficiencyBonus / 2);
+    const charismaCheckBonus = window.charismaCheckBonus || 0;
+    const charismaSkillIds = new Set([5, 8, 13, 14]);
 
     attributeList.forEach(attribute => {
         const stringId = attribute.translationLabel.replace('Label', '');
@@ -1896,6 +2080,14 @@ function updateSkillValues() {
                         if (skillData && expertiseIDs.includes(skillData.skillCategoryNumber)) {
                             finalValue += proficiencyBonus; // Bonus ein zweites Mal addieren
                         }
+                    } else if (window.hasJackOfAllTrades) {
+                        // Barde L2: halber ÜB auf Fertigkeiten ohne Übung (inkl. passive Wahrnehmung)
+                        finalValue += joatHalfPb;
+                    }
+
+                    // Fey Wanderer: Otherworldly Glamour auf Charisma-Fertigkeiten
+                    if (skillData && charismaSkillIds.has(skillData.skillCategoryNumber) && charismaCheckBonus > 0) {
+                        finalValue += charismaCheckBonus;
                     }
                     
                     valueInput.value = finalValue >= 0 ? `+${finalValue}` : finalValue;
@@ -2107,6 +2299,148 @@ function setProficiencies(categories, type) {
 }
 
 /**
+ * Rüstungs-/Waffenvertrautheit aus Regeldaten erneut setzen
+ * (nach Import-Overrides, die veraltete false-Werte überschreiben können).
+ */
+function getSheetProficiencyCheckboxIds() {
+    return [
+        "simpleMeleeWeapons", "simpleRangedWeapons", "martialMeleeWeapons", "martialRangedWeapons",
+        "lightArmor", "mediumArmor", "heavyArmor", "shieldProf"
+    ];
+}
+
+function isSheetProficiencyCheckboxId(id) {
+    return getSheetProficiencyCheckboxIds().includes(id);
+}
+
+/**
+ * Gespeicherte Waffen-/Rüstungsvertrautheit vom Bogen anwenden (nach allen Regel-Updates).
+ * @param {object} overrides
+ */
+function applySheetProficiencyCheckboxOverrides(overrides) {
+    if (!overrides?.checkboxes) return;
+    getSheetProficiencyCheckboxIds().forEach(id => {
+        if (overrides.checkboxes[id] === undefined) return;
+        const el = document.getElementById(id);
+        if (el) el.checked = !!overrides.checkboxes[id];
+    });
+    if (typeof updatePhysicalAttacks === "function") updatePhysicalAttacks();
+}
+
+function reapplySheetArmorWeaponProficienciesFromRuleData() {
+    const charData = (typeof loadCharacterDataFromStorage === "function")
+        ? loadCharacterDataFromStorage()
+        : null;
+    if (!charData?.basic?.class || typeof setProficiencies !== "function") return;
+
+    const className = charData.basic.class;
+    const level = parseInt(charData.basic.level, 10) || 1;
+    const classForm = charData.classForm || {};
+
+    let classData = (typeof classCoreTraitsList !== "undefined")
+        ? classCoreTraitsList.find(c =>
+            String(c.translationLabel || "").toLowerCase() === String(className).toLowerCase())
+        : null;
+    if (!classData && typeof isSheetCustomClassSlug === "function" && isSheetCustomClassSlug(className)) {
+        const runtime = (typeof getSheetCustomClassRuntime === "function")
+            ? getSheetCustomClassRuntime()
+            : null;
+        if (runtime?.coreTraits) classData = runtime.coreTraits;
+    }
+    if (classData?.armorCategoryNumber) setProficiencies(classData.armorCategoryNumber, "armor");
+    if (classData?.weaponCategoryNumber) setProficiencies(classData.weaponCategoryNumber, "weapon");
+
+    if (typeof getGrantedCustomClassArmorCategoryNumbers === "function") {
+        const granted = getGrantedCustomClassArmorCategoryNumbers(charData);
+        if (granted?.length) setProficiencies(granted, "armor");
+    }
+    if (typeof getGrantedCustomClassWeaponCategoryNumbers === "function") {
+        const granted = getGrantedCustomClassWeaponCategoryNumbers(charData);
+        if (granted?.length) setProficiencies(granted, "weapon");
+    }
+
+    if (classForm.divineOrders != null && classForm.divineOrders !== ""
+        && typeof divineOrderCategoryList !== "undefined") {
+        const orderId = parseInt(
+            Array.isArray(classForm.divineOrders) ? classForm.divineOrders[0] : classForm.divineOrders,
+            10
+        );
+        const orderData = divineOrderCategoryList.find(o => o.divineOrderCategoryNumber === orderId);
+        if (orderData?.Get_armorCategoryNumber) setProficiencies(orderData.Get_armorCategoryNumber, "armor");
+        if (orderData?.Get_weaponCategoryNumber) setProficiencies(orderData.Get_weaponCategoryNumber, "weapon");
+    }
+    if (classForm.primalOrders != null && classForm.primalOrders !== ""
+        && typeof primalOrderCategoryList !== "undefined") {
+        const orderId = parseInt(
+            Array.isArray(classForm.primalOrders) ? classForm.primalOrders[0] : classForm.primalOrders,
+            10
+        );
+        const orderData = primalOrderCategoryList.find(o => o.primalOrderCategoryNumber === orderId);
+        if (orderData?.Get_armorCategoryNumber) setProficiencies(orderData.Get_armorCategoryNumber, "armor");
+        if (orderData?.Get_weaponCategoryNumber) setProficiencies(orderData.Get_weaponCategoryNumber, "weapon");
+    }
+
+    const featIds = new Set();
+    if (charData.feats?.background) {
+        const n = parseInt(charData.feats.background, 10);
+        if (!isNaN(n) && n > 0) featIds.add(n);
+    }
+    const speciesFeatIds = Array.isArray(charData.feats?.species)
+        ? charData.feats.species
+        : (charData.feats?.species ? [charData.feats.species] : []);
+    speciesFeatIds.forEach(id => {
+        const n = parseInt(id, 10);
+        if (!isNaN(n) && n > 0) featIds.add(n);
+    });
+    if (Array.isArray(classForm.feats)) {
+        classForm.feats.forEach(item => {
+            const n = parseInt(item?.feat, 10);
+            if (!isNaN(n) && n > 0) featIds.add(n);
+        });
+    }
+    if (typeof featList !== "undefined") {
+        featIds.forEach(featId => {
+            const featData = featList.find(f => f.ID === featId);
+            if (!featData) return;
+            if (featData.Get_armorCategoryNumber && featData.Get_armorCategoryNumber !== 0) {
+                setProficiencies(featData.Get_armorCategoryNumber, "armor");
+            }
+            if (featData.Get_weaponCategoryNumber && featData.Get_weaponCategoryNumber !== 0) {
+                setProficiencies(featData.Get_weaponCategoryNumber, "weapon");
+            }
+        });
+    }
+
+    // Custom Class/UC-Merkmalszeilen mit featureHandlers (armorTrainingLabel / weaponTrainingLabel)
+    const userSubclassId = classForm.subclass ? parseInt(classForm.subclass, 10) : 0;
+    const dataSource = (typeof getClassDataArray === "function") ? getClassDataArray(className) : null;
+    if (dataSource && typeof featureHandlers !== "undefined") {
+        const computedStats = { additionalProficiencies: { armor: [], weapon: [] } };
+        dataSource.forEach(feat => {
+            if (!feat || (feat.level || 1) > level) return;
+            const isBase = !feat.subclassCategoryNumber || feat.subclassCategoryNumber === 0;
+            const isMine = feat.subclassCategoryNumber === userSubclassId;
+            if (!isBase && !isMine) return;
+            const handler = featureHandlers[feat.translationLabel];
+            if (typeof handler !== "function") return;
+            if (feat.translationLabel !== "armorTrainingLabel"
+                && feat.translationLabel !== "weaponTrainingLabel"
+                && feat.translationLabel !== "divineOrderLabel"
+                && feat.translationLabel !== "primalOrderLabel") {
+                return;
+            }
+            handler(charData, computedStats, feat);
+        });
+        if (computedStats.additionalProficiencies.armor.length) {
+            setProficiencies(computedStats.additionalProficiencies.armor, "armor");
+        }
+        if (computedStats.additionalProficiencies.weapon.length) {
+            setProficiencies(computedStats.additionalProficiencies.weapon, "weapon");
+        }
+    }
+}
+
+/**
  * Zusätzliche Waffeneigenschaften (z. B. Custom-Class Grants) an #weaponProperties anhängen.
  * Bestehende Tab-1-Einträge bleiben erhalten; Dubletten werden vermieden.
  */
@@ -2143,10 +2477,14 @@ function mergeAdditionalWeaponProperties(propertyIds) {
 /**
  * Wird aufgerufen, wenn eine Rüstungs-Checkbox geklickt wird.
  * Aktualisiert AC und berechnet danach sofort alle Merkmale (Speed etc.) neu.
+ * @param {HTMLInputElement} [changedCheckbox] – die gerade geklickte Inventar-Checkbox
  */
-function handleArmorChange() {
+function handleArmorChange(changedCheckbox) {
+    // Nur eine Körperrüstung gleichzeitig (Schild ausgenommen)
+    enforceExclusiveBodyArmorEquipped(changedCheckbox || null);
+
     // 1. Zuerst die Rüstungs-Logik (Sperren & AC-Wert)
-    updateArmorClass(); 
+    updateArmorClass();
 
     // 2. Daten laden (für Basiswerte)
     const charData = loadCharacterDataFromStorage();
@@ -2154,7 +2492,7 @@ function handleArmorChange() {
     // 3. WICHTIG: Klassen- und Talent-Logik neu anstoßen!
     // Dadurch werden die Handler (fastMovement, unarmoredMovement) ausgeführt,
     // die jetzt den neuen Checkbox-Status prüfen.
-    applyClassFeatureLogic(charData); 
+    applyClassFeatureLogic(charData);
     applyTalentFeatureLogic(charData);
 }
 
@@ -2220,11 +2558,6 @@ function processTools(data) {
 
     // 3. Spiele
     addById(data.proficiencies.bg_games, 3);
-    
-    // (Hinweis: bg_tools hattest du oben in der Liste nicht explizit genannt, 
-    // aber falls 'tool_background' existiert, würde es hier auch Sinn machen: 
-    // addById(data.proficiencies.bg_tools, 1); )
-
 
     // --- QUELLE 4-6: KLASSE (classForm) ---
     if (data.classForm) {
@@ -2255,6 +2588,135 @@ function processTools(data) {
 /* --------------------------------------------------------------------------
    3 e. Ausrüstung (Inventar & Geldbörse)
    -------------------------------------------------------------------------- */
+
+/**
+ * Ersteller-Zeilen (Waffen/Rüstung) tragen data-creator-bound + data-index.
+ * Wird der Zeilenname geleert, wird die Kopplung aufgehoben — Zeile ist wieder frei nutzbar.
+ */
+function releaseInventoryCreatorRowBinding(row, options) {
+    if (!row) return false;
+    const opts = options || {};
+    const cb = row.querySelector('input[type="checkbox"].equipped-checkbox')
+        || row.querySelector('input[type="checkbox"]');
+    if (!cb || !cb.hasAttribute("data-creator-bound")) return false;
+
+    const wasChecked = cb.checked;
+    cb.removeAttribute("data-creator-bound");
+    cb.removeAttribute("data-index");
+    cb.removeAttribute("data-source-id");
+
+    // Nur bei geleertem Namen Anlege-Status zurücksetzen — manueller Ersatzname behält Auswahl
+    if (opts.uncheckOnRelease === true && wasChecked) {
+        cb.checked = false;
+    }
+    // Schild-Marker immer an den aktuellen Namen koppeln (nicht am alten Ersteller-Schild festhalten)
+    if (typeof syncInventoryArmorRowShieldState === "function") {
+        syncInventoryArmorRowShieldState(row);
+    }
+    if (opts.markManual) {
+        row.setAttribute("data-inventory-manual", "1");
+    }
+
+    if (opts.refreshWeapons !== false && typeof updatePhysicalAttacks === "function") {
+        updatePhysicalAttacks();
+    }
+    if (opts.refreshArmor !== false && typeof updateArmorClass === "function") {
+        updateArmorClass();
+        const charData = loadCharacterDataFromStorage();
+        if (typeof applyClassFeatureLogic === "function") applyClassFeatureLogic(charData);
+    }
+    return true;
+}
+
+/** Prüft, ob Ersteller-Zeile noch zum gespeicherten Inventar-Eintrag passt. */
+function isInventoryCreatorRowStillValid(row, processedItems, boxId) {
+    const cb = row?.querySelector('input[type="checkbox"]');
+    if (!cb || !cb.hasAttribute("data-creator-bound")) return true;
+
+    const nameInput = row.querySelectorAll("input")[1];
+    const rowName = (nameInput?.value || "").trim();
+    if (!rowName) return false;
+
+    const index = parseInt(cb.getAttribute("data-index"), 10);
+    if (!Number.isFinite(index)) return false;
+
+    const item = processedItems[index];
+    if (!item) return false;
+
+    const rawLabel = item.selectedVaries ? item.selectedVaries : item.label;
+    const translated = (translations[currentLanguage] && translations[currentLanguage][rawLabel])
+        ? translations[currentLanguage][rawLabel]
+        : rawLabel;
+
+    if (boxId === 2 && typeof armorList !== "undefined") {
+        const armorData = armorList.find(a => a.translationLabel === item.label);
+        if (armorData?.translationShortLabel && armorData.translationShortLabel !== 0) {
+            const shortName = (translations[currentLanguage] && translations[currentLanguage][armorData.translationShortLabel])
+                ? translations[currentLanguage][armorData.translationShortLabel]
+                : armorData.translationShortLabel;
+            const withShort = `${translated} (${shortName})`;
+            if (rowName === withShort || rowName === translated) return true;
+        }
+    }
+
+    return rowName === translated;
+}
+
+/** Bei geleertem/geändertem Namen: Ersteller-Kopplung der Inventarzeile lösen. */
+function validateInventoryCreatorRowBinding(row, boxId, options) {
+    if (!row) return;
+    const opts = options || {};
+    const cb = row.querySelector('input[type="checkbox"]');
+    if (!cb) return;
+
+    const nameInput = row.querySelectorAll("input")[1];
+    const rowName = (nameInput?.value || "").trim();
+    const refreshOpts = opts.skipRefresh
+        ? { refreshWeapons: false, refreshArmor: false }
+        : { refreshWeapons: boxId === 1, refreshArmor: boxId === 2 };
+
+    // Geleerte Zeile: Anlegen unmöglich (Waffe / Rüstung / Schild), Kopplung lösen
+    if (!rowName) {
+        if (cb.hasAttribute("data-creator-bound")) {
+            releaseInventoryCreatorRowBinding(row, Object.assign({
+                uncheckOnRelease: true
+            }, refreshOpts));
+        } else {
+            cb.checked = false;
+            if (boxId === 2) {
+                cb.classList.remove("inventory-shield-checkbox");
+            }
+            if (!opts.skipRefresh) {
+                if (boxId === 1 && typeof updatePhysicalAttacks === "function") {
+                    updatePhysicalAttacks();
+                }
+                if (boxId === 2 && typeof updateArmorClass === "function") {
+                    updateArmorClass();
+                    const charDataEmpty = loadCharacterDataFromStorage();
+                    if (typeof applyClassFeatureLogic === "function") {
+                        applyClassFeatureLogic(charDataEmpty);
+                    }
+                }
+            }
+        }
+        return;
+    }
+
+    if (!cb.hasAttribute("data-creator-bound")) return;
+
+    const charData = loadCharacterDataFromStorage();
+    let items = [];
+    if (boxId === 1) items = charData.equipment?.weapons || [];
+    else if (boxId === 2) items = charData.equipment?.armor || [];
+    items = mergeDuplicateItems(expandInventoryPacks(items));
+
+    if (!isInventoryCreatorRowStillValid(row, items, boxId)) {
+        releaseInventoryCreatorRowBinding(row, Object.assign({
+            uncheckOnRelease: false,
+            markManual: true
+        }, refreshOpts));
+    }
+}
 
 function processInventory(data) {
     // --- 1. GELDBÖRSE --- (unverändert)
@@ -2354,6 +2816,7 @@ function processInventory(data) {
 
                 if (box.col3 === 'checkbox') {
                     inputs[2].setAttribute('data-index', i);
+                    inputs[2].setAttribute('data-creator-bound', '1');
                     
                     // --- NEU: EINDEUTIGE ID FÜR DIE KOPPLUNG AN DIE ANGRIFFSTABELLE ---
                     const sourceId = `inv-${box.id}-row-${i}`;
@@ -2399,7 +2862,7 @@ function processInventory(data) {
                             inputs[2].setAttribute('onchange', 'toggleShield(this, "inventory")');
                             inputs[2].classList.add('inventory-shield-checkbox'); 
                         } else {
-                            inputs[2].setAttribute('onchange', 'handleArmorChange()');
+                            inputs[2].setAttribute('onchange', 'handleArmorChange(this)');
                         }
                     }
                 } else if (box.col3 === 'ability' && inputs[2]) {
@@ -2417,7 +2880,10 @@ function processInventory(data) {
                     if (inputs[2].type === "checkbox") {
                         inputs[2].checked = false;
                         inputs[2].removeAttribute('onchange');
-                        inputs[2].removeAttribute('data-source-id'); // ID entfernen
+                        inputs[2].removeAttribute('data-source-id');
+                        inputs[2].removeAttribute('data-creator-bound');
+                        inputs[2].removeAttribute('data-index');
+                        inputs[2].classList.remove('inventory-shield-checkbox');
                     } else {
                         inputs[2].value = "";
                     }
@@ -2474,10 +2940,34 @@ function calculateBestWeaponMod(weaponData, strMod, dexMod) {
 }
 
 /**
+ * Attribut-Label-Key → übersetzte Abkürzung (strengthLabel → STÄ/STR).
+ * @param {string} abilityLabelKey - z. B. dexterityLabel
+ * @returns {string}
+ */
+function getAttributeAbbrFromLabelKey(abilityLabelKey) {
+    if (!abilityLabelKey) return "-";
+
+    const labelKey = String(abilityLabelKey).trim();
+    if (!labelKey) return "-";
+
+    const abbrKey = labelKey.endsWith("Label")
+        ? labelKey.replace(/Label$/, "AbbrLabel")
+        : `${labelKey}AbbrLabel`;
+
+    const lang = translations[currentLanguage] || translations.de || {};
+    if (lang[abbrKey]) {
+        return String(lang[abbrKey]).toUpperCase();
+    }
+
+    const full = lang[labelKey] || labelKey;
+    return String(full).substring(0, 3).toUpperCase();
+}
+
+/**
  * Löst das Attribut (toolAbility) für ein Inventar-Werkzeug auf.
  * Instrumente/Spiele ohne toolAbility → "-".
  * @param {object} item - Eintrag aus equipment.tools
- * @returns {string} Übersetzter Attributname oder "-"
+ * @returns {string} Attribut-Abkürzung oder "-"
  */
 function resolveInventoryToolAbility(item) {
     if (!item || !item.label) return '-';
@@ -2496,8 +2986,7 @@ function resolveInventoryToolAbility(item) {
     const abilityKey = toolData && toolData.toolAbility ? toolData.toolAbility : null;
     if (!abilityKey) return '-';
 
-    const lang = translations[currentLanguage];
-    return (lang && lang[abilityKey]) ? lang[abilityKey] : abilityKey;
+    return getAttributeAbbrFromLabelKey(abilityKey);
 }
 
 /**
@@ -2623,14 +3112,118 @@ function getCapacityString(itemLabel) {
 
 // BEREICH: PHYSISCHE ANGRIFFE (LOGIK & RENDERING)
 
+/** Physische-Angriffe-Tabelle (Seite 2) — eindeutig, nicht Inventar/Glaube. */
+function getPhysicalAttacksTable() {
+    return document.querySelector('[data-dc-table-id="physical_attacks"]')
+        || document.getElementById("th_weapon_attack")?.closest("table")
+        || null;
+}
+
+/**
+ * Zeile als manuell überschrieben markieren (Export + Schutz vor Auto-Regenerierung).
+ * @param {HTMLTableRowElement} row
+ */
+function markPhysicalAttackRowManual(row) {
+    if (!row) return;
+    row.setAttribute("data-attack-manual", "1");
+}
+
+/**
+ * Manuelle Markierung entfernen, wenn die Zeile komplett leer ist.
+ * @param {HTMLTableRowElement} row
+ */
+function clearPhysicalAttackRowManualIfEmpty(row) {
+    if (!row || !row.hasAttribute("data-attack-manual")) return;
+    const hasContent = Array.from(row.querySelectorAll("input")).some(inp => (inp.value || "").trim() !== "");
+    if (!hasContent) row.removeAttribute("data-attack-manual");
+}
+
 /**
  * Wird aufgerufen, wenn eine Waffe im Inventar "equipped" (angehakt) wird.
  * Liest alle gecheckten Waffen aus und füllt die obere Tabelle.
  */
+/** Anzeigenamen einer Inventarzeile (Vollname + optional Kurzform in Klammern). */
+function getInventoryItemDisplayNameVariants(translationLabel, shortLabel) {
+    const lang = (typeof currentLanguage !== "undefined" && currentLanguage)
+        ? currentLanguage
+        : ((typeof currentLang !== "undefined" && currentLang) ? currentLang : "de");
+    const t = (typeof translations !== "undefined" && translations[lang]) ? translations[lang] : {};
+    const full = String(t[translationLabel] || translationLabel).trim();
+    const names = full ? [full] : [];
+    if (shortLabel && shortLabel !== 0) {
+        const short = String(t[shortLabel] || shortLabel).trim();
+        if (short) names.push(`${full} (${short})`);
+    }
+    return names;
+}
+
+/** Rüstung anhand des Inventar-Anzeigenamens finden (Creator- und manuelle Zeilen). */
+function findArmorDataByInventoryDisplayName(displayName) {
+    if (!displayName || typeof armorList === "undefined") return null;
+    const trimmedLower = String(displayName).trim().toLowerCase();
+    if (!trimmedLower) return null;
+    for (const armor of armorList) {
+        const variants = getInventoryItemDisplayNameVariants(armor.translationLabel, armor.translationShortLabel);
+        if (variants.some(v => {
+            const vLower = v.toLowerCase();
+            return trimmedLower === vLower || trimmedLower.startsWith(vLower + " ");
+        })) return armor;
+    }
+    return null;
+}
+
+/** Waffe anhand des Inventar-Anzeigenamens finden (Creator- und manuelle Zeilen). */
+function findWeaponDataByInventoryDisplayName(displayName) {
+    if (!displayName || typeof weaponList === "undefined") return null;
+    const trimmedLower = String(displayName).trim().toLowerCase();
+    if (!trimmedLower) return null;
+    for (const weapon of weaponList) {
+        const variants = getInventoryItemDisplayNameVariants(weapon.translationLabel, weapon.translationShortLabel);
+        if (variants.some(v => {
+            const vLower = v.toLowerCase();
+            return trimmedLower === vLower || trimmedLower.startsWith(vLower + " ");
+        })) return weapon;
+    }
+    return null;
+}
+
+/** RK einer Körperrüstung (ohne Schild) berechnen. */
+function computeBodyArmorAc(armorData, dexMod) {
+    const baseVal = parseInt(armorData.armorClassValue, 10) || 10;
+    let modVal = 0;
+    if (armorData.armorClassMod === "dexMod") {
+        let applicableDexMod = dexMod;
+        const catNum = armorData.armorCategoryNumber;
+        if (catNum === 2) {
+            let maxDex = 2;
+            const dexScore = parseInt(document.getElementById("dexterityScore")?.value, 10) || 10;
+            if (window.hasMediumArmorMaster === true && dexScore >= 16) maxDex = 3;
+            if (applicableDexMod > maxDex) applicableDexMod = maxDex;
+        } else if (catNum === 3) {
+            applicableDexMod = 0;
+        }
+        modVal = applicableDexMod;
+    }
+    let ac = baseVal + modVal;
+    if (window.hasDefenseStyle === true) ac += 1;
+    return ac;
+}
+
+function getEquippedArmorDisplayLabel(armorData, itemLabel) {
+    if (armorData.translationShortLabel && armorData.translationShortLabel !== 0) {
+        return (translations[currentLanguage] && translations[currentLanguage][armorData.translationShortLabel])
+            ? translations[currentLanguage][armorData.translationShortLabel]
+            : armorData.translationShortLabel;
+    }
+    return (translations[currentLanguage] && translations[currentLanguage][itemLabel])
+        ? translations[currentLanguage][itemLabel]
+        : itemLabel;
+}
+
 function updatePhysicalAttacks() {
-    const attackHeader = document.getElementById('th_weapon_attack');
-    if (!attackHeader) return;
-    const attackRows = attackHeader.closest('table').querySelector('tbody').querySelectorAll('tr');
+    const attackTable = getPhysicalAttacksTable();
+    if (!attackTable) return;
+    const attackRows = attackTable.querySelectorAll('tbody tr');
     
     const inventoryHeader = document.getElementById('th_amount_1');
     if (!inventoryHeader) return;
@@ -2644,16 +3237,30 @@ function updatePhysicalAttacks() {
     const activeDbWeapons = [];
     inventoryRows.forEach(iRow => {
         const cb = iRow.querySelector('input[type="checkbox"]');
-        if (cb && cb.checked) {
+        if (!cb || !cb.checked) return;
+
+        if (cb.hasAttribute("data-creator-bound")) {
+            validateInventoryCreatorRowBinding(iRow, 1, { skipRefresh: true });
+        }
+
+        if (cb.hasAttribute("data-creator-bound")) {
             const index = parseInt(cb.getAttribute('data-index'), 10);
             const item = processedWeapons[index];
-            if (item) {
-                // Prüfen, ob die Waffe in der Datenbank existiert
-                const wData = typeof weaponList !== 'undefined' ? weaponList.find(w => w.translationLabel === item.label) : null;
-                if (wData) {
-                    activeDbWeapons.push({ item, wData });
-                }
-            }
+            if (!item) return;
+            const wData = typeof weaponList !== 'undefined'
+                ? weaponList.find(w => w.translationLabel === item.label)
+                : null;
+            if (wData) activeDbWeapons.push({ item, wData });
+            return;
+        }
+
+        // Manuelle Inventarzeile: Anzeigename gegen Waffenliste matchen
+        const nameInput = iRow.querySelectorAll("input")[1];
+        const rowName = (nameInput?.value || "").trim();
+        if (!rowName) return;
+        const wData = findWeaponDataByInventoryDisplayName(rowName);
+        if (wData) {
+            activeDbWeapons.push({ item: { label: wData.translationLabel }, wData });
         }
     });
 
@@ -2661,6 +3268,7 @@ function updatePhysicalAttacks() {
     // Wir löschen NUR Zeilen, die eine Datenbank-Verknüpfung hatten, aber nicht mehr aktiv sind.
     // Manuelle Zeilen (ohne data-db-linked) bleiben absolut unberührt.
     attackRows.forEach(aRow => {
+        if (aRow.hasAttribute("data-attack-manual")) return;
         const isLinked = aRow.hasAttribute('data-db-linked');
         const currentName = aRow.querySelectorAll('input')[0].value;
 
@@ -2694,8 +3302,11 @@ function updatePhysicalAttacks() {
         const alreadyInTable = Array.from(attackRows).some(r => r.querySelectorAll('input')[0].value === translatedName);
 
         if (!alreadyInTable) {
-            // Suche erste freie Zeile
-            const freeRow = Array.from(attackRows).find(r => r.querySelectorAll('input')[0].value === "");
+            // Suche erste freie Zeile (manuelle Overrides nicht überschreiben)
+            const freeRow = Array.from(attackRows).find(r => {
+                if (r.hasAttribute("data-attack-manual")) return false;
+                return r.querySelectorAll('input')[0].value === "";
+            });
             if (freeRow) {
                 freeRow.setAttribute('data-db-linked', 'true');
                 renderAttackRow(freeRow, dbW.item, charData, strMod, dexMod, pb);
@@ -3003,13 +3614,17 @@ function updateArmorClass() {
         for (let row of rows) {
             const checkbox = row.querySelector('input[type="checkbox"]');
             
-            // Check: Ist das ein Schild?
-            if (checkbox && checkbox.classList.contains('inventory-shield-checkbox')) {
+            // Check: Ist das ein Schild mit Namen? (geleerte Zeile zählt nicht)
+            if (checkbox && isInventoryArmorRowShield(row, checkbox)) {
                 shieldAvailableInInventory = true;
             }
 
             // Check: Ist diese Rüstung angelegt?
-            if (checkbox && checkbox.checked) {
+            if (checkbox && checkbox.checked && checkbox.hasAttribute("data-creator-bound")) {
+                validateInventoryCreatorRowBinding(row, 2, { skipRefresh: true });
+            }
+
+            if (checkbox && checkbox.checked && checkbox.hasAttribute("data-creator-bound")) {
                 const index = parseInt(checkbox.getAttribute('data-index'), 10);
                 const item = processedArmor[index];
 
@@ -3018,68 +3633,27 @@ function updateArmorClass() {
                     
                     // RÜSTUNG (Kein Schild)
                     if (armorData && armorData.armorCategoryNumber !== 4) {
-                        
-                        // Basis AC der Rüstung
-                        const baseVal = parseInt(armorData.armorClassValue) || 10;
-                        let modVal = 0;
-
-                        // --- MODIFIKATOR BERECHNUNG ---
-                        if (armorData.armorClassMod === 'dexMod') {
-                            
-                            // Standardmäßig nehmen wir den vollen DexMod
-                            let applicableDexMod = dexMod;
-                            const catNum = armorData.armorCategoryNumber;
-
-                            // KATEGORIE 2: MITTELSCHWERE RÜSTUNG (Medium Armor)
-                            if (catNum === 2) {
-                                let maxDex = 2; // Standard-Cap: +2
-
-                                // Talent-Check: "Medium Armor Master"
-                                // Bedingung: Talent aktiv UND GE-Wert >= 16
-                                const dexScore = parseInt(document.getElementById('dexterityScore').value) || 10;
-                                
-                                if (window.hasMediumArmorMaster === true && dexScore >= 16) {
-                                    maxDex = 3; // Erhöhtes Cap
-                                }
-
-                                // Cap anwenden
-                                if (applicableDexMod > maxDex) {
-                                    applicableDexMod = maxDex;
-                                }
-                            }
-                            // KATEGORIE 3: SCHWERE RÜSTUNG (Heavy Armor)
-                            else if (catNum === 3) {
-                                applicableDexMod = 0; // Kein Dex-Bonus
-                            }
-                            // KATEGORIE 1: LEICHTE RÜSTUNG
-                            // Kein Cap (applicableDexMod bleibt unverändert)
-
-                            modVal = applicableDexMod;
-                        }
-
-                        finalAC = baseVal + modVal;
-
-                        // --- KAMPFSTIL VERTEIDIGUNG (DEFENSE) ---
-                        // Bedingung: Rüstung getragen (sind wir hier im Block) UND Talent vorhanden
-                        if (window.hasDefenseStyle === true) {
-                            finalAC += 1;
-                        }
-                        
-                        // --- Short Label Logik ---
-                        if (armorData.translationShortLabel && armorData.translationShortLabel !== 0) {
-                            equippedArmorName = (translations[currentLanguage] && translations[currentLanguage][armorData.translationShortLabel]) 
-                                                ? translations[currentLanguage][armorData.translationShortLabel] 
-                                                : armorData.translationShortLabel;
-                        } else {
-                            equippedArmorName = (translations[currentLanguage] && translations[currentLanguage][item.label]) 
-                                                ? translations[currentLanguage][item.label] 
-                                                : item.label;
-                        }
+                        finalAC = computeBodyArmorAc(armorData, dexMod);
+                        equippedArmorName = getEquippedArmorDisplayLabel(armorData, item.label);
                     }
+                }
+            } else if (checkbox && checkbox.checked) {
+                if (isInventoryArmorRowShield(row, checkbox)) continue;
+                if (!inventoryEquipRowHasName(row)) continue;
+                const nameInput = row.querySelectorAll("input")[1];
+                const rowName = (nameInput?.value || "").trim();
+                if (!rowName) continue;
+                const armorData = findArmorDataByInventoryDisplayName(rowName);
+                if (armorData && armorData.armorCategoryNumber !== 4) {
+                    finalAC = computeBodyArmorAc(armorData, dexMod);
+                    equippedArmorName = getEquippedArmorDisplayLabel(armorData, armorData.translationLabel);
                 }
             }
         }
     }
+
+    // 2b. Geleerte Zeilen dürfen nicht „angelegt“ bleiben (Rüstung + Schild)
+    enforceInventoryEquipRequiresName(2);
 
     // 3. Schild-Logik auf Seite 1
     const shieldCheckboxPage1 = document.getElementById('shieldActive');
@@ -3109,38 +3683,216 @@ function updateArmorClass() {
 
 /**
  * Synchronisiert die Schild-Checkboxen zwischen Seite 1 und Inventar.
+ * Nur Zeilen mit Namen zählen; Rüstung+Schild gleichzeitig bleibt erlaubt.
  * @param {HTMLElement} element - Das angeklickte Element
  * @param {string} source - 'page1' oder 'inventory'
  */
 function toggleShield(element, source) {
-    const isChecked = element.checked;
-    
-    // 1. Referenzen holen
+    const namedShields = getNamedInventoryShieldCheckboxes();
     const page1Checkbox = document.getElementById('shieldActive');
-    
-    // Inventory Checkbox suchen (Markiert mit Klasse 'inventory-shield-checkbox')
-    // Achtung: Es könnte theoretisch mehrere Schilde im Inventar geben. Wir nehmen alle.
-    const inventoryShields = document.querySelectorAll('.inventory-shield-checkbox');
 
-    // 2. Synchronisieren
-    if (source === 'page1') {
-        // Seite 1 geklickt -> Inventar updaten
-        inventoryShields.forEach(cb => cb.checked = isChecked);
-    } else {
-        // Inventar geklickt -> Seite 1 updaten
-        if (page1Checkbox) page1Checkbox.checked = isChecked;
-        
-        // Auch alle anderen Schilde im Inventar gleichschalten (wenn man 2 hat)
-        inventoryShields.forEach(cb => cb.checked = isChecked);
+    // Kein benanntes Schild im Inventar → Anlegen unmöglich
+    if (!namedShields.length) {
+        if (element) element.checked = false;
+        if (page1Checkbox) {
+            page1Checkbox.checked = false;
+            page1Checkbox.disabled = true;
+        }
+        document.querySelectorAll('.inventory-shield-checkbox').forEach(cb => {
+            cb.checked = false;
+        });
+        updateArmorClass();
+        const charDataEmpty = loadCharacterDataFromStorage();
+        applyClassFeatureLogic(charDataEmpty);
+        applyTalentFeatureLogic(charDataEmpty);
+        return;
     }
 
-    // 3. AC neu berechnen
+    // Inventar-Klick auf geleerte Zeile abfangen
+    if (source === 'inventory' && element) {
+        const row = element.closest('tr');
+        if (row && !inventoryEquipRowHasName(row)) {
+            element.checked = false;
+            element.classList.remove('inventory-shield-checkbox');
+            updateArmorClass();
+            return;
+        }
+    }
+
+    const isChecked = !!element?.checked;
+
+    if (source === 'page1') {
+        namedShields.forEach(cb => { cb.checked = isChecked; });
+    } else {
+        if (page1Checkbox) page1Checkbox.checked = isChecked;
+        namedShields.forEach(cb => { cb.checked = isChecked; });
+    }
+
     updateArmorClass();
 
-    // Damit Mönch/Barbar sofort merken, dass ein Schild getragen wird
     const charData = loadCharacterDataFromStorage();
     applyClassFeatureLogic(charData);
     applyTalentFeatureLogic(charData);
+}
+
+/**
+ * true = Inventar-Zeile hat einen nicht-leeren Ausrüstungsnamen (Spalte 2).
+ */
+function inventoryEquipRowHasName(row) {
+    if (!row) return false;
+    const nameInput = row.querySelectorAll("input")[1];
+    return String(nameInput?.value || "").trim() !== "";
+}
+
+/**
+ * true = Zeilenname entspricht einem Schild (armorCategory 4 / shieldLabel).
+ * Nur Namensabgleich — die CSS-Klasse allein zählt nicht (verhindert Ex-Schild-Zeilen).
+ */
+function isInventoryArmorRowShield(row, checkbox) {
+    if (!row || !inventoryEquipRowHasName(row)) return false;
+    if (typeof armorList === "undefined") return false;
+
+    const inputs = row.querySelectorAll("input");
+    const nameVal = String(inputs[1]?.value || "").trim();
+    const lang = (typeof currentLanguage !== "undefined" && currentLanguage)
+        ? currentLanguage
+        : ((typeof currentLang !== "undefined" && currentLang) ? currentLang : "de");
+    const t = (typeof translations !== "undefined" && translations[lang]) ? translations[lang] : {};
+    const nameLower = nameVal.toLowerCase();
+
+    return armorList.some(a => {
+        if (!a || (a.armorCategoryNumber !== 4 && a.translationLabel !== "shieldLabel")) return false;
+        const full = String(t[a.translationLabel] || a.translationLabel).trim();
+        if (!full) return false;
+        const fullLower = full.toLowerCase();
+        return nameLower === fullLower || nameLower.startsWith(fullLower + " ");
+    });
+}
+
+/**
+ * Schild-Marker und onchange an den aktuellen Zeilennamen koppeln.
+ * Verhindert, dass umbenannte Ex-Schild-Zeilen weiter als Schild gelten (auch nach Refresh).
+ * @returns {boolean} true = Zeile ist jetzt ein Schild
+ */
+function syncInventoryArmorRowShieldState(row) {
+    const cb = row?.querySelector('input[type="checkbox"]');
+    if (!cb) return false;
+
+    const hadShieldMarker = cb.classList.contains("inventory-shield-checkbox");
+    cb.classList.remove("inventory-shield-checkbox");
+
+    const isShieldNow = isInventoryArmorRowShield(row, cb);
+    if (isShieldNow) {
+        cb.classList.add("inventory-shield-checkbox");
+        cb.setAttribute("onchange", 'toggleShield(this, "inventory")');
+        return true;
+    }
+
+    const onchange = cb.getAttribute("onchange") || "";
+    if (hadShieldMarker || onchange.includes("toggleShield")) {
+        cb.setAttribute("onchange", "handleArmorChange(this)");
+        // Ex-Schild mit neuem Nicht-Schild-Namen: Anlegen lösen (kein Parallel-Schild mehr)
+        if (hadShieldMarker && cb.checked && inventoryEquipRowHasName(row)) {
+            cb.checked = false;
+        }
+    }
+    return false;
+}
+
+/**
+ * Alle Rüstungs-Inventarzeilen: Schild-Status am Namen ausrichten.
+ */
+function syncAllInventoryArmorShieldStates() {
+    const table = document.querySelector('[data-dc-table-id="inv_armor"]');
+    if (!table) return;
+    table.querySelectorAll("tbody tr").forEach(row => {
+        syncInventoryArmorRowShieldState(row);
+    });
+}
+
+/**
+ * Anlege-Checkbox nur mit Namen — geleerte Waffen-/Rüstungs-/Schild-Zeilen abwählen.
+ * @param {1|2} boxId – 1 Waffen, 2 Rüstung/Schild
+ */
+function enforceInventoryEquipRequiresName(boxId) {
+    const tableId = boxId === 1 ? "inv_weapons" : "inv_armor";
+    const table = document.querySelector(`[data-dc-table-id="${tableId}"]`);
+    if (!table) return;
+
+    let clearedShield = false;
+    table.querySelectorAll("tbody tr").forEach(row => {
+        const cb = row.querySelector('input[type="checkbox"]');
+        if (!cb || !cb.checked) return;
+        if (inventoryEquipRowHasName(row)) return;
+
+        cb.checked = false;
+        if (boxId === 2) {
+            if (cb.classList.contains("inventory-shield-checkbox")) {
+                clearedShield = true;
+                cb.classList.remove("inventory-shield-checkbox");
+            }
+        }
+    });
+
+    if (clearedShield) {
+        const page1 = document.getElementById("shieldActive");
+        if (page1) {
+            page1.checked = false;
+        }
+    }
+}
+
+/**
+ * Alle Inventar-Schild-Checkboxen mit gültigem Schild-Namen (anlegbar).
+ * @returns {HTMLInputElement[]}
+ */
+function getNamedInventoryShieldCheckboxes() {
+    const headerEl = document.getElementById("th_amount_2");
+    if (!headerEl) return [];
+    const rows = headerEl.closest("table")?.querySelector("tbody")?.querySelectorAll("tr");
+    if (!rows) return [];
+
+    const out = [];
+    rows.forEach(row => {
+        const cb = row.querySelector('input[type="checkbox"]');
+        if (!cb) return;
+        if (!isInventoryArmorRowShield(row, cb)) return;
+        out.push(cb);
+    });
+    return out;
+}
+
+/**
+ * Nur eine Körperrüstung angelegt — weitere abwählen (Schild bleibt erlaubt).
+ * @param {HTMLInputElement} [preferredCheckbox] – gerade aktivierte Checkbox hat Vorrang
+ */
+function enforceExclusiveBodyArmorEquipped(preferredCheckbox) {
+    const headerEl = document.getElementById("th_amount_2");
+    if (!headerEl) return;
+
+    const rows = headerEl.closest("table").querySelector("tbody").querySelectorAll("tr");
+    const bodyArmorChecks = [];
+
+    rows.forEach(row => {
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        if (!checkbox || !checkbox.checked) return;
+        if (isInventoryArmorRowShield(row, checkbox)) return;
+        bodyArmorChecks.push(checkbox);
+    });
+
+    if (bodyArmorChecks.length <= 1) return;
+
+    let keep = null;
+    if (preferredCheckbox && preferredCheckbox.checked
+        && bodyArmorChecks.includes(preferredCheckbox)) {
+        keep = preferredCheckbox;
+    } else {
+        keep = bodyArmorChecks[0];
+    }
+
+    bodyArmorChecks.forEach(cb => {
+        if (cb !== keep) cb.checked = false;
+    });
 }
 
 /**
@@ -3151,6 +3903,12 @@ function updateArmorLocking() {
     const headerEl = document.getElementById('th_amount_2'); // Rüstungs-Tabelle
     if (!headerEl) return;
 
+    // Geleerte Namen: Anlegen unmöglich (Körperrüstung + Schild)
+    enforceInventoryEquipRequiresName(2);
+
+    // Zuerst Doppel-Anlagen bereinigen (nicht nur sperren) — Schild bleibt parallel erlaubt
+    enforceExclusiveBodyArmorEquipped(null);
+
     const rows = headerEl.closest('table').querySelector('tbody').querySelectorAll('tr');
     
     let isBodyArmorEquipped = false;
@@ -3159,8 +3917,7 @@ function updateArmorLocking() {
     // 1. Prüfen: Ist aktuell eine Körperrüstung (kein Schild) angelegt?
     rows.forEach((row, index) => {
         const checkbox = row.querySelector('input[type="checkbox"]');
-        // Wir erkennen Schilde an der Klasse, die wir in processInventory gesetzt haben
-        const isShield = checkbox && checkbox.classList.contains('inventory-shield-checkbox');
+        const isShield = isInventoryArmorRowShield(row, checkbox);
         
         if (checkbox && checkbox.checked && !isShield) {
             isBodyArmorEquipped = true;
@@ -3171,21 +3928,36 @@ function updateArmorLocking() {
     // 2. Sperren/Entsperren
     rows.forEach((row, index) => {
         const checkbox = row.querySelector('input[type="checkbox"]');
-        const isShield = checkbox && checkbox.classList.contains('inventory-shield-checkbox');
+        if (!checkbox) return;
 
-        // Schilde werden hiervon nicht beeinflusst (eigene Logik via toggleShield)
-        if (checkbox && !isShield) {
-            if (isBodyArmorEquipped && index !== equippedRowIndex) {
-                // Eine andere Rüstung ist an -> diese hier sperren
-                checkbox.disabled = true;
-                row.classList.add('disabled-inventory-row');
-            } else {
-                // Keine Rüstung an ODER dies ist die angelegte Rüstung -> freigeben
-                // (Wichtig: Nur freigeben, wenn wir im EditMode sind oder es generell erlaubt ist.
-                // Da Inventory-Checkboxen in BoxConfig 'checkbox' sind, sind sie per default klickbar)
-                checkbox.disabled = false;
-                row.classList.remove('disabled-inventory-row');
+        const isShield = isInventoryArmorRowShield(row, checkbox)
+            || checkbox.classList.contains('inventory-shield-checkbox');
+        const hasName = inventoryEquipRowHasName(row);
+
+        // Ohne Namen: Anlege-Checkbox sperren (Rüstung und Schild)
+        if (!hasName) {
+            checkbox.checked = false;
+            checkbox.disabled = true;
+            row.classList.add('disabled-inventory-row');
+            if (checkbox.classList.contains('inventory-shield-checkbox')) {
+                checkbox.classList.remove('inventory-shield-checkbox');
             }
+            return;
+        }
+
+        // Schilde mit Namen: frei (zusätzlich zur Körperrüstung)
+        if (isShield) {
+            checkbox.disabled = false;
+            row.classList.remove('disabled-inventory-row');
+            return;
+        }
+
+        if (isBodyArmorEquipped && index !== equippedRowIndex) {
+            checkbox.disabled = true;
+            row.classList.add('disabled-inventory-row');
+        } else {
+            checkbox.disabled = false;
+            row.classList.remove('disabled-inventory-row');
         }
     });
 }
@@ -3400,6 +4172,45 @@ const CHOICE_LIST_MAP = {
     'eldritchInvocations': 'eldritchInvocationOptionsList'  // Hexenmeister
 };
 
+// ID-Feld pro [CHOICE_LIST]-Typ — nicht über Object.values matchen (z. B. level vs. eldritchInvocationOption)
+const CHOICE_LIST_ID_FIELD = {
+    'expertise': 'skillCategoryNumber',
+    'maneuvers': 'maneuverCategoryNumber',
+    'metamagics': 'ID',
+    'eldritchInvocations': 'eldritchInvocationOption'
+};
+
+const CHOICE_LIST_ID_FIELD_BY_LIST = {
+    'skillList': 'skillCategoryNumber',
+    'maneuverCategoryList': 'maneuverCategoryNumber',
+    'metamagicOptionsList': 'ID',
+    'eldritchInvocationOptionsList': 'eldritchInvocationOption'
+};
+
+function choiceListItemMatchesSavedId(item, idField, idInt) {
+    if (!item || !idField) return false;
+    const raw = item[idField];
+    if (raw == null) return false;
+    if (Array.isArray(raw)) return raw.some(v => parseInt(v, 10) === idInt);
+    return parseInt(raw, 10) === idInt;
+}
+
+function findChoiceListItemById(list, savedId, options = {}) {
+    const idInt = parseInt(savedId, 10);
+    if (!list || !Array.isArray(list) || !Number.isFinite(idInt)) return null;
+
+    const { fieldName, listName } = options;
+    const idField = (fieldName && CHOICE_LIST_ID_FIELD[fieldName])
+        || (listName && CHOICE_LIST_ID_FIELD_BY_LIST[listName])
+        || null;
+
+    if (idField) {
+        return list.find(obj => choiceListItemMatchesSavedId(obj, idField, idInt)) || null;
+    }
+
+    return list.find(obj => obj.id == idInt || obj.ID === idInt) || null;
+}
+
 // 1. Grundfunktion: Pfad im Objekt finden
 function getValueByPath(obj, path) {
     if (!path || !obj) return undefined;
@@ -3520,8 +4331,7 @@ function getSingleChoiceName(keyPath, globalData, className) {
     }
 
     if (list && Array.isArray(list)) {
-        // ID suchen (String vs Number sicherstellen)
-        const foundItem = list.find(item => item.id == val || Object.values(item).includes(parseInt(val)));
+        const foundItem = findChoiceListItemById(list, val, { listName });
         
         if (foundItem) {
             let labelKey = foundItem.translationLabel || foundItem.label;
@@ -3559,8 +4369,7 @@ function getDataLookupValue(keyString, globalData) {
 
     if (!list || !Array.isArray(list)) return "-";
 
-    // Item suchen
-    const foundItem = list.find(item => item.id == savedId || Object.values(item).includes(parseInt(savedId)));
+    const foundItem = findChoiceListItemById(list, savedId, { listName });
     if (!foundItem) return "-";
 
     let resultValue = foundItem[targetProp];
@@ -3590,9 +4399,7 @@ function getChoiceListHTML(keyPath, data) {
     let html = "<ul class='compact-list'>";
     
     val.forEach(savedId => {
-        const idInt = parseInt(savedId, 10);
-        // Robuste Suche (id oder irgendein Value)
-        const item = list.find(obj => obj.id == idInt || Object.values(obj).includes(idInt));
+        const item = findChoiceListItemById(list, savedId, { fieldName });
         
         if (item) {
             const labelKey = item.translationLabel || item.label;
@@ -3843,12 +4650,15 @@ function applyClassFeatureLogic(charData) {
     window.activeExpertiseIDs = [];
     window.speedBonusClass = 0;
     window.hasMartialArts = false;
+    window.hasJackOfAllTrades = false;
+    window.charismaCheckBonus = 0;
 
     // Basis-Speed (Spezies)
     let baseSpeedFT = 30;
-    const searchTerm = (charData.basic.species || "").toLowerCase() + "Label";
     if (typeof speciesList !== 'undefined') {
-        const sData = speciesList.find(s => s.translationLabel === searchTerm);
+        const sData = (typeof findSpeciesBySelectionValue === "function")
+            ? findSpeciesBySelectionValue(charData.basic.species || "")
+            : speciesList.find(s => s.translationLabel === ((charData.basic.species || "").toLowerCase() + "Label"));
         if (sData) baseSpeedFT = sData.speedFT;
     }
 
@@ -3864,7 +4674,10 @@ function applyClassFeatureLogic(charData) {
         additionalProficiencies: { armor: [], weapon: [] },
         additionalWeaponProperties: [],
         additionalLanguages: [],
-        bonusSpeedFT: 0 
+        bonusSpeedFT: 0,
+        charismaCheckBonus: 0,
+        hasJackOfAllTrades: false,
+        grantAllSavingThrows: false
     };
 
     const className = charData.basic.class; 
@@ -3900,6 +4713,16 @@ function applyClassFeatureLogic(charData) {
 
     if (computedStats.computedAC > 0) window.classFeatureAC = computedStats.computedAC;
     window.activeExpertiseIDs = computedStats.expertiseSkillIDs;
+    window.hasJackOfAllTrades = !!computedStats.hasJackOfAllTrades;
+    window.charismaCheckBonus = computedStats.charismaCheckBonus || 0;
+
+    // Disciplined Survivor: alle Rettungswürfe als geübt markieren
+    if (computedStats.grantAllSavingThrows) {
+        ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].forEach(attr => {
+            const cb = document.getElementById(`${attr}SavingTrained`);
+            if (cb) cb.checked = true;
+        });
+    }
 
     if (computedStats.additionalProficiencies.armor.length > 0) setProficiencies(computedStats.additionalProficiencies.armor, 'armor');
     if (computedStats.additionalProficiencies.weapon.length > 0) setProficiencies(computedStats.additionalProficiencies.weapon, 'weapon');
@@ -3908,8 +4731,9 @@ function applyClassFeatureLogic(charData) {
     }
 
     calculateFinalSpeed();
-    updateArmorClass();  
-    updateSkillValues(); 
+    updateArmorClass();
+    updateSavingThrowValues();
+    updateSkillValues();
 }
 
 /* --------------------------------------------------------------------------
@@ -3937,13 +4761,16 @@ function processFeats(data) {
         }
     }
 
-    // B. Spezies
-    if (data.feats.species) {
-        if (!collectedFeatIDs.has(data.feats.species)) {
-            collectedFeatIDs.add(data.feats.species);
-            orderedFeats.push({ id: data.feats.species, source: 'species' });
-        }
-    }
+    // B. Spezies (alle Herkunftstalente)
+    const speciesFeatIds = Array.isArray(data.feats.species)
+        ? data.feats.species
+        : (data.feats.species ? [data.feats.species] : []);
+    speciesFeatIds.forEach(featIdRaw => {
+        const fId = parseInt(featIdRaw, 10);
+        if (!fId || collectedFeatIDs.has(fId)) return;
+        collectedFeatIDs.add(fId);
+        orderedFeats.push({ id: fId, source: 'species' });
+    });
 
     // C. Klasse
     if (data.classForm && data.classForm.feats && Array.isArray(data.classForm.feats)) {
@@ -3988,6 +4815,27 @@ function processFeats(data) {
     let appendExpertiseList = false;
     let htmlContent = "";
 
+    /** true = Talent mit Fertigkeit/Expertise-Radio hat Expertise-Zweig gewählt (Scharfsinnig, Aufmerksam, Fertigkeitsexperte). */
+    const didFeatChooseExpertiseBranch = (featId) => {
+        const entry = (data.classForm?.feats || []).find(
+            f => parseInt(f.feat, 10) === featId
+        );
+        if (!entry || !Array.isArray(entry.dynamicChoices)) return false;
+        const lvl = parseInt(entry.level, 10);
+        if (!lvl) return false;
+        const expertiseRadioId = `expertiseRadio${lvl}_expert`;
+        return entry.dynamicChoices.some(
+            c => c.id === expertiseRadioId && String(c.value) === "expertise"
+        );
+    };
+
+    /** Talente mit Radio Fertigkeit ↔ Expertise (nicht z. B. Gabe des Geschicks). */
+    const FEAT_LABELS_EXPERT_BRANCH = new Set([
+        "keenMindLabel",
+        "observantLabel",
+        "skillExpertLabel"
+    ]);
+
     // 3. Rendering-Schleife
     orderedFeats.forEach(item => {
         const featData = featList.find(f => f.ID === item.id);
@@ -4003,11 +4851,22 @@ function processFeats(data) {
             const operator = parts[1];
 
             if (operator === "EXPERT_CHECK") {
+                const isExpertBranchFeat = FEAT_LABELS_EXPERT_BRANCH.has(featData.translationLabel);
+                const choseExpertise = didFeatChooseExpertiseBranch(item.id);
                 if (classHasExpertise) {
                     status = baseStatus;
+                } else if (isExpertBranchFeat) {
+                    if (choseExpertise) {
+                        status = baseStatus;
+                        appendExpertiseList = true;
+                    } else {
+                        // Fertigkeits-Zweig: Talent-Blurb anzeigen, kein leerer Expertise-Block
+                        status = baseStatus === 0 ? 1 : baseStatus;
+                    }
                 } else {
+                    // z. B. Gabe des Geschicks: Expertise-Liste ohne Radio-Zweig
                     status = baseStatus;
-                    appendExpertiseList = true; 
+                    appendExpertiseList = true;
                 }
             } 
             else if (operator === "MASTERY_CHECK") {
@@ -4216,8 +5075,7 @@ function getFeatChoiceListHTML(path, data) {
 
     let html = "<ul class='compact-list'>";
     val.forEach(savedId => {
-        const idInt = parseInt(savedId, 10);
-        const item = list.find(obj => obj.id == idInt || Object.values(obj).includes(idInt) || obj.ID === idInt);
+        const item = findChoiceListItemById(list, savedId, { fieldName, listName });
         
         if (item) {
             const labelKey = item.translationLabel || item.label;
@@ -4236,7 +5094,11 @@ function getFeatChoiceListHTML(path, data) {
 function getFeatSpellListBySourceHTML(path, data) {
     const parts = path.split('.');
     const arrayName = parts[0]; // z.B. "preparedSpells" oder "cantrips"
-    const targetLabel = parts[parts.length - 1]; // z.B. "magicInitiateLabel"
+    const targetLabel = parts[parts.length - 1]; // z.B. "magicInitiateLabel" oder "mysticArcanumLabel,mysticArcanum2Label"
+    const targetLabels = String(targetLabel || "")
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean);
 
     // 1. Zieldaten-Array dynamisch anhand des Tags auswählen
     let spellArray = [];
@@ -4247,7 +5109,7 @@ function getFeatSpellListBySourceHTML(path, data) {
     
     // 2. Filterung WIRKLICH nur auf dem Array anwenden, das vom Tag verlangt wurde!
     const foundSpells = spellArray.filter(entry => {
-        return entry.source && entry.source.name === targetLabel;
+        return entry.source && targetLabels.includes(entry.source.name);
     });
 
     // 3. Duplikate herausfiltern, aber das Objekt behalten, um an "spellList" heranzukommen
@@ -4422,7 +5284,13 @@ function applyTalentFeatureLogic(charData) {
 
         // 1. IDs SAMMELN 
         if (charData.feats && charData.feats.background) activeFeatIDs.add(parseInt(charData.feats.background, 10));
-        if (charData.feats && charData.feats.species) activeFeatIDs.add(parseInt(charData.feats.species, 10));
+        const speciesFeatIds = Array.isArray(charData.feats?.species)
+            ? charData.feats.species
+            : (charData.feats?.species ? [charData.feats.species] : []);
+        speciesFeatIds.forEach(id => {
+            const n = parseInt(id, 10);
+            if (!isNaN(n) && n > 0) activeFeatIDs.add(n);
+        });
         
         if (charData.classForm && charData.classForm.feats && Array.isArray(charData.classForm.feats)) {
             charData.classForm.feats.forEach(item => activeFeatIDs.add(parseInt(item.feat, 10)));
@@ -4506,22 +5374,16 @@ function processAppearance(data) {
     const app = data.appearance || {};
 
     // 1. Volk / Erblinie kombinieren & formatieren
-    let rawSpecies = data.basic.species || "";
-    if (rawSpecies) {
-        // Ersten Buchstaben klein machen (z.B. "Elf" -> "elf")
-        rawSpecies = rawSpecies.charAt(0).toLowerCase() + rawSpecies.slice(1);
-        // "Label" anhängen, falls es noch nicht da ist (-> "elfLabel")
-        if (!rawSpecies.endsWith("Label")) {
-            rawSpecies += "Label";
-        }
+    let speciesDisplay = "-";
+    if (data.basic.species) {
+        speciesDisplay = (typeof getSpeciesDisplayTranslation === "function")
+            ? getSpeciesDisplayTranslation(data.basic.species, currentLanguage)
+            : data.basic.species;
     }
-    
-    let displaySpeciesKey = rawSpecies;
-    // Wenn es eine Erblinie gibt (z.B. "woodElfLabel"), überschreibt diese das normale Volk
     if (data.basic.lineage && data.basic.lineage !== "null" && data.basic.lineage !== "") {
-        displaySpeciesKey = data.basic.lineage; 
+        speciesDisplay = getTrans(data.basic.lineage);
     }
-    setVal("physSpecies", getSafeVal(getTrans(displaySpeciesKey)));
+    setVal("physSpecies", getSafeVal(speciesDisplay));
     
     // 2. Abstammung (Ancestry) Logik
     let ancestryDisplay = "-";
@@ -4572,6 +5434,38 @@ function processAppearance(data) {
 /* --------------------------------------------------------------------------
    3 i. Geschichte, Persönlichkeit & Glaube 
    -------------------------------------------------------------------------- */
+
+/** Sprachenfeld aus Hintergrund/Spezies + classForm + Feature-Handler (z. B. Druidisch). */
+function buildLanguagesListDisplayText(data) {
+    const t = translations[currentLanguage] || {};
+    const getTrans = (key) => (t[key] ? t[key] : key);
+
+    let langs = data.proficiencies.languages || [];
+
+    if (data.classForm && data.classForm.languages) {
+        const classLangs = Array.isArray(data.classForm.languages)
+            ? data.classForm.languages
+            : [data.classForm.languages];
+        langs = langs.concat(classLangs);
+    }
+
+    if (window.additionalClassLanguages && window.additionalClassLanguages.length > 0) {
+        langs = langs.concat(window.additionalClassLanguages);
+    }
+
+    langs = [...new Set(langs)];
+
+    const translatedLangs = langs.map(id => {
+        if (typeof languageList !== "undefined") {
+            const langData = languageList.find(l => l.languageCategoryNumber == id || l.translationLabel == id);
+            if (langData) return getTrans(langData.translationLabel);
+        }
+        return getTrans(id);
+    }).filter(Boolean);
+
+    return translatedLangs.length > 0 ? translatedLangs.join(", ") : "-";
+}
+
 function processStoryAndAlignment(data) {
     const t = translations[currentLanguage] || {};
     const getTrans = (key) => (t[key] ? t[key] : key);
@@ -4591,32 +5485,7 @@ function processStoryAndAlignment(data) {
     
     setVal("characterStory", data.details.story || "");
 
-    // 2. Sprachen aus Liste übersetzen (Hintergrund/Spezies + Klasse kombiniert)
-    let langs = data.proficiencies.languages || [];
-    
-    // Klassensprachen hinzufügen (falls vorhanden)
-    if (data.classForm && data.classForm.languages) {
-        const classLangs = Array.isArray(data.classForm.languages) ? data.classForm.languages : [data.classForm.languages];
-        langs = langs.concat(classLangs);
-    }
-    
-    // --- NEU: Automatisch gelernte Sprachen durch Klassenmerkmale (z.B. Druidisch) ---
-    if (window.additionalClassLanguages && window.additionalClassLanguages.length > 0) {
-        langs = langs.concat(window.additionalClassLanguages);
-    }
-
-    // Duplikate entfernen (Set filtert automatisch doppelte IDs heraus)
-    langs = [...new Set(langs)];
-
-    const translatedLangs = langs.map(id => {
-        if (typeof languageList !== 'undefined') {
-            const langData = languageList.find(l => l.languageCategoryNumber == id || l.translationLabel == id);
-            if (langData) return getTrans(langData.translationLabel);
-        }
-        return getTrans(id); // Fallback
-    }).filter(Boolean); // Leere Einträge rausfiltern
-    
-    setVal("languagesList", translatedLangs.length > 0 ? translatedLangs.join(', ') : "-");
+    setVal("languagesList", buildLanguagesListDisplayText(data));
 
     // 3. Persönlichkeit & Gesinnung
     setVal("personalityTraits", data.details.personalityTraits || "");
@@ -4666,7 +5535,7 @@ function processStoryAndAlignment(data) {
 }
 
 /* --------------------------------------------------------------------------
-   3 j. Vilksmerkmale
+   3 j. Volksmerkmale
    -------------------------------------------------------------------------- */
 
 function processSpeciesTraits(data) {
@@ -4685,7 +5554,9 @@ function processSpeciesTraits(data) {
 
     if (!rawSpecies || typeof speciesList === 'undefined' || typeof speciesTraitList === 'undefined') return;
 
-    const speciesData = speciesList.find(s => s.translationLabel === rawSpecies);
+    const speciesData = (typeof findSpeciesBySelectionValue === "function")
+        ? findSpeciesBySelectionValue(data.basic.species || "")
+        : speciesList.find(s => s.translationLabel === rawSpecies);
     if (!speciesData || !speciesData.speciesTraitLabel) return;
 
     let htmlContent = "";
@@ -4760,7 +5631,9 @@ function parseSpeciesTraitDescription(text, data) {
     if (!text) return "";
 
     text = text.replace(/\[CHOICE_LIST\](.*?)\[\/CHOICE_LIST\]/g, (m, path) => {
-        if (path.trim() === 'preparedSpells.source.name.speciesSpellsLabel') {
+        const raw = String(path || "").trim();
+        // PHB-Erblinie: prepared + Cantrips unter speciesSpellsLabel (bestehendes Verhalten)
+        if (raw === "preparedSpells.source.name.speciesSpellsLabel") {
             const targetLabel = "speciesSpellsLabel";
             
             const foundSpells = (data.spells.prepared || []).filter(entry => entry.source && entry.source.name === targetLabel);
@@ -4787,7 +5660,11 @@ function parseSpeciesTraitDescription(text, data) {
             });
             return listHtml + "</ul>";
         }
-        return ""; 
+        // Custom / generisch: preparedSpells.source.name.<featureLabel> (nur vorbereitete Zauber)
+        if (raw.includes("source.name") && typeof getFeatSpellListBySourceHTML === "function") {
+            return getFeatSpellListBySourceHTML(raw, data);
+        }
+        return "";
     });
 
     return text;
@@ -4813,7 +5690,9 @@ function applySpeciesFeatureLogic(charData) {
     if (!rawSpecies || typeof speciesList === 'undefined' || typeof speciesTraitList === 'undefined') return;
 
     // 3. Spezies finden
-    const speciesData = speciesList.find(s => s.translationLabel === rawSpecies);
+    const speciesData = (typeof findSpeciesBySelectionValue === "function")
+        ? findSpeciesBySelectionValue(charData.basic.species || "")
+        : speciesList.find(s => s.translationLabel === rawSpecies);
     if (!speciesData || !speciesData.speciesTraitLabel) return;
 
     // 4. Merkmale iterieren (Nur Logik für Zustand 2 & 3)
@@ -5024,7 +5903,7 @@ function fillSpellRow(tr, entry, data, level) {
 
     // 2. Ability (Attribut) ermitteln
     const abilityKey = determineSpellAbility(source, data);
-    const abilityName = (t[abilityKey] && t[abilityKey].substring(0,3)) || "---"; 
+    const abilityName = getAttributeAbbrFromLabelKey(abilityKey) || "---";
 
     // 3. Stats berechnen (SG & Angriff)
     const stats = calculateSpellStats(abilityKey); 
@@ -5041,9 +5920,16 @@ function fillSpellRow(tr, entry, data, level) {
         
         if (isFavored) {
             const favEntry = data.spells.favored.find(f => f.spellId === spell.ID);
-            if (favEntry && favEntry.source && favEntry.source.name) {
-                 const srcLabel = favEntry.source.name;
-                 benefitText = t[srcLabel] || srcLabel;
+            if (favEntry && favEntry.source) {
+                const src = favEntry.source;
+                // Volkszauber: Anzeige immer generisch „Volkszauber“ (auch bei Trait-source.name)
+                if (src.type === "Volk" || src.type === "Species" || src.type === "lineage") {
+                    benefitText = t.speciesSpellsLabel || "Volkszauber";
+                } else if (src.name) {
+                    benefitText = t[src.name] || src.name;
+                } else {
+                    benefitText = "Bonus";
+                }
             } else {
                  benefitText = "Bonus"; 
             }
@@ -5056,9 +5942,13 @@ function fillSpellRow(tr, entry, data, level) {
         appPage = window.spellAppendixPages[spell.ID];
     }
 
-    // HTML einfügen (kein Custom-Marker in der Zaubertabelle – verhindert Spaltenverschiebung)
+    const nameMarkerHtml = (typeof isCustomContentSpell === "function" && isCustomContentSpell(spell)
+        && typeof getCustomContentMarkerHtml === "function")
+        ? getCustomContentMarkerHtml()
+        : "";
+
     tr.innerHTML = `
-        <td><input type="text" class="spell-input" value="${name}"></td>
+        <td><div class="spell-name-cell"><input type="text" class="spell-input" value="${name}">${nameMarkerHtml}</div></td>
         <td><input type="text" class="spell-input center-text" value="${abilityName}"></td>
         <td><input type="text" class="spell-input center-text" value="${stats.dc}"></td>
         <td><input type="text" class="spell-input center-text" value="${stats.attack}"></td>
@@ -5129,20 +6019,51 @@ function determineSpellAbility(source, data) {
 
     // Fall 3: Talent
     if (source.type === 'Talent' || source.type === 'Feat') {
-        // A. Spezialfall Magic Initiate
-        if (source.name === 'magicInitiateLabel') {
-            // spellList ('cleric', 'druid', 'wizard') bestimmt das Attribut
-            const list = source.spellList; 
-            if (list === 'cleric' || list === 'druid') return "wisdomLabel";
-            if (list === 'wizard') return "intelligenceLabel";
-            return "intelligenceLabel"; 
+        const talentKey = source.name;
+        const talentAbilityStore = data.spells.spellcastingAbility_talent;
+
+        /** Magic-Initiate-Listen-Slug vergleichen (cleric / clericLabel). */
+        const normSpellListSlug = (raw) => {
+            if (raw == null || raw === "") return "";
+            return String(raw).replace(/Label$/i, "").toLowerCase().trim();
+        };
+
+        // Kanonisch (Ersteller): [{ talent, ability, spellList? }, ...]
+        // Mehrfach dasselbe Talent (z. B. 2× Magischer Adept): per spellList disambiguieren
+        if (Array.isArray(talentAbilityStore) && talentKey) {
+            const candidates = talentAbilityStore.filter(e =>
+                e && (e.talent === talentKey || e.name === talentKey)
+            );
+            if (candidates.length) {
+                const sourceList = normSpellListSlug(source.spellList);
+                let entry = null;
+                if (sourceList) {
+                    entry = candidates.find(e =>
+                        normSpellListSlug(e.spellList) === sourceList
+                    ) || null;
+                }
+                if (!entry) entry = candidates[0];
+                if (entry?.ability) return entry.ability;
+            }
         }
 
-        // B. Generell: Mapping aus spellcastingAbility_talent
-        // Das Objekt sieht so aus: { 'ritualCasterLabel': 'intelligenceLabel', ... }
-        const map = data.spells.spellcastingAbility_talent; 
-        if (map && map[source.name]) {
-            return map[source.name];
+        // A. Magic Initiate: ohne gespeichertes Attribut → Listen-Heuristik
+        if (talentKey === 'magicInitiateLabel') {
+            const list = normSpellListSlug(source.spellList)
+                || (Array.isArray(talentAbilityStore)
+                    ? normSpellListSlug(
+                        talentAbilityStore.find(e => e?.talent === 'magicInitiateLabel')?.spellList
+                    )
+                    : "");
+            if (list === 'cleric' || list === 'druid') return "wisdomLabel";
+            if (list === 'wizard') return "intelligenceLabel";
+            return "intelligenceLabel";
+        }
+
+        // Legacy-Map: { ritualCasterLabel: 'intelligenceLabel', ... }
+        if (talentAbilityStore && !Array.isArray(talentAbilityStore) && talentKey
+            && talentAbilityStore[talentKey]) {
+            return talentAbilityStore[talentKey];
         }
     }
 
@@ -5180,66 +6101,40 @@ function calculateSpellStats(abilityLabel) {
 
 // --- LOGIK: ZAUBERPLÄTZE ---
 function calculateSpellSlots(spellLevel, data) {
-    // 1. Basisklasse prüfen
     const className = data.basic.class;
     if (!className) return 0;
-    
-    const coreTrait = classCoreTraitsList.find(c => c.translationLabel.toLowerCase() === className.toLowerCase());
-    if (!coreTrait) return 0;
 
     const charLevel = parseInt(document.getElementById('level').value, 10) || 1;
-    let hasSlots = false;
+    const subId = data.classForm?.subclass ? parseInt(data.classForm.subclass, 10) : 0;
 
-    // A. Basisklasse kann zaubern?
-    if (coreTrait.spellcastingLabel === 1) {
-        hasSlots = true;
-    } 
-    // B. Unterklasse kann zaubern?
-    else if (data.classForm.subclass) {
-        const subId = parseInt(data.classForm.subclass, 10);
-        // Prüfen ob Unterklasse in der Liste der Zauberer ist
-        const abilityList = typeof getEffectiveSubclassSpellAbilityList === "function"
-            ? getEffectiveSubclassSpellAbilityList()
-            : subclassSpellAbillityList;
-        const subEntry = abilityList.find(s => 
-            s.classLabel.toLowerCase() === className.toLowerCase() &&
-            s.subclassCategoryNumber === subId
-        );
-        if (subEntry) hasSlots = true;
-    }
-
-    // C. Custom Class / Standalone-UC: Spellcasting-Merkmal / SSpSL im Scope (Base oder gewählte UC)
-    if (!hasSlots) {
-        const classDataArray = typeof getClassDataArray === "function"
-            ? getClassDataArray(className)
-            : null;
-        const subId = data.classForm?.subclass ? parseInt(data.classForm.subclass, 10) : 0;
-        if (Array.isArray(classDataArray)) {
-            hasSlots = classDataArray.some(r =>
-                r
-                && r.level <= charLevel
-                && (r.subclassCategoryNumber === 0 || r.subclassCategoryNumber === subId)
-                && (
-                    r.translationLabel === "spellcastingLabel"
-                    || r.translationLabel === "pactMagicLabel"
-                    || (parseInt(r.SSpSL1, 10) || 0) > 0
-                )
+    // Nur Full-Caster-Basis / spellcastingLabel / pactMagicLabel (keine Talent-/SSpSL-Heuristik)
+    const hasSlots = (typeof characterHasSpellSlotProgression === "function")
+        ? characterHasSpellSlotProgression(className, subId, charLevel)
+        : (() => {
+            const coreTrait = classCoreTraitsList.find(c =>
+                c.translationLabel.toLowerCase() === className.toLowerCase()
             );
-        }
-    }
+            if (coreTrait && coreTrait.spellcastingLabel === 1) return true;
+            const classDataArray = typeof getClassDataArray === "function"
+                ? getClassDataArray(className)
+                : null;
+            return typeof classDataHasSpellcastingOrPactMagic === "function"
+                ? classDataHasSpellcastingOrPactMagic(classDataArray, charLevel, subId)
+                : false;
+        })();
 
     if (!hasSlots) return 0;
 
-    // D. Eine konsistente Slot-Zeile (UC vor Basis – nicht pro Grad die erste Zeile mit Wert > 0)
-    const classDataArray = getClassDataArray(className);
+    const classDataArray = typeof getClassDataArray === "function"
+        ? getClassDataArray(className)
+        : null;
     if (!classDataArray) return 0;
 
-    const subIdForSlots = data.classForm?.subclass ? parseInt(data.classForm.subclass, 10) : 0;
     const levelRow = (typeof resolveClassLevelSpellResourceRow === "function")
-        ? resolveClassLevelSpellResourceRow(classDataArray, charLevel, subIdForSlots)
+        ? resolveClassLevelSpellResourceRow(classDataArray, charLevel, subId)
         : classDataArray.find(r =>
             r.level === charLevel
-            && (r.subclassCategoryNumber === 0 || r.subclassCategoryNumber === subIdForSlots)
+            && (r.subclassCategoryNumber === 0 || r.subclassCategoryNumber === subId)
         );
     if (!levelRow) return 0;
 
@@ -5257,6 +6152,16 @@ function getLevelKey(lvl) {
 
 
 /* --- Zauberbuch ---*/
+
+function isSpellbookSheetTableId(tableId) {
+    return typeof tableId === "string" && /^sb_table_\d+$/.test(tableId);
+}
+
+function findPreparedSpellEntry(preparedSpells, spellId) {
+    const id = parseInt(spellId, 10);
+    if (isNaN(id)) return null;
+    return (preparedSpells || []).find(p => parseInt(p.spellId, 10) === id) || null;
+}
 
 function processSpellbookPage(data) {
     if (typeof characterUsesSpellbook === "function") {
@@ -5301,7 +6206,7 @@ function processSpellbookPage(data) {
         if(spellLvl < 1 || spellLvl > 9) return;
 
         // 3. Prüfen ob vorbereitet
-        const prepEntry = preparedSpells.find(p => p.spellId === spellId);
+        const prepEntry = findPreparedSpellEntry(preparedSpells, spellId);
         const isPrepared = !!prepEntry;
         
         // WICHTIG: Ist der Zauber zwangs-vorbereitet? (Talent oder Spezies)
@@ -5351,7 +6256,7 @@ function handleSpellbookCheckboxClick(checkbox) {
 
     if (isChecked) {
         // Füge hinzu
-        const exists = preparedArray.find(p => p.spellId === spellId);
+        const exists = findPreparedSpellEntry(preparedArray, spellId);
         if (!exists) {
             preparedArray.push({
                 spellId: spellId,
@@ -5360,7 +6265,7 @@ function handleSpellbookCheckboxClick(checkbox) {
         }
     } else {
         // Entferne
-        preparedArray = preparedArray.filter(p => p.spellId !== spellId);
+        preparedArray = preparedArray.filter(p => parseInt(p.spellId, 10) !== spellId);
     }
 
     // 2. Zurück in LocalStorage speichern! (Wichtig für Konsistenz beim Neuladen)
@@ -5375,21 +6280,50 @@ function handleSpellbookCheckboxClick(checkbox) {
 
 let appendixTotalPages = 0; // Separate Zählung für den Anhang
 
+/** true, wenn der Charakter Zauber für den Anhang hat und Seite 5 noch existiert. */
+function isSpellAppendixAvailable(charData) {
+    const data = charData || (typeof loadCharacterDataFromStorage === "function"
+        ? loadCharacterDataFromStorage()
+        : null);
+    if (!data?.spells) return false;
+
+    const hasCantrips = Array.isArray(data.spells.cantrips) && data.spells.cantrips.length > 0;
+    const hasPrepared = Array.isArray(data.spells.prepared) && data.spells.prepared.length > 0;
+    const hasSpellbook = Array.isArray(data.spells.spellbook) && data.spells.spellbook.length > 0;
+    const hasFavored = Array.isArray(data.spells.favored) && data.spells.favored.length > 0;
+    const hasSpells = hasCantrips || hasPrepared || hasSpellbook || hasFavored;
+    const page5Exists = !!document.getElementById("page5-wrapper");
+
+    return hasSpells && page5Exists;
+}
+
+/**
+ * Zauberanhang-Schalter an verfügbare Zauber koppeln.
+ * Kein Zauber / keine Seite 5 → Checkbox aus, Anhang entfernen, Button verstecken.
+ */
+function syncSpellAppendixToggleState(charData) {
+    const toggleWrapper = document.getElementById("appendixToggleWrapper");
+    const checkbox = document.getElementById("generateSpellDesc");
+    const available = isSpellAppendixAvailable(charData);
+
+    if (!available) {
+        if (checkbox) checkbox.checked = false;
+        removeAppendix();
+        if (toggleWrapper) toggleWrapper.style.display = "none";
+        return;
+    }
+
+    if (toggleWrapper) toggleWrapper.style.display = "flex";
+    if (checkbox?.checked) {
+        buildAppendix();
+    } else {
+        removeAppendix();
+    }
+}
+
 // Prüft beim Start, ob der Schalter überhaupt angezeigt werden soll
 function initAppendixToggle() {
-    const charData = loadCharacterDataFromStorage();
-    const hasCantrips = (charData.spells.cantrips && charData.spells.cantrips.length > 0);
-    const hasPrepared = (charData.spells.prepared && charData.spells.prepared.length > 0);
-    const hasSpellbook = (charData.spells.spellbook && charData.spells.spellbook.length > 0);
-
-    const toggleWrapper = document.getElementById('appendixToggleWrapper');
-    if (toggleWrapper) {
-        if (hasCantrips || hasPrepared || hasSpellbook) {
-            toggleWrapper.style.display = 'flex';
-        } else {
-            toggleWrapper.style.display = 'none';
-        }
-    }
+    syncSpellAppendixToggleState();
 }
 
 // Wird beim Klicken der Checkbox aufgerufen
@@ -5478,7 +6412,7 @@ function buildAppendix() {
                 </main>
 		<footer class="sheet-footer">
                     <div class="footer-left">
-			<a href="https://www.dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
+			<a href="https://dicecharacters.com" target="_blank" class="footer-link">www.dicecharacters.com</a>
                     </div>
                     <div class="footer-right">
                         <span>${t['appendixPageLabel'] || 'Anhang Seite'}</span>
@@ -5612,6 +6546,7 @@ function setupEventListeners() {
         xpInput.addEventListener('change', () => {
             updateLevelFromXP(); 
             updateHitPointsAndDice();
+            updateLevelUpButtonState();
             
             // Logik-Kette neu durchlaufen
             const charData = loadCharacterDataFromStorage();
@@ -5627,6 +6562,7 @@ function setupEventListeners() {
         levelInput.addEventListener('change', () => {
             updateXPFromLevel(); 
             updateHitPointsAndDice();
+            updateLevelUpButtonState();
 
             // Logik-Kette neu durchlaufen
             const charData = loadCharacterDataFromStorage();
@@ -5666,8 +6602,97 @@ function setupEventListeners() {
                 updateSavingThrowValues();
                 updateSkillValues();
             }
+            if (isEditMode && typeof scheduleSheetOverridesPersist === "function") {
+                scheduleSheetOverridesPersist();
+            }
         }
     });
+
+    // 4b. Manuelle Bogenänderungen im Bearbeitungsmodus persistieren
+    document.body.addEventListener('input', (e) => {
+        if (!isEditMode) return;
+        const t = e.target;
+        if (!t || (t.tagName !== "INPUT" && t.tagName !== "TEXTAREA")) return;
+        if (t.type === "file") return;
+        if (typeof scheduleSheetOverridesPersist === "function") {
+            scheduleSheetOverridesPersist();
+        }
+    });
+
+    // 4c. Waffen-/Rüstungs-Inventar: Ersteller-Kopplung bei geleertem Namen aufheben
+    const bindInventoryNameValidation = (tableSelector, boxId) => {
+        const table = document.querySelector(tableSelector);
+        if (!table || table.dataset.creatorNameBound) return;
+        table.dataset.creatorNameBound = "1";
+        table.addEventListener('input', (e) => {
+            const inp = e.target;
+            if (!inp || inp.type !== "text") return;
+            const row = inp.closest("tr");
+            if (!row) return;
+            const cells = row.querySelectorAll("td");
+            if (cells[1] && cells[1].contains(inp)) {
+                validateInventoryCreatorRowBinding(row, boxId);
+                // Schild ↔ Nicht-Schild bei manuellem Umbenennen sofort korrigieren
+                if (boxId === 2 && typeof syncInventoryArmorRowShieldState === "function") {
+                    syncInventoryArmorRowShieldState(row);
+                    if (typeof updateArmorClass === "function") updateArmorClass();
+                }
+                if (typeof scheduleSheetOverridesPersist === "function") {
+                    scheduleSheetOverridesPersist();
+                }
+            }
+        });
+    };
+    bindInventoryNameValidation('[data-dc-table-id="inv_weapons"]', 1);
+    bindInventoryNameValidation('[data-dc-table-id="inv_armor"]', 2);
+
+    // 4c2. Waffen-Anlege-Checkbox: Persist + Angriffstabelle (auch manuelle Zeilen)
+    const weaponsEquipTable = document.querySelector('[data-dc-table-id="inv_weapons"]');
+    if (weaponsEquipTable && !weaponsEquipTable.dataset.equippedPersistBound) {
+        weaponsEquipTable.dataset.equippedPersistBound = "1";
+        weaponsEquipTable.addEventListener("change", (e) => {
+            const cb = e.target;
+            if (!cb || cb.type !== "checkbox") return;
+            const row = cb.closest("tr");
+            if (row && cb.hasAttribute("data-creator-bound")) {
+                validateInventoryCreatorRowBinding(row, 1);
+            } else if (row && !cb.hasAttribute("data-creator-bound")) {
+                const name = (row.querySelectorAll("input")[1]?.value || "").trim();
+                if (name) row.setAttribute("data-inventory-manual", "1");
+            }
+            if (typeof updatePhysicalAttacks === "function") updatePhysicalAttacks();
+            if (typeof scheduleSheetOverridesPersist === "function") scheduleSheetOverridesPersist();
+        });
+    }
+
+    // 4d. Physische Angriffe: manuelle Zeilen markieren + persistieren
+    const physicalAttacksTable = getPhysicalAttacksTable();
+    if (physicalAttacksTable && !physicalAttacksTable.dataset.manualAttackBound) {
+        physicalAttacksTable.dataset.manualAttackBound = "1";
+        physicalAttacksTable.addEventListener('input', (e) => {
+            if (!isEditMode) return;
+            const inp = e.target;
+            if (!inp || inp.type !== "text") return;
+            const row = inp.closest("tr");
+            if (!row) return;
+            markPhysicalAttackRowManual(row);
+            clearPhysicalAttackRowManualIfEmpty(row);
+            if (typeof scheduleSheetOverridesPersist === "function") {
+                scheduleSheetOverridesPersist();
+            }
+        });
+        physicalAttacksTable.addEventListener('change', (e) => {
+            if (!isEditMode) return;
+            const sel = e.target;
+            if (!sel || !sel.classList.contains("finesse-selector")) return;
+            const row = sel.closest("tr");
+            if (!row) return;
+            markPhysicalAttackRowManual(row);
+            if (typeof scheduleSheetOverridesPersist === "function") {
+                scheduleSheetOverridesPersist();
+            }
+        });
+    }
 
     // 5. Schild Checkbox auf Seite 1
     const shieldPage1 = document.getElementById('shieldActive');
@@ -5677,6 +6702,48 @@ function setupEventListeners() {
             const charData = loadCharacterDataFromStorage();
             applyClassFeatureLogic(charData);
             applyTalentFeatureLogic(charData); // Sicherheitshalber auch hier
+        });
+    }
+
+    // 5b. Rüstungs-Inventar: auch manuelle Zeilen (ohne onchange aus processInventory)
+    // Schilde: Name-Pflicht; Körperrüstung+Schild gleichzeitig bleibt erlaubt
+    const armorTable = document.querySelector('[data-dc-table-id="inv_armor"]');
+    if (armorTable && !armorTable.dataset.armorExclusiveBound) {
+        armorTable.dataset.armorExclusiveBound = "1";
+        armorTable.addEventListener('change', (e) => {
+            const cb = e.target;
+            if (!cb || cb.type !== "checkbox") return;
+            const row = cb.closest("tr");
+            const isShield = !!(row && (
+                cb.classList.contains("inventory-shield-checkbox")
+                || isInventoryArmorRowShield(row, cb)
+            ));
+
+            // Ohne Namen: Anlegen blockieren (Rüstung und Schild)
+            if (row && !inventoryEquipRowHasName(row)) {
+                cb.checked = false;
+                if (isShield || cb.classList.contains("inventory-shield-checkbox")) {
+                    cb.classList.remove("inventory-shield-checkbox");
+                }
+                if (typeof updateArmorClass === "function") updateArmorClass();
+                if (typeof scheduleSheetOverridesPersist === "function") scheduleSheetOverridesPersist();
+                return;
+            }
+
+            // Schilde mit Namen: Sync über inline onchange → toggleShield
+            if (isShield) {
+                if (typeof scheduleSheetOverridesPersist === "function") scheduleSheetOverridesPersist();
+                return;
+            }
+
+            if (row && cb.hasAttribute("data-creator-bound")) {
+                validateInventoryCreatorRowBinding(row, 2);
+            } else if (row && !cb.hasAttribute("data-creator-bound")) {
+                const name = (row.querySelectorAll("input")[1]?.value || "").trim();
+                if (name) row.setAttribute("data-inventory-manual", "1");
+            }
+            handleArmorChange(cb);
+            if (typeof scheduleSheetOverridesPersist === "function") scheduleSheetOverridesPersist();
         });
     }
     
@@ -5697,7 +6764,18 @@ function setupEventListeners() {
         const cb = document.getElementById(id);
         if (cb) {
             cb.addEventListener('change', () => {
-                updatePhysicalAttacks(); 
+                updatePhysicalAttacks();
+                if (typeof scheduleSheetOverridesPersist === "function") scheduleSheetOverridesPersist();
+            });
+        }
+    });
+
+    const armorProfCheckboxes = ['lightArmor', 'mediumArmor', 'heavyArmor', 'shieldProf'];
+    armorProfCheckboxes.forEach(id => {
+        const cb = document.getElementById(id);
+        if (cb) {
+            cb.addEventListener('change', () => {
+                if (typeof scheduleSheetOverridesPersist === "function") scheduleSheetOverridesPersist();
             });
         }
     });
@@ -5729,6 +6807,7 @@ const editModeOnlyFields = [
     "strengthScore", "dexterityScore", "constitutionScore", "intelligenceScore", "wisdomScore", "charismaScore",
     "maxHP", "maxHD",
     "speed", "size",
+    "armorClass",
 
     // Textfelder für Notizen/Details
     "weaponProperties", 
@@ -5758,7 +6837,6 @@ const neverEditableFields = [
     "class", "background", "subclass", "species", 
     
     // Berechnete Kampfwerte
-    "armorClass", 
     "initiative", 
     "passivePerception", 
     "proficiencyBonus",
@@ -5803,6 +6881,13 @@ function toggleEditMode() {
 
     // Sperren aktualisieren (Felder klickbar machen oder sperren)
     applyFieldLocks();
+    // applyFieldLocks gibt Equipped-Checkboxen frei — Rüstungs-Exklusivität erneut anwenden
+    if (typeof updateArmorLocking === "function") updateArmorLocking();
+
+    // Beim Verlassen des Bearbeitungsmodus: Overrides sofort persistieren
+    if (!isEditMode && typeof collectSheetOverridesFromDOM === "function") {
+        persistSheetOverrides(collectSheetOverridesFromDOM());
+    }
 }
 
 /**
@@ -5932,6 +7017,9 @@ function applyFieldLocks() {
             lockInput(input, !isEditMode);
         }
     });
+
+    // Equipped-Checkboxen wurden freigegeben — Rüstungs-Exklusivität wiederherstellen
+    if (typeof updateArmorLocking === "function") updateArmorLocking();
 }
 
 /**
@@ -5974,7 +7062,19 @@ function downloadPDF() {
     }
 }
 
-// 2. Hilfsfunktion: Generiert den sauberen Dateinamen (z.B. "Fabiano_Character-Sheet_08MAR2026")
+/**
+ * Stufe für Dateinamen (Export/PDF), z. B. "L6" — Bogen-Anzeige.
+ */
+function getCharacterSheetLevelFilenameToken() {
+    const fromInput = document.getElementById("level")?.value;
+    const fromLs = (typeof localStorage !== "undefined") ? localStorage.getItem("level") : null;
+    let level = parseInt(fromInput != null && String(fromInput).trim() !== "" ? fromInput : fromLs, 10);
+    if (!Number.isFinite(level) || level < 1) level = 1;
+    if (level > 20) level = 20;
+    return `L${level}`;
+}
+
+// 2. Hilfsfunktion: Generiert den sauberen Dateinamen (z.B. "Fabiano_L6_Character-Sheet_08MAR2026")
 function generateSafeFilename() {
     const nameInput = document.getElementById('characterName');
     let charName = nameInput && nameInput.value ? nameInput.value.trim() : "Unbekannt";
@@ -5993,8 +7093,9 @@ function generateSafeFilename() {
     const month = monthArr[d.getMonth()];
     const year = d.getFullYear();
     const dateString = `${day}${month}${year}`;
+    const levelToken = getCharacterSheetLevelFilenameToken();
 
-    return `${safeName}_Character-Sheet_${dateString}`;
+    return `${safeName}_${levelToken}_Character-Sheet_${dateString}`;
 }
 
 // 3. MODUS 1: Nativer Browser-Druck (Der neue Goldstandard)
@@ -6441,6 +7542,7 @@ function applyTranslations() {
     // --- BUTTONS ---
     setTextContent('generateSpellDescLabel', elements.generateSpellDesc);
     setTextContent('editModeBtnText', elements.editButtonLabel);
+    setTextContent('levelUpBtnText', (elements.levelUpLabel || "Stufenaufstieg"));
     setTextContent('exportBtnText', elements.exportBtnLabel);
     setTextContent('importBtnText', elements.importBtnLabel);
     setTextContent('downloadBtnText', elements.downloadPdfLabel);
@@ -6507,12 +7609,16 @@ function confirmClearData() {
             "cantrips", "spellbookSpells", "preparedSpells", "favoredSpells", "languages",
             "portraitImage", "symbolImage", "customClassRuntime", "customSubclassRuntime",
             "customBackgroundRuntime", "customSpellPackRuntime", "customFeatPackRuntime",
+            "customSpeciesRuntime",
             "dcCharacterPackageId", "dcCharacterPackageCreatedAt",
             // Talente & Hintergrund-/Völker-Nebenwerte (fehlten zuvor → Talente blieben auf S. 3)
             "feat_background", "feat_species",
             "tool_background", "instrument_background", "game_background",
+            "backgroundAttributeBonuses",
+            "levelUpReconstruction",
+            "speciesFreeChoices",
             "spellcastingAbility_species", "spellcastingAbility_talent",
-            "import_overrides"
+            "import_overrides", SHEET_OVERRIDES_STORAGE_KEY
         ];
 
         // Nur Charakter-relevante Daten löschen (Sprache & Bilder bleiben evtl. zur Bequemlichkeit)
@@ -6527,101 +7633,114 @@ function confirmClearData() {
    AREAL 6: DOWNLOAD & UPLOAD
    ========================================================================== */
 
+let sheetOverridesPersistTimer = null;
+
 /**
- * Hilfsfunktion für das Datumsformat (z.B. 10MAY2026)
+ * Liest gespeicherte Bogen-Overrides (Fallback: legacy import_overrides).
+ * @returns {object|null}
  */
-function getFormattedDateJSON() {
-    const d = new Date();
-    const day = String(d.getDate()).padStart(2, '0');
-    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-    const month = months[d.getMonth()];
-    const year = d.getFullYear();
-    return `${day}${month}${year}`;
+function getSheetOverridesFromStorage() {
+    const key = (typeof SHEET_OVERRIDES_STORAGE_KEY !== "undefined")
+        ? SHEET_OVERRIDES_STORAGE_KEY
+        : "sheet_overrides";
+    const raw = localStorage.getItem(key) || localStorage.getItem("import_overrides");
+    if (!raw) return null;
+    try {
+        return JSON.parse(raw);
+    } catch (e) {
+        console.warn("Sheet-Overrides konnten nicht gelesen werden:", e);
+        return null;
+    }
+}
+
+/** Schreibt Overrides dauerhaft in localStorage (Refresh-sicher). */
+function persistSheetOverrides(overrides) {
+    if (!overrides || typeof overrides !== "object") return;
+    const key = (typeof SHEET_OVERRIDES_STORAGE_KEY !== "undefined")
+        ? SHEET_OVERRIDES_STORAGE_KEY
+        : "sheet_overrides";
+    try {
+        localStorage.setItem(key, JSON.stringify(overrides));
+        localStorage.removeItem("import_overrides");
+    } catch (e) {
+        console.warn("Sheet-Overrides konnten nicht gespeichert werden:", e);
+    }
+}
+
+/** Debounced Persist nach manuellen Änderungen im Bearbeitungsmodus. */
+function scheduleSheetOverridesPersist() {
+    if (sheetOverridesPersistTimer) clearTimeout(sheetOverridesPersistTimer);
+    sheetOverridesPersistTimer = setTimeout(() => {
+        sheetOverridesPersistTimer = null;
+        if (typeof collectSheetOverridesFromDOM === "function") {
+            persistSheetOverrides(collectSheetOverridesFromDOM());
+        }
+    }, 400);
 }
 
 /**
- * Exportiert den Charakter als JSON mit Deep-Scan der UI-Werte.
- * Neu: DC-Envelope; alte Bögen bleiben beim Import ohne Envelope gültig.
+ * Sammelt alle UI-Overrides vom aktuellen Bogen (Deep-Scan).
+ * @returns {object}
  */
-function exportCharacterJSON() {
-    console.log("Starte Deep-Scan für Export...");
-
-    // 1. Basis-Daten aus dem Storage (DNA)
-    const storageKeys = [
-        "characterName", "playerName", "class", "background", "species", "lineage", "ancestry", "level", "xp",
-        "strengthScore", "dexterityScore", "constitutionScore", "intelligenceScore", "wisdomScore", "charismaScore",
-        "classForm", "equipment", "purse", "languages", "cantrips", "spellbookSpells", "preparedSpells", "favoredSpells",
-        "feat_background", "feat_species",
-        "portraitImage", "symbolImage", "currentLanguage", "customClassRuntime", "customSubclassRuntime",
-        "customBackgroundRuntime", "customSpellPackRuntime", "customFeatPackRuntime",
-        "dcCharacterPackageId", "dcCharacterPackageCreatedAt"
-    ];
-
-    const baseStorage = {};
-    storageKeys.forEach(key => {
-        baseStorage[key] = localStorage.getItem(key);
-    });
-
+function collectSheetOverridesFromDOM() {
     const uiOverrides = {
         inputs: {},
         checkboxes: {},
         tableData: [],
-        attackTable: [] // Spezial-Array für die Angriffe (S. 2)
+        attackTable: []
     };
 
-    // A. Alle Standard-Felder (Inputs & Textareas)
     document.querySelectorAll('input[type="text"], textarea').forEach(el => {
         if (el.id) uiOverrides.inputs[el.id] = el.value;
     });
 
-    // B. Alle Checkboxen (Skills, Training etc.)
     document.querySelectorAll('input[type="checkbox"]').forEach(el => {
         if (el.id) uiOverrides.checkboxes[el.id] = el.checked;
     });
 
-    // C. Spezial-Scan: Physische Angriffe (S. 2)
-    const attackTable = document.querySelector('.attack-table');
+    const attackTable = getPhysicalAttacksTable();
     if (attackTable) {
         const rows = attackTable.querySelectorAll('tbody tr');
         rows.forEach((row) => {
             const rowData = [];
             const inputs = row.querySelectorAll('input');
             inputs.forEach(inp => rowData.push(inp.value));
-
-            // Finesse-Dropdown (STR/DEX) mitspeichern
             const sel = row.querySelector('select.finesse-selector');
             uiOverrides.attackTable.push({
                 values: rowData,
-                finesse: sel ? sel.value : null
+                finesse: sel ? sel.value : null,
+                dbLinked: row.hasAttribute("data-db-linked"),
+                manualOverride: row.hasAttribute("data-attack-manual")
             });
         });
     }
 
-    // D. Deep-Scan aller anderen Tabellen (Inventar, Zauber)
     const allTables = document.querySelectorAll('table');
     allTables.forEach((table, tableIndex) => {
-        // Die Haupt-Angriffstabelle ignorieren wir hier (wird oben in B behandelt)
         if (table.classList.contains('attack-table') && table.closest('.inventory-box') === null) return;
-
+        if (table.getAttribute('data-dc-table-id') === 'physical_attacks') return;
+        const tableId = getDcSheetTableExportId(table);
         const rows = table.querySelectorAll('tbody tr');
         rows.forEach((row, rowIndex) => {
             const cells = row.querySelectorAll('td');
             cells.forEach((cell, cellIndex) => {
                 const input = cell.querySelector('input');
-                if (input) {
-                    uiOverrides.tableData.push({
-                        t: tableIndex,
-                        r: rowIndex,
-                        c: cellIndex,
-                        v: input.value,
-                        chk: input.type === 'checkbox' ? input.checked : null
-                    });
-                }
+                if (!input) return;
+                // Zauberbuch: Vorbereitet-Status kommt aus preparedSpells (base), nicht aus Overrides
+                if (input.classList.contains('spellbook-checkbox')) return;
+                const entry = {
+                    t: tableIndex,
+                    r: rowIndex,
+                    c: cellIndex,
+                    v: input.value,
+                    chk: input.type === 'checkbox' ? input.checked : null
+                };
+                if (tableId) entry.tableId = tableId;
+                uiOverrides.tableData.push(entry);
             });
         });
     });
 
-    // E. Content / Todesrettungswürfe / Merkmale
     const deathSaveBox = document.querySelector('.death-saves-box');
     if (deathSaveBox) {
         uiOverrides.deathSaves = Array.from(deathSaveBox.querySelectorAll('input[type="checkbox"]')).map(c => c.checked);
@@ -6635,7 +7754,231 @@ function exportCharacterJSON() {
         communityDesc: document.getElementById('communityDesc')?.innerHTML
     };
 
-    // Stabile Charakterbogen-packageId (über Re-Exports)
+    uiOverrides.inventoryEquipped = collectInventoryEquippedStates();
+
+    return uiOverrides;
+}
+
+/** Inventar-Tabellen mit Anlege-Checkbox (Seite 2). */
+const INVENTORY_EQUIP_TABLE_IDS = ["inv_weapons", "inv_armor"];
+
+/**
+ * Anlege-Status pro Zeile für Waffen/Rüstung sammeln (zuverlässiger als tableData-Zellen).
+ * @returns {{ inv_weapons?: boolean[], inv_armor?: boolean[] }}
+ */
+function collectInventoryEquippedStates() {
+    const result = {};
+    INVENTORY_EQUIP_TABLE_IDS.forEach(tableId => {
+        const table = document.querySelector(`[data-dc-table-id="${tableId}"]`);
+        if (!table) return;
+        result[tableId] = Array.from(table.querySelectorAll("tbody tr")).map(row => {
+            const cb = row.querySelector('input[type="checkbox"]');
+            return cb ? cb.checked : false;
+        });
+    });
+    return result;
+}
+
+/**
+ * Waffen-/Rüstungs-Inventar aus Overrides anwenden (Text + Anlege-Status).
+ * Muss nach allen Auto-Updates laufen, damit manuelle Zeilen nicht überschrieben werden.
+ * @param {object} overrides
+ */
+function applyInventoryEquipTableOverrides(overrides) {
+    if (!overrides || typeof overrides !== "object") return;
+
+    // 1. Zellwerte (Menge, Name) aus tableData
+    if (Array.isArray(overrides.tableData)) {
+        overrides.tableData.forEach(item => {
+            if (!item || (item.tableId !== "inv_weapons" && item.tableId !== "inv_armor")) return;
+            const table = resolveDcSheetTableForImport(item);
+            if (!table) return;
+            const row = table.querySelectorAll("tbody tr")[item.r];
+            if (!row) return;
+            const cell = row.querySelectorAll("td")[item.c];
+            const input = cell?.querySelector("input");
+            if (!input || input.type === "checkbox") return;
+            input.value = item.v;
+            if (!input.hasAttribute("data-creator-bound")) {
+                const hasName = (item.v || "").trim() !== "";
+                if (hasName) row.setAttribute("data-inventory-manual", "1");
+            }
+        });
+    }
+
+    // 1b. Ersteller-Kopplung nach Namens-Override auflösen (vor Anlege-Status)
+    INVENTORY_EQUIP_TABLE_IDS.forEach(tableId => {
+        const boxId = tableId === "inv_weapons" ? 1 : 2;
+        const table = document.querySelector(`[data-dc-table-id="${tableId}"]`);
+        if (!table) return;
+        table.querySelectorAll("tbody tr").forEach(row => {
+            validateInventoryCreatorRowBinding(row, boxId, { skipRefresh: true });
+        });
+    });
+
+    // 2. Anlege-Checkboxen (dediziertes Array hat Vorrang)
+    const applyEquippedArray = (tableId, states) => {
+        if (!Array.isArray(states)) return;
+        const table = document.querySelector(`[data-dc-table-id="${tableId}"]`);
+        if (!table) return;
+        const rows = table.querySelectorAll("tbody tr");
+        states.forEach((checked, rIdx) => {
+            const row = rows[rIdx];
+            if (!row) return;
+            const cb = row.querySelector('input[type="checkbox"]');
+            if (cb) cb.checked = !!checked;
+        });
+    };
+
+    if (overrides.inventoryEquipped && typeof overrides.inventoryEquipped === "object") {
+        INVENTORY_EQUIP_TABLE_IDS.forEach(tableId => {
+            applyEquippedArray(tableId, overrides.inventoryEquipped[tableId]);
+        });
+    } else if (Array.isArray(overrides.tableData)) {
+        // Legacy: nur Checkbox-Spalte (c === 2)
+        overrides.tableData.forEach(item => {
+            if (!item || item.c !== 2) return;
+            if (item.tableId !== "inv_weapons" && item.tableId !== "inv_armor") return;
+            if (item.chk === null) return;
+            const table = resolveDcSheetTableForImport(item);
+            if (!table) return;
+            const row = table.querySelectorAll("tbody tr")[item.r];
+            const cb = row?.querySelector('input[type="checkbox"]');
+            if (cb) cb.checked = !!item.chk;
+        });
+    }
+
+    // 2b. Schild-Marker nach Namens-Overrides neu setzen (Ex-Schild ≠ Schild)
+    if (typeof syncAllInventoryArmorShieldStates === "function") {
+        syncAllInventoryArmorShieldStates();
+    }
+
+    // 3. Abgeleitete Werte aus Anlege-Status (ohne setProficiencies — läuft danach separat)
+    if (typeof updatePhysicalAttacks === "function") updatePhysicalAttacks();
+    if (typeof updateArmorClass === "function") updateArmorClass();
+}
+
+/**
+ * Wendet gespeicherte Physische-Angriffe-Overrides an (muss nach allen Auto-Updates laufen).
+ * @param {Array} attackTableData
+ */
+function applyPhysicalAttacksTableOverrides(attackTableData) {
+    if (!Array.isArray(attackTableData) || !attackTableData.length) return;
+    const attackTable = getPhysicalAttacksTable();
+    if (!attackTable) return;
+
+    const rows = attackTable.querySelectorAll('tbody tr');
+    attackTableData.forEach((savedRow, rIdx) => {
+        const row = rows[rIdx];
+        if (!row || !savedRow) return;
+
+        const inputs = row.querySelectorAll('input');
+        (savedRow.values || []).forEach((val, iIdx) => {
+            if (inputs[iIdx]) inputs[iIdx].value = val;
+        });
+
+        const sel = row.querySelector('select.finesse-selector');
+        if (sel && savedRow.finesse) sel.value = savedRow.finesse;
+
+        if (savedRow.dbLinked) row.setAttribute('data-db-linked', 'true');
+        else row.removeAttribute('data-db-linked');
+
+        const hasContent = (savedRow.values || []).some(v => (v || "").trim() !== "");
+        if (savedRow.manualOverride || (hasContent && !savedRow.dbLinked)) {
+            row.setAttribute('data-attack-manual', '1');
+        } else {
+            row.removeAttribute('data-attack-manual');
+        }
+    });
+}
+
+/**
+ * Hilfsfunktion für das Datumsformat (z.B. 10MAY2026)
+ */
+function getFormattedDateJSON() {
+    const d = new Date();
+    const day = String(d.getDate()).padStart(2, '0');
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    return `${day}${month}${year}`;
+}
+
+/**
+ * Stabile Tabellen-ID für Export/Import (id-Attribut oder data-dc-table-id).
+ * @param {HTMLTableElement} table
+ * @returns {string|null}
+ */
+function getDcSheetTableExportId(table) {
+    if (!table) return null;
+    if (table.id) return String(table.id);
+    const dataId = table.getAttribute("data-dc-table-id");
+    return dataId ? String(dataId) : null;
+}
+
+/**
+ * Tabelle für Override-Import auflösen (tableId bevorzugt, sonst Legacy-Index t).
+ * @param {{ tableId?: string, t?: number }} item
+ * @returns {HTMLTableElement|null}
+ */
+function resolveDcSheetTableForImport(item) {
+    if (!item) return null;
+    if (item.tableId) {
+        const byId = document.getElementById(item.tableId);
+        if (byId && byId.tagName === "TABLE") return byId;
+        const byData = document.querySelector(
+            `table[data-dc-table-id="${CSS.escape(String(item.tableId))}"]`
+        );
+        if (byData) return byData;
+    }
+    if (typeof item.t === "number") {
+        const allTables = document.querySelectorAll("table");
+        return allTables[item.t] || null;
+    }
+    return null;
+}
+
+/**
+ * Baut Export-Payload (meta/base/overrides) ohne Download — auch für Stufenaufstieg-Snapshot.
+ * @returns {{ meta: object, base: object, overrides: object, dc?: object }}
+ */
+function buildCharacterSheetExportPayload() {
+    console.log("Starte Deep-Scan für Export-Payload...");
+
+    const storageKeys = [
+        "characterName", "playerName", "class", "background", "species", "lineage", "ancestry", "level", "ruleLevel", "xp",
+        "strengthScore", "dexterityScore", "constitutionScore", "intelligenceScore", "wisdomScore", "charismaScore",
+        "classForm", "equipment", "purse", "languages", "cantrips", "spellbookSpells", "preparedSpells", "favoredSpells",
+        "feat_background", "feat_species",
+        "tool_background", "instrument_background", "game_background",
+        "backgroundAttributeBonuses",
+        "levelUpReconstruction",
+        "speciesFreeChoices", "spellcastingAbility_species", "spellcastingAbility_talent",
+        "story", "deityId", "deityName", "communityName", "communityDesc",
+        "alignment", "personalityTraits",
+        "gender", "age", "eyeColor", "hairColor", "skinTone", "size", "appearanceDescription",
+        "portraitImage", "symbolImage", "currentLanguage", "customClassRuntime", "customSubclassRuntime",
+        "customBackgroundRuntime", "customSpellPackRuntime", "customFeatPackRuntime",
+        "customSpeciesRuntime",
+        "dcCharacterPackageId", "dcCharacterPackageCreatedAt"
+    ];
+
+    const baseStorage = {};
+    storageKeys.forEach(key => {
+        baseStorage[key] = localStorage.getItem(key);
+    });
+
+    // Anzeige-Stufe/XP aus UI (falls manuell angepasst)
+    const levelEl = document.getElementById("level");
+    const xpEl = document.getElementById("xp");
+    if (levelEl && levelEl.value !== "") baseStorage.level = levelEl.value;
+    if (xpEl && xpEl.value !== "") baseStorage.xp = xpEl.value;
+    if (!baseStorage.ruleLevel && baseStorage.level) {
+        baseStorage.ruleLevel = localStorage.getItem("ruleLevel") || baseStorage.level;
+    }
+
+    const uiOverrides = collectSheetOverridesFromDOM();
+
     let packageId = localStorage.getItem("dcCharacterPackageId");
     let packageCreatedAt = localStorage.getItem("dcCharacterPackageCreatedAt");
     if (!packageId && typeof createDcPackageId === "function") {
@@ -6651,7 +7994,6 @@ function exportCharacterJSON() {
         || baseStorage.characterName
         || "Unnamed";
 
-    // Flaches Legacy-kompatibles Payload (weiterhin meta/base/overrides)
     const flatPayload = {
         meta: { app: "DiceCharacters", date: new Date().toISOString(), version: "1.5" },
         base: baseStorage,
@@ -6666,18 +8008,51 @@ function exportCharacterJSON() {
         })
         : flatPayload;
 
-    // Dateiname generieren (Name_Character_Data_DDMMMYYYY)
+    return finalExport;
+}
+
+/**
+ * Exportiert den Charakter als JSON mit Deep-Scan der UI-Werte.
+ * Neu: DC-Envelope; alte Bögen bleiben beim Import ohne Envelope gültig.
+ */
+function exportCharacterJSON() {
+    const finalExport = buildCharacterSheetExportPayload();
+    const flat = finalExport?.payload || finalExport;
+
+    // Base + Overrides in localStorage spiegeln (Refresh-sicher)
+    if (flat?.base) {
+        Object.keys(flat.base).forEach(key => {
+            if (flat.base[key] !== null && flat.base[key] !== undefined) {
+                localStorage.setItem(key, flat.base[key]);
+            }
+        });
+    }
+    if (flat?.overrides) {
+        persistSheetOverrides(flat.overrides);
+    }
+
+    const characterName = document.getElementById('characterName')?.value
+        || flat?.base?.characterName
+        || "Unnamed";
+
     let safeName = String(characterName).trim().replace(/[\\/:\*\?"<>|;,]/g, '_');
     if (safeName === "") safeName = "Unnamed";
+    safeName = safeName.replace(/_+/g, '_');
 
     const dateStr = getFormattedDateJSON();
-    const finalFilename = `${safeName}_Character_Data_${dateStr}.json`;
+    const levelToken = getCharacterSheetLevelFilenameToken();
+    const finalFilename = `${safeName}_${levelToken}_Character_Data_${dateStr}.json`;
 
-    const blob = new Blob([JSON.stringify(finalExport, null, 2)], { type: "application/json" });
+    downloadJsonFile(finalFilename, finalExport);
+}
+
+/** Hilfs-Download für Bogen-Export (wiederverwendbar). */
+function downloadJsonFile(filename, dataObj) {
+    const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = finalFilename;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -6705,6 +8080,11 @@ function applyCharacterSheetImport(sheetPayload, envelope) {
         }
     });
 
+    // Legacy: ruleLevel fehlt → aus level übernehmen
+    if (!localStorage.getItem("ruleLevel") && localStorage.getItem("level")) {
+        localStorage.setItem("ruleLevel", localStorage.getItem("level"));
+    }
+
     // Envelope-IDs wiederherstellen (neu); Legacy bekommt IDs beim nächsten Export
     if (envelope?.packageId) {
         localStorage.setItem("dcCharacterPackageId", envelope.packageId);
@@ -6713,7 +8093,8 @@ function applyCharacterSheetImport(sheetPayload, envelope) {
         }
     }
 
-    localStorage.setItem("import_overrides", JSON.stringify(sheetPayload.overrides || {}));
+    localStorage.setItem(SHEET_OVERRIDES_STORAGE_KEY, JSON.stringify(sheetPayload.overrides || {}));
+    localStorage.removeItem("import_overrides");
     window.location.reload();
 }
 
@@ -6812,35 +8193,62 @@ function importCharacterJSON(event) {
  * Wendet die manuellen Anpassungen über die generierten Daten an
  */
 function applyImportOverrides() {
-    const overridesRaw = localStorage.getItem('import_overrides');
-    if (!overridesRaw) return;
-    const overrides = JSON.parse(overridesRaw);
+    const overrides = getSheetOverridesFromStorage();
+    if (!overrides) return;
+    const fromLevelUp = isSheetFromLevelUpNavigation();
 
     // 1. Basis-Werte & Checkboxen
     if (overrides.inputs) {
+        const classFormData = (typeof loadCharacterDataFromStorage === "function")
+            ? loadCharacterDataFromStorage()?.classForm
+            : null;
+        const hasWeaponMasteryData = Array.isArray(classFormData?.weaponMastery)
+            && classFormData.weaponMastery.length > 0;
+
         Object.keys(overrides.inputs).forEach(id => {
+            if (fromLevelUp && LEVEL_UP_STALE_OVERRIDE_INPUT_IDS.has(id)) return;
+            // Regel-abgeleitete Werte (TP/TW/XP) nie blind aus Overrides — werden unten neu berechnet
+            if (SHEET_RULE_DERIVED_INPUT_IDS.has(id)) return;
+            // Leerer Unterklassen-Override darf berechneten Namen aus classForm nicht löschen
+            if (id === "subclass" && !overrides.inputs[id]) {
+                const charData = (typeof loadCharacterDataFromStorage === "function")
+                    ? loadCharacterDataFromStorage()
+                    : null;
+                if (charData?.classForm?.subclass) return;
+            }
+            // Leere Override-Werte nicht über berechnete Regeldaten legen
+            if (id === "weaponMasteries" && hasWeaponMasteryData && !overrides.inputs[id]) {
+                return;
+            }
             const el = document.getElementById(id);
             if (el) el.value = overrides.inputs[id];
         });
     }
     if (overrides.checkboxes) {
         Object.keys(overrides.checkboxes).forEach(id => {
+            // Waffen-/Rüstungsvertrautheit kommt am Ende (nach Regel-Reapply)
+            if (isSheetProficiencyCheckboxId(id)) return;
             const el = document.getElementById(id);
             if (el) el.checked = overrides.checkboxes[id];
         });
     }
 
-    // 2. Tabellen (Inventar & Zauber)
+    // Regelbasierte Rüstungs-/Waffenvertrautheit (Basis) — manuelle Overrides folgen am Ende
+    reapplySheetArmorWeaponProficienciesFromRuleData();
+
+    // 2. Tabellen (Inventar & Zauber) — Waffen/Rüstung-Anlege-Status kommt am Ende
     if (overrides.tableData) {
-        const allTables = document.querySelectorAll('table');
         overrides.tableData.forEach(item => {
-            const table = allTables[item.t];
+            if (item.tableId === "inv_weapons" || item.tableId === "inv_armor") return;
+            if (isSpellbookSheetTableId(item.tableId)) return;
+            const table = resolveDcSheetTableForImport(item);
             if (table) {
                 const row = table.querySelectorAll('tbody tr')[item.r];
                 if (row) {
                     const cell = row.querySelectorAll('td')[item.c];
                     const input = cell?.querySelector('input');
                     if (input) {
+                        if (input.classList.contains('spellbook-checkbox')) return;
                         input.value = item.v;
                         if (item.chk !== null) input.checked = item.chk;
                     }
@@ -6849,40 +8257,79 @@ function applyImportOverrides() {
         });
     }
 
-    // 3. Physische Angriffe (Muss ganz am Ende stehen!)
-    if (overrides.attackTable) {
-        const attackTable = document.querySelector('.attack-table');
-        if (attackTable) {
-            const rows = attackTable.querySelectorAll('tbody tr');
-            overrides.attackTable.forEach((savedRow, rIdx) => {
-                const row = rows[rIdx];
-                if (row) {
-                    const inputs = row.querySelectorAll('input');
-                    savedRow.values.forEach((val, iIdx) => {
-                        if (inputs[iIdx]) inputs[iIdx].value = val;
-                    });
-                    const sel = row.querySelector('select.finesse-selector');
-                    if (sel && savedRow.finesse) sel.value = savedRow.finesse;
-                }
-            });
-        }
-    }
-
-    // 4. Todesrettungswürfe
+    // 3. Todesrettungswürfe
     if (overrides.deathSaves) {
         const checks = document.querySelectorAll('.death-saves-box input[type="checkbox"]');
         overrides.deathSaves.forEach((val, i) => { if (checks[i]) checks[i].checked = val; });
     }
 
-    // 5. Merkmale
+    // 4. Merkmale
     if (overrides.containers) {
         Object.keys(overrides.containers).forEach(key => {
+            // Volksmerkmale immer aus Regeldaten (processSpeciesTraits) — Override wäre stufenveraltet
+            if (key === "speciesTraits") return;
+            // Nach Stufenaufstieg: Klassen-/Talent-Blöcke ebenfalls frisch belassen
+            if (fromLevelUp && (key === "classFeatures" || key === "subclassFeatures" || key === "feats")) {
+                return;
+            }
             const el = document.getElementById(key + "Content") || document.getElementById(key);
             if (el) el.innerHTML = overrides.containers[key];
         });
     }
 
-    localStorage.removeItem('import_overrides');
+    // 5. Abgeleitete Werte neu berechnen (Checkbox-Overrides ändern Skill-/Save-Anzeigen)
+    if (typeof updateModifiers === "function") {
+        updateModifiers();
+    }
+    if (typeof updateProficiencyBonus === "function") {
+        updateProficiencyBonus();
+    }
+
+    // 6. Regel-abgeleitete Stats (TP/TW/XP) immer neu berechnen — Spezies-/Talent-Boni erhalten
+    const ruleDerivedSnapshot = overrides.inputs
+        ? {
+            maxHP: overrides.inputs.maxHP,
+            maxHD: overrides.inputs.maxHD,
+            currentHP: overrides.inputs.currentHP,
+            xp: overrides.inputs.xp
+        }
+        : null;
+    refreshSheetRuleDerivedStats(ruleDerivedSnapshot);
+
+    // 7. Physische Angriffe (vor Vertrautheit/Inventar — finale Werte kommen am Ende)
+    if (overrides.attackTable) {
+        applyPhysicalAttacksTableOverrides(overrides.attackTable);
+    }
+
+    // 8. Waffen-/Rüstungsvertrautheit (Seite 1) — gespeicherter Bogenzustand hat Vorrang
+    applySheetProficiencyCheckboxOverrides(overrides);
+
+    // 9. Waffen-/Rüstungs-Inventar (Text + Anlege-Checkbox) — vor Feature-Handler-Reapply
+    applyInventoryEquipTableOverrides(overrides);
+
+    // 10. Feature-Handler (featureHandlers / talentHandlers / speciesHandlers) — ZULETZT
+    reapplyAllSheetFeatureHandlers(loadCharacterDataFromStorage());
+
+    // 10b. Sprachen aus Regeldaten (classForm.languages darf alten Override nicht veralten lassen)
+    const charDataForLangs = loadCharacterDataFromStorage();
+    if (charDataForLangs) {
+        const languagesText = buildLanguagesListDisplayText(charDataForLangs);
+        const languagesEl = document.getElementById("languagesList");
+        if (languagesEl) languagesEl.value = languagesText;
+    }
+
+    // 11. Zauberanhang-Schalter: bei fehlenden Zaubern Checkbox zurücksetzen
+    syncSpellAppendixToggleState(loadCharacterDataFromStorage());
+
+    // 12. Zauberbuch (Seite 6) aus preparedSpells — Overrides dürfen Vorbereitet-Status nicht überschreiben
+    const charDataForSpellbook = loadCharacterDataFromStorage();
+    if (charDataForSpellbook) {
+        processSpellbookPage(charDataForSpellbook);
+        if (typeof applyFieldLocks === "function") applyFieldLocks();
+    }
+
+    // Overrides dauerhaft persistieren (nicht löschen — sonst gehen manuelle Änderungen beim Refresh verloren)
+    persistSheetOverrides(collectSheetOverridesFromDOM());
     console.log("Deep Import Final mit korrektem Attack-Restore abgeschlossen.");
 }
 
