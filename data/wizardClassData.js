@@ -1051,7 +1051,7 @@ const wizardClassData = [
     "constForChoice": 0,
     "classFeaturesStep2": 1,
     "infoBox": 1,
-    "classFeaturesCharacterSheet": 0,
+    "classFeaturesCharacterSheet": 1,
     "skillCategoryNumber": 0,
     "cantripsAmount": 5,
     "preparedSpellsAmount": 25,

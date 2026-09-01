@@ -1654,7 +1654,7 @@ const featList = [
     "translationLabel": "blessedWarriorLabel",
     "featDLabel": "blessedWarriorDLabel",
     "featD_sheet": "blessedWarriorDsheet",
-    "characterSheet": 1,
+    "characterSheet": 0,
     "featCategoryNumber": 5, // Eigene Kategorie fuer Paladin-Alternative
     "multipleSelection": 0,
     "takeChoice": 4,
@@ -1676,7 +1676,7 @@ const featList = [
     "translationLabel": "druidicWarriorLabel",
     "featDLabel": "druidicWarriorDLabel",
     "featD_sheet": "druidicWarriorDsheet",
-    "characterSheet": 1,
+    "characterSheet": 0,
     "featCategoryNumber": 6, // Eigene Kategorie fuer Ranger-Alternative
     "multipleSelection": 0,
     "takeChoice": 4,

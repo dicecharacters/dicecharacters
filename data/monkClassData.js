@@ -750,7 +750,7 @@ const monkClassData = [
     "choiceInStep3": 1,
     "subclassCategoryNumber": 0,
     "constForChoice": "feats [16]",
-    "classFeaturesStep2": 0,
+    "classFeaturesStep2": 1,
     "infoBox": 0,
     "classFeaturesCharacterSheet": 0,
     "skillCategoryNumber": 0,

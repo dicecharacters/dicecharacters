@@ -66,79 +66,38 @@ const attributeScorePointCosts = [
   }
 ];
 
+// Attributswert → Modifikator (PHB/SRD: Werte 1–30, paarweise Stufen)
 const modifierList = [
-  {
-    "score": 3,
-    "modifier": -4
-  },
-  {
-    "score": 4,
-    "modifier": -3
-  },
-  {
-    "score": 5,
-    "modifier": -3
-  },
-  {
-    "score": 6,
-    "modifier": -2
-  },
-  {
-    "score": 7,
-    "modifier": -2
-  },
-  {
-    "score": 8,
-    "modifier": -1
-  },
-  {
-    "score": 9,
-    "modifier": -1
-  },
-  {
-    "score": 10,
-    "modifier": 0
-  },
-  {
-    "score": 11,
-    "modifier": 0
-  },
-  {
-    "score": 12,
-    "modifier": +1
-  },
-  {
-    "score": 13,
-    "modifier": +1
-  },
-  {
-    "score": 14,
-    "modifier": +2
-  },
-  {
-    "score": 15,
-    "modifier": +2
-  },
-  {
-    "score": 16,
-    "modifier": +3
-  },
-  {
-    "score": 17,
-    "modifier": +3
-  },
-  {
-    "score": 18,
-    "modifier": +4
-  },
-  {
-    "score": 19,
-    "modifier": +4
-  },
-  {
-    "score": 20,
-    "modifier": +5
-  }
+  { "score": 1, "modifier": -5 },
+  { "score": 2, "modifier": -4 },
+  { "score": 3, "modifier": -4 },
+  { "score": 4, "modifier": -3 },
+  { "score": 5, "modifier": -3 },
+  { "score": 6, "modifier": -2 },
+  { "score": 7, "modifier": -2 },
+  { "score": 8, "modifier": -1 },
+  { "score": 9, "modifier": -1 },
+  { "score": 10, "modifier": 0 },
+  { "score": 11, "modifier": 0 },
+  { "score": 12, "modifier": +1 },
+  { "score": 13, "modifier": +1 },
+  { "score": 14, "modifier": +2 },
+  { "score": 15, "modifier": +2 },
+  { "score": 16, "modifier": +3 },
+  { "score": 17, "modifier": +3 },
+  { "score": 18, "modifier": +4 },
+  { "score": 19, "modifier": +4 },
+  { "score": 20, "modifier": +5 },
+  { "score": 21, "modifier": +5 },
+  { "score": 22, "modifier": +6 },
+  { "score": 23, "modifier": +6 },
+  { "score": 24, "modifier": +7 },
+  { "score": 25, "modifier": +7 },
+  { "score": 26, "modifier": +8 },
+  { "score": 27, "modifier": +8 },
+  { "score": 28, "modifier": +9 },
+  { "score": 29, "modifier": +9 },
+  { "score": 30, "modifier": +10 }
 ];
 
 const XPList = [

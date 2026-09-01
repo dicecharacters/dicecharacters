@@ -1851,7 +1851,7 @@ const adventuringGearList = [
   },
   {
     "ID": 186,
-    "translationLabel": "magnifyingGlassLabel",
+    "translationLabel": "smallAnimalCageLabel",
     "weight": 0,
     "costValue": 0,
     "costUnit": "GPLabel",

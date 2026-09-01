@@ -566,7 +566,7 @@ const speciesTraitList = [
         "spellLabel": "thaumaturgyLabel",
         "skillLabel": 0,
         "featLabel": 0,
-        "characterSheet": 1,
+        "characterSheet": 0,
         "speciesTraitDSheet": "otherworldlyPresenceDSheet",
         "speciesTraitDLabel": "otherworldlyPresenceD",
         "speciesTraitShortDLabel": "otherworldlyPresenceShortD"

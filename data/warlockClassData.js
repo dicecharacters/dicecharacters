@@ -794,7 +794,7 @@ const warlockClassData = [
     "constForChoice": "selectedMysticArcanum1",
     "classFeaturesStep2": 1,
     "infoBox": 1,
-    "classFeaturesCharacterSheet": 0,
+    "classFeaturesCharacterSheet": 1,
     "skillCategoryNumber": 0,
     "eldritchInvocations": 7,
     "cantripsAmount": 4,

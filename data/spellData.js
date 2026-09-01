@@ -13064,7 +13064,7 @@ const magicSkillsList = [
     "chooseNonSpecific_sl": 0,
     "chooseNonSpecificSpell_a": 0,
     "getSpecificSpell": ["darknessLabel", "minorIllusionLabel"],
-    "chooseType": 1
+    "chooseType": 3
   },
   {
     "ID": 22,
@@ -13199,7 +13199,7 @@ const magicSkillsList = [
     "chooseNonSpecific_sl": 0,
     "chooseNonSpecificSpell_a": 0,
     "getSpecificSpell": ["huntersMarkLabel"],
-    "chooseType": 1
+    "chooseType": 3
   },
   {
     "ID": 31,
@@ -14841,7 +14841,7 @@ const magicFeatsList = [
     "getSpellList_c": 0,
     "getSpellList_sl": 0,
     "chooseNonSpecificSpell_c": 0,
-    "chooseNonSpecificSpell_ss": ["divinationLabel", "evocationLabel"],
+    "chooseNonSpecificSpell_ss": ["divinationLabel", "enchantmentLabel"],
     "chooseNonSpecificSpell_sf": 0,
     "chooseNonSpecific_sl": ["1stLevelLabel"],
     "chooseNonSpecificSpell_a": 1,
@@ -14869,7 +14869,7 @@ const magicFeatsList = [
     "chooseNonSpecificSpell_c": 0,
     "chooseNonSpecificSpell_ss": 0,
     "chooseNonSpecificSpell_sf": ["ritualLabel"],
-    "chooseNonSpecific_sl": 0,
+    "chooseNonSpecific_sl": ["1stLevelLabel"],
     "chooseNonSpecificSpell_a": 555,
     "getSpecificSpell": 0,
     "chooseType": 3

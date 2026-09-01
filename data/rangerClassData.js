@@ -301,7 +301,7 @@ const rangerClassData = [
     "constForChoice": 0,
     "classFeaturesStep2": 0,
     "infoBox": 0,
-    "classFeaturesCharacterSheet": 1,
+    "classFeaturesCharacterSheet": 0,
     "skillCategoryNumber": 0,
     "favoredEnemy": 2,
     "psychicDamage": "1D4",

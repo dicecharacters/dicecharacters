@@ -1,6 +1,32 @@
 // newsData.js
 const newsUpdates = [
       {
+        date: "01.09.2026",
+        version: "v1.7",
+        content: `
+            Bugfixing:
+            <ul class="news-list">
+                <li>Schritt 7: Mit dem Talent "Feenberührt" lassen sich nun Zauber der Verzauberungsschule wie "Dissonantes Flüstern" auswählen (falsch hinterlegte Zauberschule korrigiert).</li>
+                <li>Schritt 7: Das Talent "Ritualwirker" beschränkt die Zauberauswahl nun korrekt auf Ritualzauber des 1. Grades (statt aller Grade).</li>
+                <li>Charakterbogen: Leere Zeilen in der Ausrüstungsliste für Rüstungen (Seite 2) können im Bearbeitungsmodus nun ordnungsgemäß editiert werden.</li>
+                <li>Charakterbogen: Für Nicht-Zauberwirker (z. B. Kämpfer/Kampfmeister mit dem Talent "Schattenberührt") werden auf Seite 5 nicht mehr fälschlicherweise Zauberplätze angezeigt.</li>
+                <li>Charakterbogen: Das gewählte Zauberattribut aus der Mehrfachauswahl des Talents "Eingeweihter der Magie" wird auf Seite 5 (Zauber) nun korrekt berücksichtigt.</li>
+                <li>Charakterbogen: Bei den Talenten "Scharfsinnig", "Aufmerksam" und "Fertigkeitsexperte" wird die Expertise nun ordnungsgemäß angezeigt.</li>
+                <li>Allgemein: Merkmale (z. B. "Meister der Wildnis") und Epische Gaben erhöhen nun wie vorgesehen die Attributwertgrenzen (von 20 auf 25 bzw. 30).</li>
+            </ul>
+
+            Optimierungen:
+            <ul class="news-list">
+                <li>Charakterbogen: Neue Stufenaufstiegsfunktion direkt auf dem Bogen für alle Klassen implementiert.</li>
+                <li>Charakterbogen: Die Rüstungsklasse (RK) wurde in den Bearbeitungsmodus aufgenommen und ist nun direkt anpassbar.</li>
+                <li>Waldläufer: Das Merkmal "Vagabund" (Stufe 6) berechnet den Bonus von +3 m Bewegungsrate (ohne schwere Rüstung) nun automatisch auf dem Bogen ein.</li>
+                <li>Barde: Das Merkmal "Alleskönner" rechnet ungeübten Werten nun automatisch die Hälfte des Übungsbonus an.</li>
+                <li>Mönch: Das Merkmal "Der disziplinierte Überlebende" gewährt und markiert automatisch die Übung in allen Rettungswürfen auf dem Bogen.</li>
+                <li>Waldläufer (Feenwanderer): Die Boni des Merkmals "Außerweltlicher Glanz" werden nun automatisch in die Charakterwerte auf dem Bogen eingerechnet.</li>
+            </ul>
+        `
+      },
+      {
         date: "16.08.2026",
         version: "v1.6",
         content: `
