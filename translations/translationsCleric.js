@@ -86,7 +86,7 @@ Object.assign(translations.de, {
     "improvedDuplicityD": "Abbild beschwören verbessert:<ul><li><b>Gemeinsame Ablenkung:</b> du & Verbündete Vorteil auf Angriffe gegen Kreaturen in 1,5 m zur Illusion.</li><li><b>Heilende Illusion:</b> endet die Illusion: heile dich oder Kreatur in 1,5 m um Klerikerstufe TP.</li></ul>",
     "avatarOfBattleD": "Resistenz gegen Hieb-, Stich- und Wuchtschaden.",
     "greaterDivineInterventionD": "Bei Göttliche Intervention kannst du 'Wunsch' wählen; dann erst nach 2W4 langen Rasten erneut einsetzbar.",
-    "protectorDLabel": "Für den Kampf ausgebildet: Übung mit Kriegswaffen und Vertrautheit mit schwerer Rüstung.",
+    "protectorDLabel": "Für den Kampf ausgebildet. Übung mit Kriegswaffen und Vertrautheit mit schwerer Rüstung.",
     "thaumaturgeDLabel": "Zusätzlicher Kleriker-Zaubertrick. Bonus = WEIS-Mod. (min. +1) auf Intelligenzwürfe (Arkane Kunde oder Religion).",
     "divineStrikeDLabel": "Einmal in jedem deiner Züge bei Treffer mit Waffenangriff: +1W8 gleißend oder nekrotisch (Wahl).",
     "potentSpellcastingDLabel": "Füge deinen WEIS-Mod. dem Schaden von Klerikerzaubertricks hinzu.",

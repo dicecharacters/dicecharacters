@@ -102,7 +102,7 @@ Object.assign(translations.de, {
     "beastSpellsD": "In Tiergestalt kannst du Zauber wirken, außer solche mit Materialkomponenten mit angegebenen Kosten oder die ihre Materialkomponente verbrauchen.",
     "archdruidD": "Die Lebenskraft der Natur gewährt dir:<ul><li><b>Ausdauernde Tiergestalt:</b> Würfelst du Initiative und hast 0 Anwendungen, erhältst du 1 zurück.</li><li><b>Naturmagier:</b> Wandle Anwendungen Tiergestalt in einen Zauberplatz um (jede Anwendung trägt 2 Zaubergrade bei; z. B. 2 Anwendungen → Platz Grad 4; keine Aktion; 1× pro langer Rast).</li><li><b>Langlebigkeit:</b> Für je 10 vergangene Jahre altert dein Körper nur 1 Jahr.</li></ul>",
     "magicianDLabel": "Du kennst einen zusätzlichen Zaubertrick aus der Zauberliste des Druiden. Außerdem erhältst du einen Bonus in Höhe deines Weisheitsmodifikators (mindestens +1) auf Intelligenzwürfe (Arkane Kunde oder Naturkunde).",
-    "wardenDLabel": "Für den Kampf ausgebildet: Übung mit Kriegswaffen und Vertrautheit mit mittelschwerer Rüstung.",
+    "wardenDLabel": "Für den Kampf ausgebildet. Übung mit Kriegswaffen und Vertrautheit mit mittelschwerer Rüstung.",
     "potentSpellcastingDLabel": "Füge deinen Weisheitsmodifikator dem Schaden hinzu, den du mit einem Druidenzaubertrick verursachst.",
     "primalStrikeDLabel": "Einmal in jedem deiner Züge, wenn du eine Kreatur mit einem Waffenangriff oder einem Angriff in Tiergestalt triffst: zusätzlicher 1W8 Blitz-, Feuer-, Kälte- oder Schallschaden (Wahl beim Treffer).",
     "improvedPotentSpellcastingDLabel": "Wirkst du einen Druidenzaubertrick mit einer Reichweite von mindestens 3 m, erhöht sich die Reichweite um 90 m.",
