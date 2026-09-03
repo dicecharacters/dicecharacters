@@ -4169,22 +4169,56 @@ const CHOICE_LIST_MAP = {
     'expertise': 'skillList',
     'maneuvers': 'maneuverCategoryList',            // Kämpfer
     'metamagics': 'metamagicOptionsList',            // Zauberer
-    'eldritchInvocations': 'eldritchInvocationOptionsList'  // Hexenmeister
+    'eldritchInvocations': 'eldritchInvocationOptionsList',  // Hexenmeister
+    'energyMasteries': 'energyMasteryCategoryList',  // Talent Elementar-Adept
+    'damageType_Boon': 'damageType_All'              // Boon of Energy Resistance
 };
 
-// ID-Feld pro [CHOICE_LIST]-Typ — nicht über Object.values matchen (z. B. level vs. eldritchInvocationOption)
+// ID-Feld pro [CHOICE]/[CHOICE_LIST]/[DATA]-Lookup — nicht über Object.values matchen
+// (z. B. Invocations: level vs. eldritchInvocationOption)
 const CHOICE_LIST_ID_FIELD = {
     'expertise': 'skillCategoryNumber',
     'maneuvers': 'maneuverCategoryNumber',
     'metamagics': 'ID',
-    'eldritchInvocations': 'eldritchInvocationOption'
+    'eldritchInvocations': 'eldritchInvocationOption',
+    'primalOrders': 'primalOrderCategoryNumber',
+    'divineOrders': 'divineOrderCategoryNumber',
+    'blessedStrikes': 'blessedStrikesCategoryNumber',
+    'elementalFuries': 'elementalFuryCategoryNumber',
+    'lands': 'landCategoryNumber',
+    'energyMasteries': 'energyMasteryCategoryNumber',
+    'damageType_Dragon': 'ID',
+    'damageType_fiendRes': 'ID',
+    'damageType_Boon': 'ID',
+    'attributes': 'ID',
+    'subclass': 'subclassCategoryNumber'
 };
 
 const CHOICE_LIST_ID_FIELD_BY_LIST = {
     'skillList': 'skillCategoryNumber',
     'maneuverCategoryList': 'maneuverCategoryNumber',
     'metamagicOptionsList': 'ID',
-    'eldritchInvocationOptionsList': 'eldritchInvocationOption'
+    'eldritchInvocationOptionsList': 'eldritchInvocationOption',
+    'primalOrderCategoryList': 'primalOrderCategoryNumber',
+    'divineOrderCategoryList': 'divineOrderCategoryNumber',
+    'blessedStrikesCategoryList': 'blessedStrikesCategoryNumber',
+    'elementalFuryCategoryList': 'elementalFuryCategoryNumber',
+    'landCategoryList': 'landCategoryNumber',
+    'energyMasteryCategoryList': 'energyMasteryCategoryNumber',
+    'damageType_All': 'ID',
+    'attributeList': 'ID',
+    'subclassListBarbarian': 'subclassCategoryNumber',
+    'subclassListBard': 'subclassCategoryNumber',
+    'subclassListCleric': 'subclassCategoryNumber',
+    'subclassListDruid': 'subclassCategoryNumber',
+    'subclassListFighter': 'subclassCategoryNumber',
+    'subclassListMonk': 'subclassCategoryNumber',
+    'subclassListPaladin': 'subclassCategoryNumber',
+    'subclassListRanger': 'subclassCategoryNumber',
+    'subclassListRogue': 'subclassCategoryNumber',
+    'subclassListSorcerer': 'subclassCategoryNumber',
+    'subclassListWarlock': 'subclassCategoryNumber',
+    'subclassListWizard': 'subclassCategoryNumber'
 };
 
 function choiceListItemMatchesSavedId(item, idField, idInt) {
@@ -4195,20 +4229,50 @@ function choiceListItemMatchesSavedId(item, idField, idInt) {
     return parseInt(raw, 10) === idInt;
 }
 
+/** Gespeicherte ID normalisieren (Array → erstes Element; string/number). */
+function normalizeChoiceListSavedId(savedId) {
+    if (savedId == null || savedId === "") return null;
+    if (Array.isArray(savedId)) {
+        if (!savedId.length) return null;
+        return savedId[0];
+    }
+    return savedId;
+}
+
 function findChoiceListItemById(list, savedId, options = {}) {
-    const idInt = parseInt(savedId, 10);
+    const normalized = normalizeChoiceListSavedId(savedId);
+    const idInt = parseInt(normalized, 10);
     if (!list || !Array.isArray(list) || !Number.isFinite(idInt)) return null;
 
     const { fieldName, listName } = options;
-    const idField = (fieldName && CHOICE_LIST_ID_FIELD[fieldName])
+    let idField = (fieldName && CHOICE_LIST_ID_FIELD[fieldName])
         || (listName && CHOICE_LIST_ID_FIELD_BY_LIST[listName])
         || null;
+
+    // subclassList* ohne expliziten Map-Eintrag (Custom / neue Klassen)
+    if (!idField && listName && /^subclassList/i.test(String(listName))) {
+        idField = "subclassCategoryNumber";
+    }
 
     if (idField) {
         return list.find(obj => choiceListItemMatchesSavedId(obj, idField, idInt)) || null;
     }
 
-    return list.find(obj => obj.id == idInt || obj.ID === idInt) || null;
+    // Fallback: id/ID, sonst *CategoryNumber / *Number (ohne Object.values-Kollisionen)
+    const byId = list.find(obj => obj.id == idInt || obj.ID == idInt);
+    if (byId) return byId;
+
+    return list.find(obj => {
+        if (!obj || typeof obj !== "object") return false;
+        return Object.keys(obj).some(k => {
+            if (!/(CategoryNumber|Option)$/i.test(k) && !/(^|[^a-z])Number$/i.test(k)) return false;
+            if (k === "subclassCategoryNumber" && listName && !/^subclassList/i.test(String(listName))) {
+                // Auf Klassenmerkmal-Zeilen oft 0 — nicht als Auswahl-ID missbrauchen
+                return false;
+            }
+            return choiceListItemMatchesSavedId(obj, k, idInt);
+        });
+    }) || null;
 }
 
 // 1. Grundfunktion: Pfad im Objekt finden
@@ -4272,8 +4336,10 @@ function getListByName(listName) {
         'divineOrderCategoryList': (typeof divineOrderCategoryList !== 'undefined') ? divineOrderCategoryList : null,
         'blessedStrikesCategoryList': (typeof blessedStrikesCategoryList !== 'undefined') ? blessedStrikesCategoryList : null,
 
-        // Zauberer / Hexenmeister
+        // Zauberer / Hexenmeister / allgemein
         'damageType_All': (typeof damageType_All !== 'undefined') ? damageType_All : null,
+        'attributeList': (typeof attributeList !== 'undefined') ? attributeList : null,
+        'energyMasteryCategoryList': (typeof energyMasteryCategoryList !== 'undefined') ? energyMasteryCategoryList : null,
         
         // Listen für [CHOICE_LIST]
         'skillList': (typeof skillList !== 'undefined') ? skillList : null,
@@ -4288,7 +4354,7 @@ function getListByName(listName) {
         'subclassListDruid': (typeof subclassListDruid !== 'undefined') ? subclassListDruid : null,
         'subclassListFighter': (typeof subclassListFighter !== 'undefined') ? subclassListFighter : null,
         'subclassListMonk': (typeof subclassListMonk !== 'undefined') ? subclassListMonk : null,
-        'subclassListPaladin': (typeof paladinClassData !== 'undefined') ? paladinClassData : null, 
+        'subclassListPaladin': (typeof subclassListPaladin !== 'undefined') ? subclassListPaladin : null,
         'subclassListRanger': (typeof subclassListRanger !== 'undefined') ? subclassListRanger : null,
         'subclassListRogue': (typeof subclassListRogue !== 'undefined') ? subclassListRogue : null,
         'subclassListSorcerer': (typeof subclassListSorcerer !== 'undefined') ? subclassListSorcerer : null,
@@ -4305,6 +4371,16 @@ function getSingleChoiceName(keyPath, globalData, className) {
     // Sicherheitscheck: undefined/null/empty -> "-"
     if (val === undefined || val === null || val === "") return "-";
 
+    // Arrays (z. B. classForm.primalOrders: ["1"]) — jedes Element auflösen
+    if (Array.isArray(val)) {
+        if (!val.length) return "-";
+        return val.map(v => getSingleChoiceNameResolved(keyPath, v, className)).join(", ");
+    }
+
+    return getSingleChoiceNameResolved(keyPath, val, className);
+}
+
+function getSingleChoiceNameResolved(keyPath, val, className) {
     // Wenn es KEINE Zahl ist, ist es Text -> Übersetzen
     if (isNaN(val)) {
         return (translations[currentLanguage] && translations[currentLanguage][val]) ? translations[currentLanguage][val] : val;
@@ -4322,7 +4398,7 @@ function getSingleChoiceName(keyPath, globalData, className) {
         listName = `subclassList${capClass}`;
     }
 
-    // Liste holen (Das hatte ich im letzten Versuch falsch gemacht)
+    // Liste holen
     let list = getListByName(listName);
 
     // Custom-Class: Unterklassen aus Runtime
@@ -4331,7 +4407,7 @@ function getSingleChoiceName(keyPath, globalData, className) {
     }
 
     if (list && Array.isArray(list)) {
-        const foundItem = findChoiceListItemById(list, val, { listName });
+        const foundItem = findChoiceListItemById(list, val, { fieldName, listName });
         
         if (foundItem) {
             let labelKey = foundItem.translationLabel || foundItem.label;
@@ -4356,10 +4432,13 @@ function getSingleChoiceName(keyPath, globalData, className) {
 // 5. Gezielter Daten-Abruf (Repariert: Nutzt getListByName)
 function getDataLookupValue(keyString, globalData) {
     const parts = keyString.split(':');
-    const savedId = getValueByPath(globalData, parts[0]);
+    let savedId = getValueByPath(globalData, parts[0]);
     
     if (savedId === undefined || savedId === null || savedId === "") return "-";
-    if (parts.length < 3) return savedId; 
+    if (parts.length < 3) {
+        if (Array.isArray(savedId)) return savedId.join(", ");
+        return savedId;
+    }
 
     const listName = parts[1].trim();     
     const targetProp = parts[2].trim();    
@@ -4369,19 +4448,28 @@ function getDataLookupValue(keyString, globalData) {
 
     if (!list || !Array.isArray(list)) return "-";
 
-    const foundItem = findChoiceListItemById(list, savedId, { listName });
-    if (!foundItem) return "-";
+    const resolveOne = (id) => {
+        const foundItem = findChoiceListItemById(list, id, { listName });
+        if (!foundItem) return "-";
 
-    let resultValue = foundItem[targetProp];
+        let resultValue = foundItem[targetProp];
 
-    // Übersetzen wenn der Wert selbst ein Key ist
-    if (resultValue && typeof resultValue === 'string') {
-        if (translations[currentLanguage] && translations[currentLanguage][resultValue]) {
-            return translations[currentLanguage][resultValue];
+        // Übersetzen wenn der Wert selbst ein Key ist
+        if (resultValue && typeof resultValue === 'string') {
+            if (translations[currentLanguage] && translations[currentLanguage][resultValue]) {
+                return translations[currentLanguage][resultValue];
+            }
         }
+
+        return resultValue !== undefined ? resultValue : "-";
+    };
+
+    if (Array.isArray(savedId)) {
+        if (!savedId.length) return "-";
+        return savedId.map(resolveOne).join(", ");
     }
 
-    return resultValue !== undefined ? resultValue : "-";
+    return resolveOne(savedId);
 }
 
 // 6. Generische Listen-Anzeige (Für Manöver etc.)
@@ -4399,7 +4487,7 @@ function getChoiceListHTML(keyPath, data) {
     let html = "<ul class='compact-list'>";
     
     val.forEach(savedId => {
-        const item = findChoiceListItemById(list, savedId, { fieldName });
+        const item = findChoiceListItemById(list, savedId, { fieldName, listName });
         
         if (item) {
             const labelKey = item.translationLabel || item.label;
@@ -5017,10 +5105,11 @@ function resolveSingleValue(keyPath, val) {
         list = attributeList;
     }
 
-    // D. Item suchen & Label zurückgeben
+    // D. Item suchen & Label zurückgeben (gleiche ID-Semantik wie Klassenmerkmale)
     if (list && Array.isArray(list)) {
-        // Findet item.ID (4) oder item.id (4) egal ob Zahl oder String
-        const foundItem = list.find(item => (item.ID == val || item.id == val));
+        const foundItem = (typeof findChoiceListItemById === "function")
+            ? findChoiceListItemById(list, val, { fieldName, listName })
+            : list.find(item => (item.ID == val || item.id == val));
         
         if (foundItem) {
             const labelKey = foundItem.translationLabel || foundItem.label;
@@ -5568,6 +5657,8 @@ function processSpeciesTraits(data) {
         let status = traitData.characterSheet;
         let descKey = traitData.speciesTraitDSheet;
         let titleKey = traitLabel;
+        // Nur Custom-Volk: Erblinie-Titel = „Erblinie / Lineage“ + Volksname (PHB behält elvenLineageLabel etc.)
+        let lineageSheetTitle = null;
 
         let statusStr = String(status);
         if (statusStr.includes(":LEVEL:")) {
@@ -5591,6 +5682,14 @@ function processSpeciesTraits(data) {
             if (lineageObj) {
                 status = lineageObj.characterSheet;
                 descKey = lineageObj.lineageTraitDSheet;
+                if (speciesData.isCustom || traitData.isCustom) {
+                    const tLang = translations[currentLanguage] || translations['de'] || {};
+                    const lineageWord = tLang.lineageLabel || "Erblinie";
+                    const speciesName = tLang[speciesData.translationLabel]
+                        || speciesData.translationLabel
+                        || "";
+                    lineageSheetTitle = `${lineageWord} ${speciesName}`.trim();
+                }
             } else {
                 status = 0;
             }
@@ -5600,7 +5699,7 @@ function processSpeciesTraits(data) {
         if (status === 1 || status === 3) {
             const t = translations[currentLanguage] || translations['de'];
             
-            let title = t[titleKey] || titleKey;
+            let title = lineageSheetTitle || t[titleKey] || titleKey;
 		const autoText = t['autoValueText'] || "Dieser Wert wird automatisch berechnet";
         	if (status === 3) {
             		title += `<span class="auto-marker" title="${autoText}">⚙</span>`;
