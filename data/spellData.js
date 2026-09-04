@@ -1209,7 +1209,7 @@ const spellList = [
   },
   {
     "ID": 39,
-    "translationLabel": "baneLabel",
+    "translationLabel": "baneSpellLabel",
     "spellLevel": "1stLevelLabel",
     "spellSchool": "enchantmentLabel",
     "components": [
