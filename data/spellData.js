@@ -5597,7 +5597,7 @@ const spellList = [
   },
   {
     "ID": 167,
-    "translationLabel": "crusader'sMantleLabel",
+    "translationLabel": "crusadersMantleLabel",
     "spellLevel": "3rdLevelLabel",
     "spellSchool": "evocationLabel",
     "components": [
