@@ -1209,7 +1209,7 @@ const spellList = [
   },
   {
     "ID": 39,
-    "translationLabel": "baneLabel",
+    "translationLabel": "baneSpellLabel",
     "spellLevel": "1stLevelLabel",
     "spellSchool": "enchantmentLabel",
     "components": [
@@ -5597,7 +5597,7 @@ const spellList = [
   },
   {
     "ID": 167,
-    "translationLabel": "crusader'sMantleLabel",
+    "translationLabel": "crusadersMantleLabel",
     "spellLevel": "3rdLevelLabel",
     "spellSchool": "evocationLabel",
     "components": [
@@ -14425,7 +14425,7 @@ const subclassSpellsList = [
     "level": 3,
     "subclassCategoryNumber": 4,
     "landCategoryNumber": 0,
-    "preparedSpells": ["baneLabel", "huntersMarkLabel"]
+    "preparedSpells": ["baneSpellLabel", "huntersMarkLabel"]
   },
   {
     "ID": 57,
