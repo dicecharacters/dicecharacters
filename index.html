@@ -150,7 +150,6 @@
     </footer>
 
     <script src="data/newsData.js"></script>
-    <script src="translations/translationsCore.js"></script>
     <script src="translations/translationsIndex.js"></script>
     <script>
 
@@ -158,21 +157,25 @@
 
     function setLanguage(lang) {
         currentLang = lang;
-        const elements = translations[lang];
+        const elements = translations[lang] || translations.de;
+        if (!elements) return;
         
         // Titel, Sprache und SEO (auch ohne JavaScript steht Deutsch schon im HTML)
         document.documentElement.lang = lang === 'en' ? 'en' : 'de';
-        document.title = elements.indexPageTitle;
+        // Nie "undefined" in den Tab schreiben (Google indexiert sonst genau dieses Wort)
+        if (typeof elements.indexPageTitle === "string") {
+            document.title = elements.indexPageTitle;
+        }
         const meta = document.getElementById('metaDesc');
-        if (meta) meta.content = elements.indexMetaDesc;
+        if (meta && typeof elements.indexMetaDesc === "string") meta.content = elements.indexMetaDesc;
         const ogTitle = document.getElementById('ogTitle');
         const ogDesc = document.getElementById('ogDesc');
         const twitterTitle = document.getElementById('twitterTitle');
         const twitterDesc = document.getElementById('twitterDesc');
-        if (ogTitle) ogTitle.setAttribute('content', elements.indexPageTitle);
-        if (ogDesc) ogDesc.setAttribute('content', elements.indexMetaDesc);
-        if (twitterTitle) twitterTitle.setAttribute('content', elements.indexPageTitle);
-        if (twitterDesc) twitterDesc.setAttribute('content', elements.indexMetaDesc);
+        if (ogTitle && typeof elements.indexPageTitle === "string") ogTitle.setAttribute('content', elements.indexPageTitle);
+        if (ogDesc && typeof elements.indexMetaDesc === "string") ogDesc.setAttribute('content', elements.indexMetaDesc);
+        if (twitterTitle && typeof elements.indexPageTitle === "string") twitterTitle.setAttribute('content', elements.indexPageTitle);
+        if (twitterDesc && typeof elements.indexMetaDesc === "string") twitterDesc.setAttribute('content', elements.indexMetaDesc);
         const structured = document.getElementById('structuredData');
         if (structured) {
             try {
