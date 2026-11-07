@@ -1,4 +1,9 @@
 // translationsIndex.js
+// Landing/Rechtseiten laden translationsCore nicht: leeres Objekt bereitstellen
+if (typeof translations === "undefined") {
+    var translations = { de: {}, en: {} };
+}
+
 Object.assign(translations.de, {
     "indexPageTitle": "DiceCharacters | Dein Charakterersteller",
     "indexMetaDesc": "Erstelle deinen DnD 5.5e Charakter einfach, kostenlos und auf Deutsch. Der einsteigerfreundliche Generator für deine Abenteuerreise.",
