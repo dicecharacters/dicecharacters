@@ -4758,46 +4758,73 @@ textarea::placeholder,
     width: 100%;
 }
 
-/* Volksname → Bezeichnung (Abstammung): längerer Stamm + mehr Abstand */
-#customSpeciesTab2Content .cspc-tree-trunk--to-ancestry-group {
-    height: 36px;
+.cspc-spell-ability-section .cspc-spell-ability-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 8px;
 }
 
-#customSpeciesTab2Content .cspc-ancestry-group-wrap {
-    width: min(100%, 280px);
-    margin: 0 auto;
+.cspc-spell-ability-section .cspc-spell-ability-select {
+    width: min(100%, 220px);
 }
 
-#customSpeciesTab2Content .cspc-ancestry-group-field {
+.cspc-spell-ability-section .cspc-spell-ability-free-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     margin: 0;
-    padding: 0;
-    border: none;
+    white-space: nowrap;
 }
 
-#customSpeciesTab2Content .cspc-ancestry-group-field > label {
-    font-size: 0.82rem;
-    line-height: 1.2;
-    text-align: center;
-    margin-bottom: 4px;
+/* Kein Zauberwissen: Sektion visuell ausgegraut */
+.cspc-spell-ability-section--inactive {
+    opacity: 0.55;
+    filter: grayscale(0.25);
 }
 
-#customSpeciesTab2Content .cspc-ancestry-group-field .char-counter {
-    margin-top: 2px;
+.cspc-spell-ability-section--inactive .cspc-spell-ability-select,
+.cspc-spell-ability-section--inactive .cspc-spell-ability-free-label {
+    cursor: not-allowed;
+    color: #9a8f7a;
 }
 
-/* Globaler 5vh-Abstand unter Inputs (wie bei Branch-Bezeichnung) entfernen */
-#customSpeciesTab2Content .cspc-ancestry-group-field input[type="text"],
-#customSpeciesTab2Content .cspc-ancestry-group-field .custom-class-name-input {
-    height: 32px !important;
-    min-height: 32px !important;
-    max-height: 32px !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding: 4px 8px !important;
-    font-size: inherit !important;
-    max-width: none;
-    width: 100%;
-    box-sizing: border-box;
+.cspc-spell-ability-section--inactive .cspc-spell-ability-select:disabled,
+.cspc-spell-ability-section .cspc-spell-ability-select:disabled {
+    opacity: 0.7;
+    background-color: rgba(0, 0, 0, 0.18);
+    color: #9a8f7a;
+    cursor: not-allowed;
+}
+
+.cspc-spell-ability-section--inactive input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Schritt 3: Zauberattribut in der Species-Trait-Box – Label und Dropdown linksbündig */
+#speciesTraitsContent .cspc-species-spell-ability-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+#speciesTraitsContent .cspc-species-spell-ability-select {
+    width: 150px;
+    margin-left: 0;
+}
+
+/* Schritt 3: Abstand Label → Dropdown in Species-Trait-Box und Erblinie-Box */
+#step3 #speciesTraitsContent select.dropdown:not(.cspc-species-spell-ability-select),
+#step3 #speciesTraitsContent select.cspc-skill-select,
+#step3 #speciesTraitsContent select.cspc-feat-select,
+#step3 #speciesTraitsContent select.cspc-species-free-select,
+#step3 #lineageDetailBox select.dropdown {
+    display: block;
+    margin-top: 6px;
 }
 
 #customSpeciesTab2Content .cspc-tree-bar {
@@ -4864,25 +4891,14 @@ textarea::placeholder,
     margin-bottom: 4px;
 }
 
-.cspc-origin-lang-hint {
-    margin: 6px 0 0;
-    font-size: 0.78rem;
-    text-align: center;
-    opacity: 0.85;
-}
-
-#customSpeciesTab2Content .cspc-localized-field.cspc-ancestry-group-field,
 #customSpeciesTab2Content .cspc-tree-branch .cspc-localized-field.cspc-compact-field {
     margin-bottom: 6px;
 }
 
-#customSpeciesTab2Content .cspc-localized-field.cspc-ancestry-group-field:last-child,
 #customSpeciesTab2Content .cspc-tree-branch .cspc-localized-field.cspc-compact-field:last-child {
     margin-bottom: 0;
 }
 
-#customSpeciesTab2Content .cspc-ancestry-group-field .cspc-compact-lang-block input[type="text"],
-#customSpeciesTab2Content .cspc-ancestry-group-field .cspc-compact-lang-block .custom-class-name-input,
 #customSpeciesTab2Content .cspc-tree-branch .cspc-compact-lang-block input[type="text"],
 #customSpeciesTab2Content .cspc-tree-branch .cspc-compact-lang-block .custom-class-name-input {
     height: 32px !important;
@@ -6448,6 +6464,33 @@ textarea::placeholder,
     box-shadow: inset 4px 0 0 #c62828;
 }
 
+/* Tab-3: Stufe etwas breiter als Tab-2, Dropdown bleibt kompakt */
+.cc-sc-table-wrap .cc-lf-header {
+    grid-template-columns: 70px 44px minmax(110px, 1.1fr) minmax(120px, 1.2fr) minmax(140px, 1.4fr) minmax(140px, 1.4fr) 118px 84px;
+}
+
+.cc-sc-table-wrap .cc-lf-level-group {
+    grid-template-columns: 70px 1fr;
+}
+
+.cc-sc-table-wrap .cc-lf-table {
+    min-width: 956px;
+}
+
+/* Magieprogression: Zahnrad grau bis Stufe gewählt */
+.cc-lf-sc-spells-gear-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(232, 216, 181, 0.35);
+    line-height: 1;
+    pointer-events: none;
+}
+
+.cc-lf-sc-spells-gear-placeholder .cc-lf-gear-icon {
+    font-size: 0.95rem;
+}
+
 .cc-lf-row--linked-subclass {
     box-shadow: inset 4px 0 0 #d4a017;
 }
@@ -6508,6 +6551,22 @@ textarea::placeholder,
 
 .cc-lf-select option:disabled {
     color: #777;
+}
+
+/* Magieprogression: eigene Rail-Gruppe, kompakt, zentriert, Abstand zu Zelllinien */
+.cc-lf-select.cc-lf-sc-spells-level-select {
+    width: auto;
+    max-width: calc(100% - 8px);
+    min-width: 2.6rem;
+    margin: 0 4px;
+    padding: 5px 4px;
+    text-align: center;
+    text-align-last: center;
+    box-sizing: border-box;
+}
+
+.cc-lf-select.cc-lf-sc-spells-level-select option {
+    text-align: center;
 }
 
 .cc-lf-cell--center {
