@@ -1,5 +1,22 @@
 // newsData.js
 const newsUpdates = [
+     {
+        date: "11.11.2026",
+        version: "v1.8",
+        content: `
+            Bugfixing:
+            <ul class="news-list">
+                <li>Kämpfer (Schritt 6): Auf Stufe 1 können nun gemäß PHB 3 statt bisher nur 2 Waffenmeisterschaften gewählt werden.</li>
+                <li>Schurke / Arkaner Betrüger (Schritt 7): Die Zaubertrick-Auswahl bis Stufe 10 wurde korrigiert – Insgesamt 3 Zaubertricks: "Magierhand" + 2 frei wählbare Zaubertricks (statt 3).</li>
+            </ul>
+
+            Optimierungen:
+            <ul class="news-list">
+                <li>Charakterbogen (Seite 5): Die Zauberliste passt sich nun dynamisch an, um zu verhindern, dass überzählige Zauber abgeschnitten werden.</li>
+                <li>Eigene Homebrew-Inhalte erstellen (gekennzeichnet mit ⊕): Eingabemasken ermöglichen es euch ab sofort, eure eigenen Homebrew-Hintergründe, -Völker und -Unterklassen direkt im Tool zu erfassen und nahtlos in die Charaktererstellung sowie den Charakterbogen einzubinden.</li>
+            </ul>
+        `
+      },
       {
         date: "01.09.2026",
         version: "v1.7",
