@@ -35,15 +35,15 @@ const CUSTOM_FEATURE_FLAGS = {
     /** Custom-Klassen-Ersteller: „+“-Button in Schritt 1 */
     customClassBuilder: 0,
     /** Custom-Unterklassen-Ersteller: „+“ in Schritt 6 */
-    customSubclassBuilder: 0,
+    customSubclassBuilder: 1,
     /** Custom-Hintergrund-Ersteller: „+“ in Schritt 2 */
-    customBackgroundBuilder: 0,
+    customBackgroundBuilder: 1,
     /** Custom-Zauber-Ersteller: „+“ in Schritt 7 */
     customSpellBuilder: 0,
     /** Custom-Talentbibliothek: „+“ in Schritt 6 */
     customFeatsBuilder: 0,
     /** Custom-Völker-Ersteller: „+“ in Schritt 3 */
-    customSpeciesBuilder: 0,
+    customSpeciesBuilder: 1,
 
     /** Kreis-mit-Plus-Icon neben Custom-Bezeichnungen (Ersteller + Bogen) */
     customContentMarker: 1

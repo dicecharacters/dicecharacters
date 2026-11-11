@@ -19,7 +19,7 @@ const CUSTOM_SPECIES_CONFIG = Object.freeze({
     speciesId: 1000,
     nameMax: 30,
     descMax: 500,
-    featureRowCount: 6,
+    featureRowCount: 7,
     ancestryMin: 2,
     ancestryMax: 10,
     ancestryStart: 2,
@@ -45,7 +45,7 @@ const CUSTOM_SPECIES_CONFIG = Object.freeze({
     lineagePreparedSpellPickMax: 2,
     /**
      * Pro Builder-Session nur einmal wählbare Kategorien (Einfach + Optionen).
-     * Zauberwissen: siehe CSPC_SPELLCRAFT_ONCE.
+     * Zauberwissen: siehe CSPC_SPELLCRAFT_ONCE (einmal pro Stufe).
      */
     categoriesOncePerSession: Object.freeze([
         "skills",
@@ -75,6 +75,7 @@ const CSPC_CATEGORIES_BY_TYPE = Object.freeze({
     options: Object.freeze(["free", "skills", "originFeats"]),
     spellcraft: Object.freeze(["getCantrip", "chooseCantrip", "getPreparedSpell", "choosePreparedSpell"])
 });
+/** Zauberwissen-Kategorien: höchstens einmal pro Stufe (nicht session-weit). */
 const CSPC_SPELLCRAFT_ONCE = Object.freeze([
     "getCantrip", "chooseCantrip", "getPreparedSpell", "choosePreparedSpell"
 ]);
@@ -231,12 +232,13 @@ function createEmptyCustomSpeciesState() {
         availableLanguages: [active],
         names: { de: "", en: "" },
         descriptions: { de: "", en: "" },
-        ancestryGroupNames: { de: "", en: "" },
         speciesAge_years: "",
         size: ["mediumLabel"],
         sizeRange_ft: [4.0, 8.0],
         speedFT: CSPC_CONFIG.defaultSpeedFT,
         originBranch: "none",
+        spellAbilityFreeChoice: false,
+        spellAbilityAttr: "",
         features,
         ancestries,
         lineages
@@ -634,19 +636,6 @@ function importCustomSpeciesPayload(payload, envelope) {
     if (snap) {
         state.names = { de: snap.names?.de || "", en: snap.names?.en || "" };
         state.descriptions = { de: snap.descriptions?.de || "", en: snap.descriptions?.en || "" };
-        state.ancestryGroupNames = {
-            de: snap.ancestryGroupNames?.de || "",
-            en: snap.ancestryGroupNames?.en || ""
-        };
-        if (!(state.ancestryGroupNames.de || state.ancestryGroupNames.en)
-            && Array.isArray(payload.compiledSpeciesTraitList)) {
-            const bridge = payload.compiledSpeciesTraitList.find(t => t.characterSheet === "0:ANC");
-            const key = bridge?.speciesTraitLabel;
-            if (key && payload.translations) {
-                state.ancestryGroupNames.de = payload.translations.de?.[key] || "";
-                state.ancestryGroupNames.en = payload.translations.en?.[key] || "";
-            }
-        }
         state.speciesAge_years = snap.speciesAge_years != null ? snap.speciesAge_years : "";
         state.size = ensureCspcContiguousSizeCategories(
             Array.isArray(snap.size) ? snap.size.slice() : ["mediumLabel"]
@@ -654,11 +643,28 @@ function importCustomSpeciesPayload(payload, envelope) {
         state.sizeRange_ft = Array.isArray(snap.sizeRange_ft) ? snap.sizeRange_ft.slice() : [4, 8];
         state.speedFT = Number(snap.speedFT) || CSPC_CONFIG.defaultSpeedFT;
         state.originBranch = snap.originBranch || "none";
+        state.spellAbilityFreeChoice = !!snap.spellAbilityFreeChoice;
+        state.spellAbilityAttr = snap.spellAbilityAttr || "";
+        // Legacy / Eintrag ohne Snap-Felder: aus kompiliertem Entry nachziehen
+        if (snap.spellAbilityFreeChoice == null && payload.compiledSpeciesListEntry) {
+            const ent = payload.compiledSpeciesListEntry;
+            if (ent.spellAbilityFreeChoice != null) state.spellAbilityFreeChoice = !!ent.spellAbilityFreeChoice;
+            if (ent.spellAbilityAttr) state.spellAbilityAttr = ent.spellAbilityAttr;
+        }
         if (Array.isArray(snap.features)) {
             state.features = [];
             for (let i = 0; i < CSPC_CONFIG.featureRowCount; i++) {
                 state.features.push(cspcNormalizeFeatureRow(snap.features[i]));
             }
+        }
+        // Legacy-Pakete mit Zauberwissen, aber ohne Attribut-Felder → Freie Wahl
+        if (cspcHasActiveSpellcraft(state)
+            && !state.spellAbilityAttr
+            && snap.spellAbilityFreeChoice == null
+            && payload.compiledSpeciesListEntry?.spellAbilityFreeChoice == null
+            && !payload.compiledSpeciesListEntry?.spellAbilityAttr
+            && !payload.compiledSpeciesListEntry?.spellAbilityId) {
+            state.spellAbilityFreeChoice = true;
         }
         if (Array.isArray(snap.ancestries) && snap.ancestries.length) {
             state.ancestries = snap.ancestries.map(b => ({
@@ -951,6 +957,7 @@ function renderCustomSpeciesTab1() {
             <div class="custom-class-section-title">${tCspc("cspcTraitTableLabel", "Fähigkeitsmerkmale")}</div>
             ${buildCspcFeatureRowsHtml()}
         </div>
+        ${buildCspcSpellAbilitySectionHtml(state)}
     `;
 
     available.forEach(lang => {
@@ -974,6 +981,88 @@ function renderCustomSpeciesTab1() {
     });
     applyCspcSizeRangeInputLimits();
     onCspcSizeRangeCommit();
+}
+
+/** True, wenn mind. eine Zauberwissen-Kategorie gesetzt ist. */
+function cspcHasActiveSpellcraft(state) {
+    return (state?.features || []).some(r => r.kind === "spellcraft" && r.category);
+}
+
+function cspcSpellAbilityAttrToId(attrLabel) {
+    if (!attrLabel || typeof attributeList === "undefined") return 0;
+    const a = attributeList.find(x => x.translationLabel === attrLabel);
+    return a ? a.ID : 0;
+}
+
+/**
+ * Nach Aktivierung/Deaktivierung von Zauberwissen: Defaults setzen.
+ * @param {boolean} hadSpellcraft vorheriger Zustand
+ */
+function cspcSyncSpellAbilityAvailability(state, hadSpellcraft) {
+    if (!state) return;
+    const has = cspcHasActiveSpellcraft(state);
+    if (!has) {
+        state.spellAbilityFreeChoice = false;
+        state.spellAbilityAttr = "";
+        return;
+    }
+    if (!hadSpellcraft) {
+        state.spellAbilityFreeChoice = true;
+        state.spellAbilityAttr = "";
+    }
+}
+
+function buildCspcSpellAbilitySectionHtml(state) {
+    const has = cspcHasActiveSpellcraft(state);
+    const free = has && !!state.spellAbilityFreeChoice;
+    const attr = state.spellAbilityAttr || "";
+    const attrs = ["intelligenceLabel", "wisdomLabel", "charismaLabel"];
+    const please = escapeCspcHtml(tCspc("pleaseSelectLabel", "-Bitte wählen-"));
+    const opts = attrs.map(k => {
+        const sel = !free && attr === k ? "selected" : "";
+        return `<option value="${k}" ${sel}>${escapeCspcHtml(tCspc(k, k))}</option>`;
+    }).join("");
+    return `
+        <div class="custom-class-field cspc-spell-ability-section${!has ? " cspc-spell-ability-section--inactive" : ""}">
+            <div class="custom-class-section-title">${escapeCspcHtml(tCspc("spellcastingAbilityLabel", "Zauberattribut"))}</div>
+            <div class="cspc-spell-ability-row">
+                <select id="cspcSpellAbilityAttr" class="dropdown cspc-spell-ability-select"
+                    ${!has || free ? "disabled" : ""}
+                    onchange="onCspcSpellAbilityAttrChange()">
+                    <option value="">${please}</option>
+                    ${opts}
+                </select>
+                <label class="cspc-spell-ability-free-label${!has ? " is-disabled" : ""}">
+                    <input type="checkbox" id="cspcSpellAbilityFree"
+                        ${free ? "checked" : ""} ${!has ? "disabled" : ""}
+                        onchange="onCspcSpellAbilityFreeChange(this.checked)">
+                    ${escapeCspcHtml(tCspc("cspcSpellAbilityFreeChoiceLabel", "Freie Wahl"))}
+                </label>
+            </div>
+        </div>
+    `;
+}
+
+function onCspcSpellAbilityFreeChange(checked) {
+    const state = customSpeciesEditorState;
+    if (!state) return;
+    syncCspcFieldsFromDom();
+    if (!cspcHasActiveSpellcraft(state)) {
+        state.spellAbilityFreeChoice = false;
+        state.spellAbilityAttr = "";
+    } else {
+        state.spellAbilityFreeChoice = !!checked;
+        if (state.spellAbilityFreeChoice) state.spellAbilityAttr = "";
+    }
+    renderCustomSpeciesTab1();
+}
+
+function onCspcSpellAbilityAttrChange() {
+    const state = customSpeciesEditorState;
+    if (!state) return;
+    syncCspcFieldsFromDom();
+    const el = document.getElementById("cspcSpellAbilityAttr");
+    state.spellAbilityAttr = el && !state.spellAbilityFreeChoice ? (el.value || "") : "";
 }
 
 function onCspcSizeCategoryChange() {
@@ -1053,10 +1142,16 @@ function cspcFeatureTypeLabel(kind) {
     return tCspc(keys[kind] || kind, kind);
 }
 
+/** Gleiche Zauberwissen-Kategorie auf derselben Stufe blockieren. */
 function cspcIsSpellcraftBlocked(cat, index) {
     if (!CSPC_SPELLCRAFT_ONCE.includes(cat)) return false;
     const rows = customSpeciesEditorState?.features || [];
-    return rows.some((r, i) => i !== index && r.kind === "spellcraft" && r.category === cat);
+    const myLevel = Number(rows[index]?.level) || 1;
+    return rows.some((r, i) => {
+        if (i === index) return false;
+        if (r.kind !== "spellcraft" || r.category !== cat) return false;
+        return (Number(r.level) || 1) === myLevel;
+    });
 }
 
 /** Kategorie nur einmal pro Session (Einfach/Optionen, z. B. Fertigkeiten). */
@@ -1217,6 +1312,7 @@ function buildCspcFeatureRowsHtml() {
 function onCspcFeatureRowChange(index) {
     const state = customSpeciesEditorState;
     if (!state || !state.features[index]) return;
+    const hadSpellcraft = cspcHasActiveSpellcraft(state);
     syncCspcFieldsFromDom();
     const row = state.features[index];
     const kindEl = document.getElementById(`cspcRowKind_${index}`);
@@ -1237,6 +1333,12 @@ function onCspcFeatureRowChange(index) {
         if (n > 20) n = 20;
         row.level = n;
     }
+    // Nach Stufenwechsel: doppelte Zauberwissen-Kategorie auf derselben Stufe leeren
+    if (row.category && cspcIsSpellcraftBlocked(row.category, index)) {
+        row.category = "";
+        row.optionsConfig = {};
+    }
+    cspcSyncSpellAbilityAvailability(state, hadSpellcraft);
     renderCustomSpeciesTab1();
 }
 
@@ -2437,24 +2539,11 @@ function renderCustomSpeciesTab2() {
     const name = (state.names[lang] || state.names.de || state.names.en || "—").trim() || "—";
     const canAdd = state.ancestries.length < CSPC_CONFIG.ancestryMax;
     const canRemove = state.ancestries.length > CSPC_CONFIG.ancestryMin;
-    const langHint = cspcGetAvailableLangs().length > 1
-        ? `<p class="cspc-origin-hint cspc-origin-lang-hint">${escapeCspcHtml(tCspc("cspcOriginLangHintLabel", ""))}</p>`
-        : "";
     container.innerHTML = `
         <div class="cspc-tree cspc-tree--ancestry">
             <div class="cspc-tree-head">
                 <div class="cspc-tree-root">${escapeCspcHtml(name)}</div>
                 ${buildCspcTreeControlsHtml(canAdd, canRemove, "addCspcAncestryBranch", "removeCspcAncestryBranch")}
-            </div>
-            ${langHint}
-            <div class="cspc-tree-trunk cspc-tree-trunk--to-ancestry-group" aria-hidden="true"></div>
-            <div class="cspc-ancestry-group-wrap">
-                ${buildCspcLocalizedFieldHtml(
-                    "cspcAncestryGroupName",
-                    tCspc("cspcAncestryGroupNameLabel", "Bezeichnung (Abstammung)"),
-                    CSPC_CONFIG.traitNameMax,
-                    { fieldClass: "cspc-compact-field cspc-ancestry-group-field" }
-                )}
             </div>
             <div class="cspc-tree-trunk" aria-hidden="true"></div>
             <div class="cspc-tree-bar"></div>
@@ -2478,8 +2567,6 @@ function renderCustomSpeciesTab2() {
             </div>
         </div>
     `;
-    if (!state.ancestryGroupNames) state.ancestryGroupNames = { de: "", en: "" };
-    fillCspcLocalizedFieldFromState("cspcAncestryGroupName", state.ancestryGroupNames, CSPC_CONFIG.traitNameMax);
     state.ancestries.forEach((b, i) => {
         if (!b.names) b.names = { de: "", en: "" };
         if (!b.descriptions) b.descriptions = { de: "", en: "" };
@@ -2519,16 +2606,12 @@ function renderCustomSpeciesTab3() {
     const canAdd = state.lineages.length < CSPC_CONFIG.lineageMax;
     const canRemove = state.lineages.length > CSPC_CONFIG.lineageMin;
     const toggleLabel = tCspc("cspcToggleLineageBranchLabel", "Erblinie auf- oder zuklappen");
-    const langHint = cspcGetAvailableLangs().length > 1
-        ? `<p class="cspc-origin-hint cspc-origin-lang-hint">${escapeCspcHtml(tCspc("cspcOriginLangHintLabel", ""))}</p>`
-        : "";
     container.innerHTML = `
         <div class="cspc-tree cspc-tree--lineage">
             <div class="cspc-tree-head">
                 <div class="cspc-tree-root">${escapeCspcHtml(name)}</div>
                 ${buildCspcTreeControlsHtml(canAdd, canRemove, "addCspcLineageBranch", "removeCspcLineageBranch")}
             </div>
-            ${langHint}
             <div class="cspc-tree-branches">
                 ${state.lineages.map((b, i) => {
                     const collapsed = !!b.uiCollapsed;
@@ -2651,8 +2734,6 @@ function syncCspcFieldsFromDom() {
         if (nameEl) state.names[lang] = nameEl.value;
         if (descEl) state.descriptions[lang] = descEl.value;
     });
-    if (!state.ancestryGroupNames) state.ancestryGroupNames = { de: "", en: "" };
-    syncCspcLocalizedFieldFromDom("cspcAncestryGroupName", state.ancestryGroupNames);
     const ageEl = document.getElementById("cspcAge");
     if (ageEl) {
         const clamped = cspcClampAgeYears(ageEl.value);
@@ -2717,6 +2798,17 @@ function syncCspcFieldsFromDom() {
             row.spellLabel = cspcSpellLabelFromConfig(row.optionsConfig, row.spellLabel);
         });
     });
+    const freeEl = document.getElementById("cspcSpellAbilityFree");
+    const attrEl = document.getElementById("cspcSpellAbilityAttr");
+    if (freeEl && !freeEl.disabled) {
+        state.spellAbilityFreeChoice = !!freeEl.checked;
+    }
+    if (attrEl && !attrEl.disabled && !state.spellAbilityFreeChoice) {
+        state.spellAbilityAttr = attrEl.value || "";
+    } else if (state.spellAbilityFreeChoice || !cspcHasActiveSpellcraft(state)) {
+        if (!cspcHasActiveSpellcraft(state)) state.spellAbilityAttr = "";
+        if (state.spellAbilityFreeChoice) state.spellAbilityAttr = "";
+    }
 }
 
 function buildCspcTreeControlsHtml(canAdd, canRemove, addHandler, removeHandler) {
@@ -2863,10 +2955,11 @@ function validateCustomSpeciesEditorState() {
         if (!row.kind) continue;
         if (!row.category) return { ok: false, errorKey: "cspcTraitOptionsRequiredAlertLabel" };
         if (CSPC_SPELLCRAFT_ONCE.includes(row.category)) {
-            if (usedSpellcraft.has(row.category)) {
+            const spellKey = `${row.category}@${Number(row.level) || 1}`;
+            if (usedSpellcraft.has(spellKey)) {
                 return { ok: false, errorKey: "cspcSpellcraftOnceAlertLabel" };
             }
-            usedSpellcraft.add(row.category);
+            usedSpellcraft.add(spellKey);
         }
         const onceCats = CSPC_CONFIG.categoriesOncePerSession || [];
         if (onceCats.includes(row.category) && (row.kind === "simple" || row.kind === "options")) {
@@ -2900,14 +2993,23 @@ function validateCustomSpeciesEditorState() {
         }
     }
     if (state.originBranch === "ancestry") {
-        const ancGroup = (state.ancestryGroupNames?.[active] || "").trim();
-        if (!ancGroup) {
-            return { ok: false, errorKey: "cspcAncestryGroupNameRequiredAlertLabel" };
-        }
         const named = (state.ancestries || []).filter(b => (b.names[active] || "").trim());
         if (named.length < CSPC_CONFIG.ancestryMin) {
             return { ok: false, errorKey: "cspcAncestryMinAlertLabel" };
         }
+    }
+    if (cspcHasActiveSpellcraft(state)) {
+        if (state.spellAbilityFreeChoice) {
+            state.spellAbilityAttr = "";
+        } else {
+            const allowed = ["intelligenceLabel", "wisdomLabel", "charismaLabel"];
+            if (!allowed.includes(state.spellAbilityAttr)) {
+                return { ok: false, errorKey: "cspcSpellAbilityRequiredAlertLabel" };
+            }
+        }
+    } else {
+        state.spellAbilityFreeChoice = false;
+        state.spellAbilityAttr = "";
     }
     if (state.originBranch === "lineage") {
         const named = (state.lineages || []).filter(b => (b.names[active] || "").trim());
@@ -3017,9 +3119,24 @@ function buildCompiledCustomSpecies(state, slug) {
     let lineageBridgeLabel = null;
     if (state.originBranch === "ancestry") {
         ancestryBridgeLabel = `${slug.replace(/Label$/, "")}_ancestryLabel`;
-        const ancDe = (state.ancestryGroupNames?.de || "").trim() || state.names.de;
-        const ancEn = (state.ancestryGroupNames?.en || "").trim() || state.names.en;
-        putT(ancestryBridgeLabel, ancDe, ancEn);
+        // Merkmalsname: „Abstammung / Ancestry“ + Volksname (sprachfest, nicht UI-Sprache)
+        const ancestryWordDe = (typeof translations !== "undefined"
+            && translations.de
+            && translations.de.ancestryLabel)
+            ? translations.de.ancestryLabel
+            : "Abstammung";
+        const ancestryWordEn = (typeof translations !== "undefined"
+            && translations.en
+            && translations.en.ancestryLabel)
+            ? translations.en.ancestryLabel
+            : "Ancestry";
+        const nameDe = (state.names.de || "").trim() || "—";
+        const nameEn = (state.names.en || "").trim() || nameDe;
+        putT(
+            ancestryBridgeLabel,
+            `${ancestryWordDe} ${nameDe}`.trim(),
+            `${ancestryWordEn} ${nameEn}`.trim()
+        );
         compiledTraits.push({
             speciesTraitCategoryNumber: nextTraitCat++,
             speciesTraitLabel: ancestryBridgeLabel,
@@ -3036,7 +3153,24 @@ function buildCompiledCustomSpecies(state, slug) {
     }
     if (state.originBranch === "lineage") {
         lineageBridgeLabel = `${slug.replace(/Label$/, "")}_lineageLabel`;
-        putT(lineageBridgeLabel, state.names.de, state.names.en);
+        // Merkmalsname: „Erblinie / Lineage“ + Volksname (sprachfest, nicht UI-Sprache)
+        const lineageWordDe = (typeof translations !== "undefined"
+            && translations.de
+            && translations.de.lineageLabel)
+            ? translations.de.lineageLabel
+            : "Erblinie";
+        const lineageWordEn = (typeof translations !== "undefined"
+            && translations.en
+            && translations.en.lineageLabel)
+            ? translations.en.lineageLabel
+            : "Lineage";
+        const nameDe = (state.names.de || "").trim() || "—";
+        const nameEn = (state.names.en || "").trim() || nameDe;
+        putT(
+            lineageBridgeLabel,
+            `${lineageWordDe} ${nameDe}`.trim(),
+            `${lineageWordEn} ${nameEn}`.trim()
+        );
         compiledTraits.push({
             speciesTraitCategoryNumber: nextTraitCat++,
             speciesTraitLabel: lineageBridgeLabel,
@@ -3311,6 +3445,13 @@ function buildCompiledCustomSpecies(state, slug) {
 
     if (compiledTraits.some(t => t.spellLabel && t.spellLabel !== 0)) hasSpeciesSpells = true;
 
+    const hasSpellcraft = cspcHasActiveSpellcraft(state);
+    const spellAbilityFreeChoice = hasSpellcraft && !!state.spellAbilityFreeChoice;
+    const spellAbilityAttr = (hasSpellcraft && !spellAbilityFreeChoice)
+        ? (state.spellAbilityAttr || "")
+        : "";
+    const spellAbilityId = spellAbilityAttr ? cspcSpellAbilityAttrToId(spellAbilityAttr) : 0;
+
     const entry = {
         ID: CSPC_CONFIG.speciesId,
         translationLabel: slug,
@@ -3328,6 +3469,10 @@ function buildCompiledCustomSpecies(state, slug) {
             : ["dicecharacters"]),
         isCustom: true,
         hasSpeciesSpells,
+        hasSpellcraftTraits: hasSpellcraft,
+        spellAbilityFreeChoice,
+        spellAbilityAttr,
+        spellAbilityId,
         customGrants
     };
 
@@ -3350,15 +3495,13 @@ function buildCspcEditorStateSnapshot(state, slug) {
         availableLanguages: (state.availableLanguages || []).slice(),
         names: { de: state.names?.de || "", en: state.names?.en || "" },
         descriptions: { de: state.descriptions?.de || "", en: state.descriptions?.en || "" },
-        ancestryGroupNames: {
-            de: state.ancestryGroupNames?.de || "",
-            en: state.ancestryGroupNames?.en || ""
-        },
         speciesAge_years: state.speciesAge_years,
         size: (state.size || []).slice(),
         sizeRange_ft: (state.sizeRange_ft || []).slice(),
         speedFT: state.speedFT,
         originBranch: state.originBranch,
+        spellAbilityFreeChoice: !!state.spellAbilityFreeChoice,
+        spellAbilityAttr: state.spellAbilityAttr || "",
         features: (state.features || []).map(r => cspcNormalizeFeatureRow(r)),
         ancestries: (state.ancestries || []).map(b => ({
             names: { de: b.names?.de || "", en: b.names?.en || "" },

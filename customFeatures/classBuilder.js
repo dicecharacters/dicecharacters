@@ -1638,6 +1638,13 @@ function validateCustomClassState(state) {
         alert(tCC("ccScNeedSubclassNameAlertLabel"));
         return false;
     }
+    if (hasPendingLfSubclassSpellsFeatures(state)) {
+        alert(tCC(
+            "ccLfSubclassSpellsPendingLevelAlertLabel",
+            "Bitte für jede Magieprogression eine Stufe wählen (kein „?“)."
+        ));
+        return false;
+    }
     return true;
 }
 
@@ -1912,8 +1919,9 @@ function isLfSlotEligibleForCompile(slot) {
         const cats = cfg.selectedArmorCategoryNumbers || [];
         return Array.isArray(cats) && cats.length >= 1;
     }
-    // Unterklassenzauber: nur mit mind. einem gewählten Zauber
+    // Unterklassenzauber: Stufe bestätigt + mind. ein gewählter Zauber
     if (type === "spellcraft" && cat === "subclassSpells") {
+        if (isLfSubclassSpellsLevelPending(slot)) return false;
         return collectLfSubclassSpellsSelectedLabels(slot.payload?.optionsConfig).length >= 1;
     }
 
@@ -1923,6 +1931,16 @@ function isLfSlotEligibleForCompile(slot) {
 function buildCompiledFeatureKeyStem(slug, slot, subclassCategoryNumber) {
     const lvl = Number(slot.level) || 1;
     const idx = Number(slot.index) || 0;
+    // Magieprogression: eigener Stem (mpUid), sonst Kollision mit Schienen-Zeilen gleicher Stufe/Index
+    if (slot?.payload?.featureType === "spellcraft"
+        && slot.payload?.category === "subclassSpells") {
+        const mp = String(slot.payload.mpUid || slot.slotId || `mp${lvl}_${idx}`)
+            .replace(/[^a-zA-Z0-9_]/g, "_");
+        if (subclassCategoryNumber > 0) {
+            return `${slug}_sc${subclassCategoryNumber}_MP_${mp}`;
+        }
+        return `${slug}_MP_${mp}`;
+    }
     if (subclassCategoryNumber > 0) {
         return `${slug}_sc${subclassCategoryNumber}_L${lvl}_${idx}`;
     }
@@ -1933,8 +1951,20 @@ function putCompiledTranslation(bag, key, de, en) {
     if (!key || key === 0) return;
     const d = String(de || "").trim();
     const e = String(en || "").trim();
-    bag.de[key] = d || e || key;
-    bag.en[key] = e || d || key;
+    const nextDe = d || e || key;
+    const nextEn = e || d || key;
+    // Kein Überschreiben bestehender echter Texte mit Platzhalter "-"
+    const isPlaceholder = (v) => !v || v === "-" || v === key;
+    const prevDe = bag.de?.[key];
+    const prevEn = bag.en?.[key];
+    if (isPlaceholder(nextDe) && prevDe && !isPlaceholder(prevDe)) {
+        return;
+    }
+    if (isPlaceholder(nextEn) && prevEn && !isPlaceholder(prevEn) && isPlaceholder(nextDe)) {
+        return;
+    }
+    bag.de[key] = nextDe;
+    bag.en[key] = nextEn;
 }
 
 function pickCompiledLocaleText(map, lang) {
@@ -2030,6 +2060,9 @@ function applyCompiledCustomTexts(row, slot, keyStem, translationsBag, state, co
 
     if (freeFamilyReuse) {
         // Langbeschreibung bereits vom Stamm übernommen
+    } else if (type === "spellcraft" && cat === "subclassSpells") {
+        // Magieprogression: keine eigenen Desc-Keys (sonst Key-Kollision / "-" überschreibt)
+        row.classFeatureDescription = "-";
     } else if (partial.classFeatureDescription && partial.classFeatureDescription !== 0) {
         row.classFeatureDescription = partial.classFeatureDescription;
     } else if (fixedDesc.longKey) {
@@ -2075,9 +2108,12 @@ function applyCompiledCustomTexts(row, slot, keyStem, translationsBag, state, co
     // Anzeige-Flags aus vorhandener Kurz-/Langbeschreibung (Presets können überschreiben)
     applyCompiledDisplayFlagsFromTexts(row, slot, partial);
 
-    // Unterklassenzauber: feste Bezeichnung + Beschreibung "-"
+    // Unterklassenzauber: Bezeichnung nur auf der ersten (niedrigsten) Stufe;
+    // spätere Aufrufe bleiben runtime-wirksam, erscheinen aber nicht erneut in der Infobox
     if (type === "spellcraft" && cat === "subclassSpells") {
-        row.translationLabel = "magicProgressionLabel";
+        const firstLvl = getLfSubclassSpellsFirstCompileLevel(state, row.subclassCategoryNumber || 0);
+        const isFirst = firstLvl != null && Number(slot.level) === Number(firstLvl);
+        row.translationLabel = isFirst ? "magicProgressionLabel" : 0;
         row.classFeatureShortDescription = 0;
         row.classFeatureDescription = "-";
         row.classFeaturesStep2 = 0;
@@ -5515,7 +5551,7 @@ const CUSTOM_CLASS_LF_CONFIG = {
          * Max. Aufrufe „Unterklassenzauber“ (Magieprogression) pro Unterklasse.
          * PHB Domäne/Patron ≈ 4 Stufen; Paladin/Ranger ≈ 5 — hier bewusst zentral erweiterbar.
          */
-        subclassSpellsFeatureMax: 4,
+        subclassSpellsFeatureMax: 5,
         /** Max. gewählte Zauber pro Magieprogression-Aufruf (über alle Grade) */
         subclassSpellsPerInvocationMax: 3,
         /** Dropdowns pro Zaubergrad-Block in der Magieprogression-Maske */
@@ -6060,6 +6096,26 @@ function getLfSpellcraftGetDropdownCount(slot) {
 //=======================================================================
 // Unterklassenzauber (Magieprogression) – Hilfen
 //=======================================================================
+// Regeln (R1–R10) – Einfrieren für Entkopplung von UC-Merkmalsschienen:
+// R1  Max. 4 Magieprogression pro Unterklasse
+// R2  Max. 1 Magieprogression pro Charakterstufe (nach Stufenwahl)
+// R3  Nur in UC-Merkmalszeilen (Tab 3 / CSC), nicht in Basisklassen-Tab 2
+// R4  Voraussetzung: Zauberwirken (Basis oder dieselbe UC)
+// R5  Gewählte Stufe ≥ Eingangsstufe Zauberwirken
+// R6  Max. 3 Zauber / Aufruf (Maske)
+// R7  Grade: Tab-4-Freischaltung ∩ strikt höher als frühere Aufrufe
+// R8  Zauberlisten der Zauberwirken-Eingangsstufe
+// R9  Compile: subclassSpellsList.level = Slot-Stufe
+// R10 UC-Merkmalsschienen bleiben für normale UC-Merkmale; Magieprogression
+//     wählt Stufe unabhängig (Dropdown), bis gewählt: Options-Zahnrad grau,
+//     danach nicht ziehbar; Stufenwechsel leert Options ohne Confirm
+//
+// Referenzszenarien:
+// S1 Kleriker-ähnlich: Schienen 3/6/17 → Magieprogression auf 3/5/7/9
+// S2 Pending: Kategorie gewählt, Stufe leer → Zahnrad gesperrt
+// S3 Stufenwechsel 5→7 → Options zurückgesetzt
+// S4 Sync/Tab-2: bestätigte Orphan-Stufen (5/7/9) bleiben erhalten
+//=======================================================================
 
 /** Basis-Zauberwirken-Slot (Tab 2), nicht Unterklasse */
 function getLfBaseSpellcastingSlot(state) {
@@ -6178,6 +6234,156 @@ function isLfSubclassSpellsPayload(payload) {
         && payload.category === "subclassSpells");
 }
 
+/** Magieprogression: Stufe entkoppelt von UC-Merkmalsschiene */
+function isLfSubclassSpellsLevelIndependent(slot) {
+    return isLfSubclassSpellsPayload(slot?.payload);
+}
+
+/** Stufe noch nicht im Dropdown gewählt → Options gesperrt */
+function isLfSubclassSpellsLevelPending(slot) {
+    return isLfSubclassSpellsLevelIndependent(slot) && !!slot?.payload?.levelPending;
+}
+
+/** Stufe bestätigt → Slot darf außerhalb der Schiene existieren */
+function isLfSubclassSpellsLevelConfirmed(slot) {
+    return isLfSubclassSpellsLevelIndependent(slot) && !slot?.payload?.levelPending;
+}
+
+function createEmptyLfSubclassSpellsOptionsConfig() {
+    return {
+        listMode: "all",
+        spellListLabels: [],
+        schoolMode: "all",
+        schoolLabels: [],
+        selectedByLevel: {}
+    };
+}
+
+/**
+ * Eigene Slot-ID für Magieprogression, damit Sync keine Schienen-Zeile
+ * mit derselben ID anlegt und die Magieprogression verwirft.
+ */
+function ensureLfSubclassSpellsStableSlotId(slot) {
+    if (!slot || !isLfSubclassSpellsLevelIndependent(slot)) return;
+    const sid = String(slot.slotId || "");
+    if (sid.includes("-MP-")) return;
+    const subclassId = slot.subclassId || "sc";
+    if (!slot.payload.mpUid) {
+        slot.payload.mpUid = `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+    }
+    slot.slotId = `${subclassId}-MP-${slot.payload.mpUid}`;
+}
+
+/** Leeren Schienen-Platzhalter mit gleicher Ziel-ID entfernen (vor Rückkehr von Magieprogression) */
+function removeDuplicateEmptyScSeat(ownerSlots, slot, railId) {
+    if (!Array.isArray(ownerSlots) || !slot || !railId) return;
+    for (let i = ownerSlots.length - 1; i >= 0; i--) {
+        const s = ownerSlots[i];
+        if (s === slot) continue;
+        if (s.slotId !== railId) continue;
+        if (isScFeatureSlotPopulated(s)) continue;
+        ownerSlots.splice(i, 1);
+    }
+}
+
+/** Flags der Stufen-Entkopplung entfernen; optional zurück auf Schienen-Heimatstufe */
+function clearLfSubclassSpellsLevelFlags(slot, opts) {
+    if (!slot?.payload) return;
+    if (opts?.restoreHome) {
+        const home = Number(slot.payload.scRailHomeLevel);
+        const homeIdx = Number(slot.payload.scRailHomeIndex);
+        if (Number.isFinite(home) && home >= 1) slot.level = home;
+        if (Number.isFinite(homeIdx) && homeIdx >= 0) slot.index = homeIdx;
+        if (slot.subclassId && Number.isFinite(home) && home >= 1) {
+            const idx = Number.isFinite(homeIdx) ? homeIdx : (Number(slot.index) || 0);
+            const railId = `${slot.subclassId}-L${home}-${idx}`;
+            if (Array.isArray(opts.ownerSlots)) {
+                removeDuplicateEmptyScSeat(opts.ownerSlots, slot, railId);
+            }
+            slot.slotId = railId;
+        }
+    }
+    delete slot.payload.levelPending;
+    delete slot.payload.scRailHomeLevel;
+    delete slot.payload.scRailHomeIndex;
+    delete slot.payload.mpUid;
+}
+
+/** true, wenn irgendwo Magieprogression noch „?“ (Stufe offen) hat */
+function hasPendingLfSubclassSpellsFeatures(state) {
+    const listHasPending = (list) => (list || []).some(s => isLfSubclassSpellsLevelPending(s));
+    if (typeof isCustomSubclassEditorActive === "function" && isCustomSubclassEditorActive()) {
+        return listHasPending(customSubclassEditorState?.levelFeatures);
+    }
+    const st = state || customClassEditorState;
+    return (st?.subclasses || []).some(sc => listHasPending(sc.levelFeatures));
+}
+
+/** Niedrigste Magieprogression-Stufe einer UC (für Compile-Infobox-Label) */
+function getLfSubclassSpellsFirstCompileLevel(state, subclassCategoryNumber) {
+    const scNum = Number(subclassCategoryNumber) || 0;
+    let slots = [];
+    if (scNum > 0 && Array.isArray(state?.subclasses) && state.subclasses.length) {
+        const sc = state.subclasses.find(s => Number(s.subclassCategoryNumber) === scNum)
+            || state.subclasses[scNum - 1]
+            || null;
+        slots = sc?.levelFeatures || [];
+    } else {
+        slots = state?.levelFeatures || [];
+    }
+    let min = null;
+    (slots || []).forEach(s => {
+        if (!isLfSubclassSpellsPayload(s?.payload)) return;
+        if (typeof isLfSubclassSpellsLevelPending === "function" && isLfSubclassSpellsLevelPending(s)) {
+            return;
+        }
+        const lvl = Number(s.level) || 0;
+        if (lvl < 1) return;
+        if (min == null || lvl < min) min = lvl;
+    });
+    return min;
+}
+
+function getLfSubclassSpellsMinSelectableLevel(slot) {
+    const prereq = getLfSubclassSpellsPrerequisiteLevel(slot);
+    return Math.max(1, Number(prereq) || 1);
+}
+
+/**
+ * Wählbare Charakterstufen für Magieprogression (1…20, ≥ Zauberwirken,
+ * ohne bereits belegte Stufen anderer bestätigter Aufrufe).
+ */
+function getLfSubclassSpellsAvailableLevels(slot, slots) {
+    const min = getLfSubclassSpellsMinSelectableLevel(slot);
+    const list = slots || getLfSlotsForSlot(slot);
+    const out = [];
+    for (let lvl = min; lvl <= 20; lvl++) {
+        if (isLfSubclassSpellsTakenOnLevel(list, lvl, slot?.slotId)) continue;
+        out.push(lvl);
+    }
+    if (isLfSubclassSpellsLevelConfirmed(slot)) {
+        const cur = Number(slot.level);
+        if (Number.isFinite(cur) && cur >= min && !out.includes(cur)) {
+            out.push(cur);
+            out.sort((a, b) => a - b);
+        }
+    }
+    return out;
+}
+
+/** Tab-3/CSC-Slots nach Stufenwechsel von Magieprogression neu packen */
+function repackScSlotsForSubclassSpells(ctx) {
+    if (typeof isCustomSubclassEditorActive === "function" && isCustomSubclassEditorActive()) {
+        if (typeof ensureCscLevelFeatureSlots === "function") {
+            ensureCscLevelFeatureSlots(customSubclassEditorState);
+        }
+        return;
+    }
+    const scId = ctx?.slot?.subclassId;
+    const sc = scId ? findCustomClassSubclassById(scId) : null;
+    if (sc) syncSubclassLevelFeatureSlots(sc, customClassEditorState.levelFeatures);
+}
+
 /**
  * Unterklassenzauber darf nicht unter die Zauberwirken-Stufe geschoben werden.
  * Beim Verschieben von Zauberwirken: keine UC-Zauber unter der neuen Stufe hinterlassen.
@@ -6233,6 +6439,7 @@ function sanitizeLfSubclassSpellsBelowLevel(minLevel, scopeSlots) {
             s.payload.names = { de: "", en: "" };
             s.payload.shortDescriptions = { de: "", en: "" };
             s.payload.descriptions = { de: "", en: "" };
+            clearLfSubclassSpellsLevelFlags(s, { restoreHome: true, ownerSlots: list });
             changed = true;
         });
     };
@@ -6379,6 +6586,7 @@ function getLfSubclassSpellsPriorMaxGradeRank(slots, slot) {
     (slots || []).forEach(s => {
         if (!s || s.slotId === slot?.slotId) return;
         if (s.payload?.featureType !== "spellcraft" || s.payload?.category !== "subclassSpells") return;
+        if (s.payload?.levelPending) return;
         if ((Number(s.level) || 0) >= lvl) return;
         collectLfSubclassSpellsSelectedLabels(s.payload?.optionsConfig).forEach(lab => {
             maxRank = Math.max(maxRank, getLfSpellGradeRankForSpellLabel(lab));
@@ -6406,6 +6614,7 @@ function countLfSubclassSpellsFeatures(slots, excludeSlotId) {
 }
 
 function isLfSubclassSpellsTakenOnLevel(slots, level, excludeSlotId) {
+    // Pending belegt die aktuell angezeigte Stufe (Zeile bleibt dort eingerastet)
     return (slots || []).some(s =>
         s.slotId !== excludeSlotId
         && Number(s.level) === Number(level)
@@ -6417,10 +6626,12 @@ function isLfSubclassSpellsTakenOnLevel(slots, level, excludeSlotId) {
 /** Ordnungszahl 1…N unter den Magieprogression-Slots derselben UC (nach Stufe) */
 function getLfSubclassSpellsOrdinal(slot, slots) {
     if (!slot || slot.payload?.category !== "subclassSpells") return 0;
+    if (isLfSubclassSpellsLevelPending(slot)) return 0;
     const series = (slots || getLfSlotsForSlot(slot))
         .filter(s =>
             s.payload?.featureType === "spellcraft"
             && s.payload?.category === "subclassSpells"
+            && !s.payload?.levelPending
         )
         .slice()
         .sort((a, b) => (a.level - b.level) || (a.index - b.index));
@@ -6429,29 +6640,36 @@ function getLfSubclassSpellsOrdinal(slot, slots) {
 }
 
 function refreshLfSubclassSpellsOrdinals(slots) {
-    const series = (slots || [])
+    const list = slots || [];
+    const series = list
         .filter(s =>
             s.payload?.featureType === "spellcraft"
             && s.payload?.category === "subclassSpells"
+            && !s.payload?.levelPending
         )
         .slice()
         .sort((a, b) => (a.level - b.level) || (a.index - b.index));
     series.forEach((s, i) => {
         s.payload.amount = i + 1;
     });
+    list.forEach(s => {
+        if (s.payload?.featureType === "spellcraft"
+            && s.payload?.category === "subclassSpells"
+            && s.payload?.levelPending) {
+            s.payload.amount = null;
+        }
+    });
 }
 
 function isLfSubclassSpellsCategorySelectable(slot, slots) {
     if (!isLfSubclassFeatureSlot(slot)) return false;
     if (!hasLfSubclassSpellsSpellcastingPrerequisite(slot)) return false;
-    const baseLvl = getLfSubclassSpellsPrerequisiteLevel(slot);
-    if (baseLvl != null && (Number(slot.level) || 0) < baseLvl) return false;
     const max = CUSTOM_CLASS_LF_CONFIG.limits.subclassSpellsFeatureMax || 4;
     const count = countLfSubclassSpellsFeatures(slots, slot.slotId);
     if (slot.payload?.category === "subclassSpells") return true;
     if (count >= max) return false;
-    if (isLfSubclassSpellsTakenOnLevel(slots, slot.level, slot.slotId)) return false;
-    return true;
+    // Stufe wird per Dropdown gewählt – Schienenstufe muss nicht ≥ Zauberwirken sein
+    return getLfSubclassSpellsAvailableLevels(slot, slots).length > 0;
 }
 
 /** true, wenn mindestens ein Magieprogression-Slot Zauber konfiguriert hat */
@@ -6474,12 +6692,13 @@ function clearAllLfSubclassSpellsConfigurations(state) {
             if (s.payload?.featureType !== "spellcraft" || s.payload?.category !== "subclassSpells") return;
             const cfg = s.payload.optionsConfig || {};
             s.payload.optionsConfig = {
+                listMode: cfg.listMode || "all",
+                spellListLabels: Array.isArray(cfg.spellListLabels) ? cfg.spellListLabels.slice() : [],
                 schoolMode: cfg.schoolMode || "all",
                 schoolLabels: Array.isArray(cfg.schoolLabels) ? cfg.schoolLabels.slice() : [],
-                selectedByLevel: {},
-                spellListLabels: getLfSpellcastingEntrySpellListLabels(st)
+                selectedByLevel: {}
             };
-            s.payload.descriptions = { de: "-", en: "-" };
+            s.payload.descriptions = { de: "", en: "" };
         });
         refreshLfSubclassSpellsOrdinals(sc.levelFeatures || []);
     });
@@ -6532,8 +6751,7 @@ function sanitizeLfSubclassSpellsSlotSelections(slot, slots, state) {
 
     slot.payload.optionsConfig = {
         ...cfg,
-        selectedByLevel: next,
-        spellListLabels: getLfSpellcastingEntrySpellListLabels(state || customClassEditorState)
+        selectedByLevel: next
     };
     return true;
 }
@@ -6854,9 +7072,44 @@ function buildLfPreDefinedClassDataPartial(label) {
 }
 
 function ensureParameterRegistry(state) {
-    const st = state || customClassEditorState;
+    const st = state || (typeof getActiveLfEditorLangState === "function"
+        ? getActiveLfEditorLangState()
+        : customClassEditorState);
+    if (!st) return [];
     if (!Array.isArray(st.parameterRegistry)) st.parameterRegistry = [];
     return st.parameterRegistry;
+}
+
+/**
+ * Fehlende Registry-Einträge aus Einfach→Frei-Slots nachziehen
+ * (wichtig für ältere CSC-Pakete ohne parameterRegistry).
+ */
+function syncLfParameterRegistryFromSlots(state) {
+    const st = state || (typeof getActiveLfEditorLangState === "function"
+        ? getActiveLfEditorLangState()
+        : customClassEditorState);
+    if (!st) return [];
+    const reg = ensureParameterRegistry(st);
+    const seen = new Set(reg.map(p => p && p.id).filter(Boolean));
+    const scan = (slots) => {
+        (slots || []).forEach(s => {
+            if (s?.payload?.featureType !== "simple" || s.payload?.category !== "free") return;
+            const cfg = s.payload.optionsConfig || {};
+            const id = cfg.parameterId;
+            if (!id || seen.has(id)) return;
+            const mode = normalizeLfParameterValueMode(cfg);
+            reg.push({
+                id,
+                names: { de: "", en: "" },
+                useValue: mode.useValue,
+                useDie: mode.useDie
+            });
+            seen.add(id);
+        });
+    };
+    scan(st.levelFeatures);
+    (st.subclasses || []).forEach(sc => scan(sc.levelFeatures));
+    return reg;
 }
 
 const LF_SIMPLE_FREE_DIE_OPTIONS = ["D4", "D6", "D8", "D10", "D12", "D20"];
@@ -6952,6 +7205,15 @@ function collectLfSlotsAnywhere() {
     (customClassEditorState.subclasses || []).forEach(sc => {
         (sc.levelFeatures || []).forEach(s => all.push(s));
     });
+    // Standalone Custom Subclass Builder (Verbesserung / Parameter-Quellen)
+    if (typeof getCustomSubclassLfBridge === "function") {
+        const bridge = getCustomSubclassLfBridge();
+        if (bridge?.active && Array.isArray(bridge.slots)) {
+            bridge.slots.forEach(s => {
+                if (s && !all.some(x => x && x.slotId === s.slotId)) all.push(s);
+            });
+        }
+    }
     return all;
 }
 
@@ -7132,7 +7394,7 @@ function formatLfFreeOptionsCopySourceLabel(slot, sources) {
     return `${scTitle} · ${basePart}`;
 }
 
-/** Slot in Basisklasse oder Unterklassen finden */
+/** Slot in Basisklasse, integrierter Unterklasse oder Standalone-UC finden */
 function findLfSlotAnywhere(slotId) {
     if (!slotId) return null;
     const base = (customClassEditorState.levelFeatures || []).find(s => s.slotId === slotId);
@@ -7140,6 +7402,14 @@ function findLfSlotAnywhere(slotId) {
     for (const sc of (customClassEditorState.subclasses || [])) {
         const hit = (sc.levelFeatures || []).find(s => s.slotId === slotId);
         if (hit) return hit;
+    }
+    // Standalone Custom Subclass Builder
+    if (typeof getCustomSubclassLfBridge === "function") {
+        const bridge = getCustomSubclassLfBridge();
+        if (bridge?.slots) {
+            const hit = bridge.slots.find(s => s.slotId === slotId);
+            if (hit) return hit;
+        }
     }
     return null;
 }
@@ -7881,7 +8151,9 @@ function filterLfSpells({
     schoolLabels = [],
     levelLabels = null,
     onlyCantrips = false,
-    excludeUsed = null
+    excludeUsed = null,
+    // Magieprogression (Auswahl): Bibliothek nicht freigeben – nur gewählte Listen
+    allowLibraryBypass = true
 } = {}) {
     const source = (typeof getEffectiveSpellList === "function")
         ? getEffectiveSpellList()
@@ -7910,9 +8182,11 @@ function filterLfSpells({
         if (listMode === "selection") {
             if (!lists.length) return false;
             const classes = Array.isArray(spell.classLabel) ? spell.classLabel : [spell.classLabel];
-            // Bibliotheks-Zauber: frei nach Grad, ohne Listenbindung
-            const isBib = (typeof isCustomContentSpell === "function" && isCustomContentSpell(spell))
-                || (typeof isSpellFromSessionLibrary === "function" && isSpellFromSessionLibrary(spell));
+            // Bibliotheks-Zauber: frei nach Grad, ohne Listenbindung (außer Magieprogression)
+            const isBib = allowLibraryBypass && (
+                (typeof isCustomContentSpell === "function" && isCustomContentSpell(spell))
+                || (typeof isSpellFromSessionLibrary === "function" && isSpellFromSessionLibrary(spell))
+            );
             if (!isBib && !lists.some(l => classes.includes(l))) return false;
         }
 
@@ -8509,36 +8783,86 @@ function syncSubclassLevelFeatureSlots(subclass, classSlots) {
     if (!subclass) return;
     const levels = getTab2SubclassLevels(classSlots || customClassEditorState.levelFeatures);
     const prev = Array.isArray(subclass.levelFeatures) ? subclass.levelFeatures : [];
+    // Magieprogression (pending + bestätigt): eigene stabile ID, nicht in rowsPer
+    const independent = prev.filter(s => isLfSubclassSpellsLevelIndependent(s));
+    independent.forEach(s => ensureLfSubclassSpellsStableSlotId(s));
+    const independentIds = new Set(independent.map(s => s.slotId));
+    // Heimat-Schienenplatz bleibt reserviert → kein leeres Loch unter der gebündelten Stufe
+    const reservedRail = new Set();
+    independent.forEach(s => {
+        const home = Number(s.payload?.scRailHomeLevel);
+        const idx = Number(s.payload?.scRailHomeIndex);
+        if (Number.isFinite(home) && home >= 1 && Number.isFinite(idx) && idx >= 0) {
+            reservedRail.add(`${home}:${idx}`);
+        }
+    });
+    const claimed = new Set();
     const next = [];
 
     levels.forEach(level => {
         const rowsPer = getScRowsPerLevel(level);
         for (let i = 0; i < rowsPer; i++) {
+            if (reservedRail.has(`${level}:${i}`)) continue;
             const slotId = `${subclass.id}-L${level}-${i}`;
-            let found = prev.find(s => s.slotId === slotId);
+            let found = prev.find(s =>
+                s.slotId === slotId
+                && !independentIds.has(s.slotId)
+                && !isLfSubclassSpellsLevelIndependent(s)
+                && !claimed.has(s.slotId)
+            );
             if (!found) {
                 found = prev.find(s =>
-                    Number(s.level) === Number(level)
+                    !independentIds.has(s.slotId)
+                    && !isLfSubclassSpellsLevelIndependent(s)
+                    && !claimed.has(s.slotId)
+                    && Number(s.level) === Number(level)
                     && Number(s.index) === i
                     && s.subclassId === subclass.id
                 );
             }
             if (!found) {
-                // Fallback: gleicher Index auf der Stufe (nach ID-Wechsel)
-                found = prev.find(s => Number(s.level) === Number(level) && Number(s.index) === i);
+                found = prev.find(s =>
+                    !independentIds.has(s.slotId)
+                    && !isLfSubclassSpellsLevelIndependent(s)
+                    && !claimed.has(s.slotId)
+                    && Number(s.level) === Number(level)
+                    && Number(s.index) === i
+                );
             }
             if (found) {
+                // Schienen-Zeile säubern (keine Magieprogression-Reste)
                 found.slotId = slotId;
                 found.subclassId = subclass.id;
                 found.level = level;
                 found.index = i;
                 found.kind = "free";
+                found.contentLocked = false;
+                found.blockedBySubclass = false;
+                if (!isLfSubclassSpellsPayload(found.payload)) {
+                    clearLfSubclassSpellsLevelFlags(found, { restoreHome: false });
+                }
+                claimed.add(found.slotId);
                 next.push(found);
             } else {
                 next.push(createScFeatureSlot(subclass.id, level, i));
             }
         }
     });
+
+    independent
+        .slice()
+        .sort((a, b) => (Number(a.level) - Number(b.level))
+            || String(a.slotId).localeCompare(String(b.slotId)))
+        .forEach(s => {
+            ensureLfSubclassSpellsStableSlotId(s);
+            if (claimed.has(s.slotId)) return;
+            s.subclassId = subclass.id;
+            s.kind = "free";
+            s.index = next.filter(x => Number(x.level) === Number(s.level)).length;
+            claimed.add(s.slotId);
+            next.push(s);
+        });
+
     subclass.levelFeatures = next;
 }
 
@@ -8551,7 +8875,22 @@ function clearSubclassFeaturesForLevels(levels, state) {
     const st = state || customClassEditorState;
     const drop = new Set((levels || []).map(Number));
     (st.subclasses || []).forEach(sc => {
-        sc.levelFeatures = (sc.levelFeatures || []).filter(s => !drop.has(Number(s.level)));
+        // Magieprogression (auch pending) behält ihre Charakterstufe auch ohne UC-Schiene
+        sc.levelFeatures = (sc.levelFeatures || []).filter(s => {
+            if (!drop.has(Number(s.level))) return true;
+            return isLfSubclassSpellsLevelIndependent(s);
+        });
+        const remainingRails = getTab2SubclassLevels(st.levelFeatures);
+        (sc.levelFeatures || []).forEach(s => {
+            if (!isLfSubclassSpellsLevelIndependent(s)) return;
+            const home = Number(s.payload?.scRailHomeLevel);
+            if (!Number.isFinite(home) || !drop.has(home)) return;
+            const cur = Number(s.level);
+            const fallback = remainingRails.includes(cur)
+                ? cur
+                : (remainingRails[0] || cur || 1);
+            s.payload.scRailHomeLevel = fallback;
+        });
         syncSubclassLevelFeatureSlots(sc, st.levelFeatures);
     });
 }
@@ -8585,11 +8924,19 @@ function resolveLfSlotContext(slotId) {
     let slot = classSlots.find(s => s.slotId === slotId);
     if (slot) return { slot, slots: classSlots, subclass: null, isSubclass: false };
 
+    const findInSlots = (slots) => {
+        const list = slots || [];
+        // Bei ID-Kollision Magieprogression bevorzugen
+        return list.find(s => s.slotId === slotId && isLfSubclassSpellsLevelIndependent(s))
+            || list.find(s => s.slotId === slotId)
+            || null;
+    };
+
     const subclasses = ensureCustomClassSubclasses(customClassEditorState);
     for (let i = 0; i < subclasses.length; i++) {
         const sc = subclasses[i];
         const slots = sc.levelFeatures || [];
-        slot = slots.find(s => s.slotId === slotId);
+        slot = findInSlots(slots);
         if (slot) return { slot, slots, subclass: sc, isSubclass: true };
     }
 
@@ -8597,7 +8944,7 @@ function resolveLfSlotContext(slotId) {
     if (typeof getCustomSubclassLfBridge === "function") {
         const bridge = getCustomSubclassLfBridge();
         if (bridge?.slots) {
-            slot = bridge.slots.find(s => s.slotId === slotId);
+            slot = findInSlots(bridge.slots);
             if (slot) {
                 return {
                     slot,
@@ -9293,6 +9640,10 @@ function ensureCustomClassLevelFeatureSlots(editorState) {
 function isLfSlotDraggable(slot) {
     if (!slot || slot.kind !== "free") return false;
     if (slot.blockedBySubclass) return false;
+    // Leere Zeilen: Merkmaltyp-Select darf nicht mit HTML5-Drag kollidieren
+    if (isLfSlotContentEmpty(slot)) return false;
+    // Magieprogression: Stufe per Dropdown, nicht per Drag
+    if (isLfSubclassSpellsPayload(slot.payload)) return false;
     // Progressionslinie mit ≥2 Merkmalen: keine Verschiebung/Tausch mehr
     if (isLfProgressionLineDragLocked(slot)) return false;
     // Tab 3: alle Unterklassen-Zeilen frei verschiebbar (keine festen Zeilen)
@@ -9876,6 +10227,7 @@ function resetLfSlotUserConfig(slot, keepTypeCategory) {
     slot.payload.optionsConfig = null;
     slot.payload.amount = null;
     slot.payload.classDataPartial = null;
+    clearLfSubclassSpellsLevelFlags(slot, { restoreHome: false });
     slot.boundFromTab1Tool = false;
     if (!slot.systemPreset && slot.kind === "free" && !slot.blockedBySubclass) {
         slot.contentLocked = false;
@@ -9916,8 +10268,15 @@ function onLfFeatureTypeChange(slotId, typeValue) {
         descriptions: { ...(slot.payload.descriptions || {}) },
         optionsConfig: slot.payload.optionsConfig,
         amount: slot.payload.amount,
-        classDataPartial: slot.payload.classDataPartial
+        classDataPartial: slot.payload.classDataPartial,
+        levelPending: slot.payload.levelPending,
+        scRailHomeLevel: slot.payload.scRailHomeLevel
     };
+    const wasSubclassSpells = prevType === "spellcraft"
+        && slot.payload.category === "subclassSpells";
+    if (wasSubclassSpells && prevType !== nextType) {
+        clearLfSubclassSpellsLevelFlags(slot, { restoreHome: true, ownerSlots: slots });
+    }
 
     slot.payload.featureType = nextType;
 
@@ -9925,6 +10284,8 @@ function onLfFeatureTypeChange(slotId, typeValue) {
         resetLfSlotUserConfig(slot, false);
     } else {
         if (prevType !== nextType) {
+            slot.payload.category = null;
+            clearLfSubclassSpellsLevelFlags(slot, { restoreHome: false });
             slot.payload.names = { de: "", en: "" };
             slot.payload.shortDescriptions = { de: "", en: "" };
             slot.payload.descriptions = { de: "", en: "" };
@@ -9964,6 +10325,7 @@ function onLfFeatureTypeChange(slotId, typeValue) {
     if (removingSpellcasting) {
         clearLfSubclassSpellsInSpellcastingScope(slot, isSubclass ? slots : null);
     }
+    if (wasSubclassSpells) repackScSlotsForSubclassSpells(ctx);
     if (typeof isCustomSubclassEditorActive === "function" && isCustomSubclassEditorActive()) {
         if (typeof renderCustomSubclassTab1 === "function") renderCustomSubclassTab1();
         if (typeof renderCustomSubclassTab2 === "function") renderCustomSubclassTab2();
@@ -10031,20 +10393,14 @@ function onLfCategoryChange(slotId, categoryValue) {
             rerenderLfOwner(ctx);
             return;
         }
-        const baseLvl = getLfSubclassSpellsPrerequisiteLevel(slot);
-        if (baseLvl != null && (Number(slot.level) || 0) < baseLvl) {
-            alert(tCC("ccLfSubclassSpellsRequiresBaseAlertLabel"));
-            rerenderLfOwner(ctx);
-            return;
-        }
-        if (isLfSubclassSpellsTakenOnLevel(slots, slot.level, slot.slotId)) {
-            alert(tCC("ccLfSubclassSpellsOncePerLevelAlertLabel"));
-            rerenderLfOwner(ctx);
-            return;
-        }
         const max = CUSTOM_CLASS_LF_CONFIG.limits.subclassSpellsFeatureMax || 4;
         if (countLfSubclassSpellsFeatures(slots, slot.slotId) >= max) {
             alert(tCC("ccLfSubclassSpellsMaxAlertLabel"));
+            rerenderLfOwner(ctx);
+            return;
+        }
+        if (getLfSubclassSpellsAvailableLevels(slot, slots).length < 1) {
+            alert(tCC("ccLfSubclassSpellsOncePerLevelAlertLabel"));
             rerenderLfOwner(ctx);
             return;
         }
@@ -10065,6 +10421,9 @@ function onLfCategoryChange(slotId, categoryValue) {
     slot.payload.category = nextCat;
 
     if (prevCat !== nextCat) {
+        if (prevCat === "subclassSpells" && nextCat !== "subclassSpells") {
+            clearLfSubclassSpellsLevelFlags(slot, { restoreHome: true, ownerSlots: slots });
+        }
         slot.payload.optionsConfig = null;
         slot.payload.amount = null;
         if ((type === "options" && nextCat && nextCat !== "free")
@@ -10085,12 +10444,12 @@ function onLfCategoryChange(slotId, categoryValue) {
         if (type === "spellcraft" && nextCat === "subclassSpells") {
             slot.payload.names = { de: "", en: "" };
             slot.payload.shortDescriptions = { de: "", en: "" };
-            slot.payload.descriptions = { de: "-", en: "-" };
-            slot.payload.optionsConfig = {
-                schoolMode: "all",
-                schoolLabels: [],
-                selectedByLevel: {}
-            };
+            slot.payload.descriptions = { de: "", en: "" };
+            slot.payload.optionsConfig = createEmptyLfSubclassSpellsOptionsConfig();
+            slot.payload.scRailHomeLevel = Number(slot.level) || 1;
+            slot.payload.scRailHomeIndex = Number(slot.index) || 0;
+            slot.payload.levelPending = true;
+            ensureLfSubclassSpellsStableSlotId(slot);
         }
         // Vorbereiteten Zauber wählen / Zauber erhalten: feste System-Beschreibung
         if (type === "spellcraft"
@@ -10162,7 +10521,68 @@ function onLfCategoryChange(slotId, categoryValue) {
         }
     }
     if (type === "spellcraft") refreshLfSubclassSpellsOrdinals(slots);
+    if (prevCat === "subclassSpells" || nextCat === "subclassSpells") {
+        repackScSlotsForSubclassSpells(ctx);
+    }
     pruneParameterRegistry(slots);
+    rerenderLfOwner(ctx);
+}
+
+/** Magieprogression: Charakterstufe per Dropdown (entkoppelt von UC-Schiene) */
+function onLfSubclassSpellsLevelChange(slotId, levelValue) {
+    const ctx = resolveLfSlotContext(slotId);
+    if (!ctx) return;
+    const { slot, slots } = ctx;
+    if (!isLfSubclassSpellsPayload(slot.payload)) {
+        rerenderLfOwner(ctx);
+        return;
+    }
+
+    ensureLfSubclassSpellsStableSlotId(slot);
+
+    const raw = String(levelValue || "").trim();
+    if (!raw) {
+        // „?“: Zeile bleibt auf der aktuellen Stufe eingerastet
+        slot.payload.levelPending = true;
+        slot.payload.optionsConfig = createEmptyLfSubclassSpellsOptionsConfig();
+        repackScSlotsForSubclassSpells(ctx);
+        refreshLfSubclassSpellsOrdinals(getLfSlotsForSlot(slot) || slots);
+        rerenderLfOwner(ctx);
+        return;
+    }
+
+    const nextLevel = parseInt(raw, 10);
+    if (!Number.isFinite(nextLevel) || nextLevel < 1 || nextLevel > 20) {
+        rerenderLfOwner(ctx);
+        return;
+    }
+    const min = getLfSubclassSpellsMinSelectableLevel(slot);
+    if (nextLevel < min) {
+        alert(tCC("ccLfSubclassSpellsRequiresBaseAlertLabel"));
+        rerenderLfOwner(ctx);
+        return;
+    }
+    if (isLfSubclassSpellsTakenOnLevel(slots, nextLevel, slot.slotId)) {
+        alert(tCC("ccLfSubclassSpellsOncePerLevelAlertLabel"));
+        rerenderLfOwner(ctx);
+        return;
+    }
+
+    const levelChanged = !!slot.payload.levelPending || Number(slot.level) !== nextLevel;
+    slot.level = nextLevel;
+    slot.payload.levelPending = false;
+    if (levelChanged) {
+        slot.payload.optionsConfig = createEmptyLfSubclassSpellsOptionsConfig();
+    }
+    if (slot.payload.scRailHomeLevel == null) {
+        slot.payload.scRailHomeLevel = nextLevel;
+    }
+    if (slot.payload.scRailHomeIndex == null) {
+        slot.payload.scRailHomeIndex = Number(slot.index) || 0;
+    }
+    ensureLfSubclassSpellsStableSlotId(slot);
+    repackScSlotsForSubclassSpells(ctx);
+    refreshLfSubclassSpellsOrdinals(getLfSlotsForSlot(slot) || slots);
     rerenderLfOwner(ctx);
 }
 
@@ -10224,7 +10644,7 @@ function formatLfDesignation(slot) {
     }
 
     if (isLfSlotContentEmpty(slot)) {
-        return tCC("ccLfEmptyFreeRowLabel", "(leer – verschiebbar)");
+        return tCC("ccLfEmptyFreeRowLabel", "(leer)");
     }
 
     const lang = typeof currentLang !== "undefined" ? currentLang : "de";
@@ -10842,6 +11262,8 @@ function canOpenLfOptionsMask(slot) {
     if (!slot || slot.kind === "fixed" || slot.blockedBySubclass || isLfSlotContentEmpty(slot)) return false;
     if (!slot.payload.featureType || !slot.payload.category) return false;
     if (slot.payload.featureType === "subclass") return false;
+    // Magieprogression: erst nach Stufenwahl
+    if (isLfSubclassSpellsLevelPending(slot)) return false;
     // Feste Labels → nur Text in der Zelle
     if (getLfFixedOptionsDisplayKeys(slot)) return false;
     // Einfach → Vordefiniert: Maske nur wenn Merkmal gewählt und Parameter-Schema (oder Attribut-Wahl) vorhanden
@@ -11056,10 +11478,14 @@ function isLfSpellcraftOptionsConfigured(cfg, cat) {
             && pick >= (spec?.pickMin || 1) && pick <= (spec?.pickMax || 3);
     }
     if (cat === "subclassSpells") {
+        // Legacy ohne listMode → Alle
+        const listMode = cfg.listMode || "all";
+        const listOk = listMode === "all"
+            || (listMode === "selection" && Array.isArray(cfg.spellListLabels) && cfg.spellListLabels.length >= 1);
         // Leere Auswahl = Slot bleibt im Editor, gilt aber nicht als „konfiguriert“ für Gear-Chip
         const schoolOk = cfg.schoolMode === "all"
             || (cfg.schoolMode === "selection" && Array.isArray(cfg.schoolLabels) && cfg.schoolLabels.length >= 1);
-        return schoolOk && collectLfSubclassSpellsSelectedLabels(cfg).length >= 1;
+        return listOk && schoolOk && collectLfSubclassSpellsSelectedLabels(cfg).length >= 1;
     }
     return false;
 }
@@ -11277,6 +11703,76 @@ function buildLfNameCellHtml(slot) {
         onmousedown="event.stopPropagation()">${empty ? tCC("ccLfClickToSetNameLabel", "(Bezeichnung festlegen)") : text}</button>`;
 }
 
+/** Stufen-Dropdown in der Spalte „Stufe“ (Magieprogression, eigene Zeilengruppe) */
+function buildLfSubclassSpellsLevelSelectHtml(slot) {
+    const slots = getLfSlotsForSlot(slot);
+    const levels = getLfSubclassSpellsAvailableLevels(slot, slots);
+    const pending = isLfSubclassSpellsLevelPending(slot);
+    const cur = pending ? "" : String(Number(slot.level) || "");
+    const pickTitle = escapeLfHtml(tCC("ccLfSubclassSpellsPickLevelLabel", "Stufe wählen…"));
+    const options = [`<option value="">?</option>`];
+    levels.forEach(lvl => {
+        const sel = String(lvl) === cur ? " selected" : "";
+        options.push(`<option value="${lvl}"${sel}>${lvl}</option>`);
+    });
+    if (cur && !levels.some(l => String(l) === cur)) {
+        options.push(`<option value="${escapeLfHtml(cur)}" selected>${escapeLfHtml(cur)}</option>`);
+    }
+    const levelTitle = escapeLfHtml(tCC("ccLfColLevelLabel", "Stufe"));
+    return `<select class="cc-lf-select cc-lf-sc-spells-level-select"
+        onchange="onLfSubclassSpellsLevelChange('${slot.slotId}', this.value)"
+        onmousedown="event.stopPropagation()"
+        title="${pickTitle || levelTitle}">${options.join("")}</select>`;
+}
+
+/** Eine Tab-3-Merkmalszeile (ohne Stufen-Rail) */
+function buildScFeatureRowHtml(slot, allSlots) {
+    const canDrag = isLfSlotDraggable(slot);
+    const dragAttrs = canDrag
+        ? `draggable="true"
+           ondragstart="onLfRowDragStart(event, '${slot.slotId}')"
+           ondragend="onLfRowDragEnd(event)"
+           ondragover="onLfRowDragOver(event, '${slot.slotId}')"
+           ondragleave="onLfRowDragLeave(event)"
+           ondrop="onLfRowDrop(event, '${slot.slotId}')"`
+        : `aria-disabled="true"`;
+    const handle = canDrag
+        ? `<span class="cc-lf-drag-handle" title="${tCC("ccLfDragHandleLabel", "Verschieben")}">⋮⋮</span>`
+        : `<span class="cc-lf-drag-handle cc-lf-drag-handle--locked" title="${tCC("ccLfFixedRowLabel", "Fest")}">✕</span>`;
+    return `
+        <div class="${getLfRowCssClass(slot)}" role="row" data-slot-id="${slot.slotId}" ${dragAttrs}>
+            <div class="cc-lf-cell cc-lf-cell--handle" role="cell">${handle}</div>
+            <div class="cc-lf-cell" role="cell">${buildLfTypeSelectHtml(slot, allSlots)}</div>
+            <div class="cc-lf-cell" role="cell">${buildLfCategorySelectHtml(slot)}</div>
+            <div class="cc-lf-cell" role="cell">${buildLfNameCellHtml(slot)}</div>
+            <div class="cc-lf-cell cc-lf-cell--center" role="cell">${buildLfDescChipsHtml(slot)}</div>
+            <div class="cc-lf-cell cc-lf-cell--center" role="cell">${buildLfOptionsChipHtml(slot)}</div>
+            <div class="cc-lf-cell cc-lf-cell--center" role="cell">${buildLfAmountChipHtml(slot, allSlots)}</div>
+        </div>
+    `;
+}
+
+/**
+ * Stufen-Gruppe: normale UC-Merkmale bleiben mit gebündelter Stufen-Zahl;
+ * Magieprogression jeweils eigene Gruppe (Dropdown in der Rail, ohne Aufteilen).
+ */
+function buildScLevelGroupHtml(level, rowSlots, railInnerHtml, allSlots) {
+    if (!rowSlots.length) return "";
+    const rows = rowSlots.map(s => buildScFeatureRowHtml(s, allSlots)).join("");
+    return `
+        <div class="cc-lf-level-group" data-level="${level}"
+            ondragover="onLfLevelGroupDragOver(event)">
+            <div class="cc-lf-level-rail" aria-label="${tCC("ccLfColLevelLabel")} ${level}"
+                ondragover="onLfLevelGroupDragOver(event)">
+                ${railInnerHtml}
+            </div>
+            <div class="cc-lf-level-rows" ondragover="onLfLevelGroupDragOver(event)">
+                ${rows}
+            </div>
+        </div>
+    `;
+}
+
 function buildLfDescChipsHtml(slot) {
     if (slot.blockedBySubclass || isLfSlotContentEmpty(slot)) {
         return `<span class="cc-lf-chip-muted">—</span>`;
@@ -11395,6 +11891,11 @@ function buildLfOptionsChipHtml(slot) {
     if (fixedKeys && fixedKeys.length) {
         return `<span>${fixedKeys.map(k => tCC(k)).join(" & ")}</span>`;
     }
+    // Magieprogression: graues Zahnrad bis Stufe gewählt (wie Erblinie idle)
+    if (isLfSubclassSpellsLevelPending(slot)) {
+        return `<span class="cc-lf-sc-spells-gear-placeholder" aria-hidden="true"
+            title="${escapeLfHtml(tCC("ccLfSubclassSpellsPickLevelLabel", "Stufe wählen…"))}">${getLfGearIconHtml()}</span>`;
+    }
     if (!canOpenLfOptionsMask(slot)) {
         return `<span class="cc-lf-chip-muted">—</span>`;
     }
@@ -11487,8 +11988,11 @@ function buildLfOptionsChipHtml(slot) {
 }
 
 function buildLfAmountChipHtml(slot, slots) {
-    // Magieprogression: Ordnungszahl 1…N (read-only)
+    // Magieprogression: Ordnungszahl 1…N (read-only); pending → —
     if (slot?.payload?.featureType === "spellcraft" && slot.payload?.category === "subclassSpells") {
+        if (isLfSubclassSpellsLevelPending(slot)) {
+            return `<span class="cc-lf-chip-muted">—</span>`;
+        }
         const n = getLfSubclassSpellsOrdinal(slot, slots) || getLfSlotAmountValue(slot);
         return n > 0
             ? `<span class="cc-lf-chip-btn cc-lf-chip-btn--on" style="pointer-events:none;">${n}</span>`
@@ -12679,7 +13183,7 @@ function bindLfSpellcraftMaskHandlers(slot) {
         });
     }
     if (cat === "subclassSpells") {
-        queryAllActiveLfFloat("#ccLfScSchools input").forEach(el => {
+        queryAllActiveLfFloat("#ccLfScSpellLists input, #ccLfScSchools input").forEach(el => {
             el.onchange = softRebuildLfSpellcraftSubclassSpellsMask;
         });
     }
@@ -12890,9 +13394,9 @@ function buildLfSpellcraftSubclassSpellsMaskHtml(slot) {
     sanitizeLfSubclassSpellsSlotSelections(slot, slots, spellState);
     cfg = slot.payload.optionsConfig || cfg || {};
 
+    const listMode = cfg.listMode || "all";
     const schoolMode = cfg.schoolMode || "all";
     const schoolLabels = cfg.schoolLabels || [];
-    const entryLists = getLfSpellcastingEntrySpellListLabels(spellState);
     const allowedGrades = getLfSubclassSpellsAllowedGradeLabels(slot, slots, spellState);
     const dropPerGrade = CUSTOM_CLASS_LF_CONFIG.limits.subclassSpellsDropdownsPerGrade || 3;
     const maxTotal = CUSTOM_CLASS_LF_CONFIG.limits.subclassSpellsPerInvocationMax || 3;
@@ -12912,12 +13416,13 @@ function buildLfSpellcraftSubclassSpellsMaskHtml(slot) {
         const picks = Array.isArray(selectedByLevel[lvl]) ? selectedByLevel[lvl].slice(0, dropPerGrade) : [];
         while (picks.length < dropPerGrade) picks.push("");
         const spells = filterLfSpells({
-            listMode: entryLists.length ? "selection" : "all",
-            spellListLabels: entryLists,
+            listMode,
+            spellListLabels: cfg.spellListLabels || [],
             schoolMode,
             schoolLabels,
             levelLabels: [lvl],
-            excludeUsed: used
+            excludeUsed: used,
+            allowLibraryBypass: false
         });
         // Leere Dropdowns sperren, sobald max. Auswahl erreicht
         const lockEmpty = selectedCount >= maxTotal;
@@ -12945,6 +13450,19 @@ function buildLfSpellcraftSubclassSpellsMaskHtml(slot) {
         <div class="cc-lf-subclass-spells-hint" style="margin-top:0;">${hintHtml}</div>
         <div class="cc-lf-param-value-block">
             ${buildLfSpellcraftFilterBlockHtml({
+                headingKey: "ccLfSpellListsHeadingLabel",
+                modeId: "ccLfScListMode",
+                listId: "ccLfScSpellLists",
+                mode: listMode,
+                items: getLfSpellcastingClassOptions(),
+                selectedSet: new Set(cfg.spellListLabels || []),
+                minHint: 1,
+                onchangeExtra: "softRebuildLfSpellcraftSubclassSpellsMask();",
+                checkboxOnchange: "softRebuildLfSpellcraftSubclassSpellsMask();"
+            })}
+        </div>
+        <div class="cc-lf-param-value-block">
+            ${buildLfSpellcraftFilterBlockHtml({
                 headingKey: "ccLfSpellSchoolsHeadingLabel",
                 modeId: "ccLfScSchoolMode",
                 listId: "ccLfScSchools",
@@ -12952,7 +13470,8 @@ function buildLfSpellcraftSubclassSpellsMaskHtml(slot) {
                 items: getLfSpellSchoolLabels(),
                 selectedSet: new Set(schoolLabels),
                 minHint: 1,
-                onchangeExtra: "softRebuildLfSpellcraftSubclassSpellsMask();"
+                onchangeExtra: "softRebuildLfSpellcraftSubclassSpellsMask();",
+                checkboxOnchange: "softRebuildLfSpellcraftSubclassSpellsMask();"
             })}
         </div>
         <div class="cc-lf-param-value-block" id="ccLfScSubclassSpellsSections">
@@ -13023,6 +13542,7 @@ function applyLfSpellcraftSubclassSpellsFromDom(slot, { soft = false } = {}) {
         && typeof customSubclassEditorState !== "undefined")
         ? customSubclassEditorState
         : customClassEditorState;
+    const { listMode, spellListLabels } = applyLfSpellcraftListFilterFromDom();
     const { schoolMode, schoolLabels } = applyLfSpellcraftSchoolFilterFromDom();
     const allowedGrades = getLfSubclassSpellsAllowedGradeLabels(slot, slots, spellState);
     const dropPerGrade = CUSTOM_CLASS_LF_CONFIG.limits.subclassSpellsDropdownsPerGrade || 3;
@@ -13046,6 +13566,10 @@ function applyLfSpellcraftSubclassSpellsFromDom(slot, { soft = false } = {}) {
     });
 
     if (!soft) {
+        if (listMode === "selection" && spellListLabels.length < 1) {
+            alert(tCC("ccLfSpellListsHeadingLabel"));
+            return false;
+        }
         if (schoolMode === "selection" && schoolLabels.length < 1) {
             alert(tCC("ccLfSpellSchoolsHeadingLabel"));
             return false;
@@ -13081,14 +13605,14 @@ function applyLfSpellcraftSubclassSpellsFromDom(slot, { soft = false } = {}) {
     }
 
     slot.payload.optionsConfig = {
+        listMode,
+        spellListLabels,
         schoolMode,
         schoolLabels,
-        selectedByLevel,
-        // Persistierte Eingangslisten (Referenz; Filter-UI hat keine Listenwahl)
-        spellListLabels: getLfSpellcastingEntrySpellListLabels(spellState)
+        selectedByLevel
     };
     slot.payload.optionsConfig = readLfAddToSpellbookFromDom(slot.payload.optionsConfig);
-    slot.payload.descriptions = { de: "-", en: "-" };
+    slot.payload.descriptions = { de: "", en: "" };
     refreshLfSubclassSpellsOrdinals(slots);
     return true;
 }
@@ -14729,17 +15253,24 @@ function buildScLangBlockHtml(sc, lang, collapsed) {
 
 function buildScFeatureTableHtml(sc, levelsOverride) {
     const slots = sc.levelFeatures || [];
-    const levels = Array.isArray(levelsOverride) && levelsOverride.length
+    const railLevels = Array.isArray(levelsOverride) && levelsOverride.length
         ? levelsOverride.slice()
         : getTab2SubclassLevels(customClassEditorState.levelFeatures);
+    // Orphan-Stufen von Magieprogression (pending oder bestätigt, z. B. 5/7/9)
+    const extraLevels = (slots || [])
+        .filter(s => isLfSubclassSpellsLevelIndependent(s))
+        .map(s => Number(s.level))
+        .filter(l => Number.isFinite(l) && l >= 1 && !railLevels.includes(l));
+    const levels = [...new Set([...railLevels, ...extraLevels])].sort((a, b) => a - b);
     if (!levels.length) {
         return `<p class="cc-sc-empty-levels">${tCC("ccScNoSubclassLevelsHintLabel")}</p>`;
     }
 
     const byLevel = new Map();
     slots.forEach(slot => {
-        if (!byLevel.has(slot.level)) byLevel.set(slot.level, []);
-        byLevel.get(slot.level).push(slot);
+        const lvl = Number(slot.level);
+        if (!byLevel.has(lvl)) byLevel.set(lvl, []);
+        byLevel.get(lvl).push(slot);
     });
 
     const colHeaders = [
@@ -14768,41 +15299,27 @@ function buildScFeatureTableHtml(sc, levelsOverride) {
 
     levels.forEach(level => {
         const levelSlots = (byLevel.get(level) || []).slice().sort((a, b) => a.index - b.index);
-        html += `
-            <div class="cc-lf-level-group" data-level="${level}"
-                ondragover="onLfLevelGroupDragOver(event)">
-                <div class="cc-lf-level-rail" aria-label="${tCC("ccLfColLevelLabel")} ${level}"
-                    ondragover="onLfLevelGroupDragOver(event)">
-                    <span class="cc-lf-level-rail-num">${level}</span>
-                </div>
-                <div class="cc-lf-level-rows" ondragover="onLfLevelGroupDragOver(event)">
-        `;
-        levelSlots.forEach(slot => {
-            const canDrag = isLfSlotDraggable(slot);
-            const dragAttrs = canDrag
-                ? `draggable="true"
-                   ondragstart="onLfRowDragStart(event, '${slot.slotId}')"
-                   ondragend="onLfRowDragEnd(event)"
-                   ondragover="onLfRowDragOver(event, '${slot.slotId}')"
-                   ondragleave="onLfRowDragLeave(event)"
-                   ondrop="onLfRowDrop(event, '${slot.slotId}')"`
-                : `aria-disabled="true"`;
-            const handle = canDrag
-                ? `<span class="cc-lf-drag-handle" title="${tCC("ccLfDragHandleLabel", "Verschieben")}">⋮⋮</span>`
-                : `<span class="cc-lf-drag-handle cc-lf-drag-handle--locked" title="${tCC("ccLfFixedRowLabel", "Fest")}">✕</span>`;
-            html += `
-                <div class="${getLfRowCssClass(slot)}" role="row" data-slot-id="${slot.slotId}" ${dragAttrs}>
-                    <div class="cc-lf-cell cc-lf-cell--handle" role="cell">${handle}</div>
-                    <div class="cc-lf-cell" role="cell">${buildLfTypeSelectHtml(slot, slots)}</div>
-                    <div class="cc-lf-cell" role="cell">${buildLfCategorySelectHtml(slot)}</div>
-                    <div class="cc-lf-cell" role="cell">${buildLfNameCellHtml(slot)}</div>
-                    <div class="cc-lf-cell cc-lf-cell--center" role="cell">${buildLfDescChipsHtml(slot)}</div>
-                    <div class="cc-lf-cell cc-lf-cell--center" role="cell">${buildLfOptionsChipHtml(slot)}</div>
-                    <div class="cc-lf-cell cc-lf-cell--center" role="cell">${buildLfAmountChipHtml(slot, slots)}</div>
-                </div>
-            `;
+        const normalSlots = levelSlots.filter(s => !isLfSubclassSpellsLevelIndependent(s));
+        const magieSlots = levelSlots.filter(s => isLfSubclassSpellsLevelIndependent(s));
+
+        // Normale UC-Merkmale: Stufen-Spalte bleibt gebündelt (eine Zahl)
+        if (normalSlots.length) {
+            html += buildScLevelGroupHtml(
+                level,
+                normalSlots,
+                `<span class="cc-lf-level-rail-num">${level}</span>`,
+                slots
+            );
+        }
+        // Magieprogression: eigene Gruppe mit Dropdown – teilt die gebündelten Zeilen nicht auf
+        magieSlots.forEach(slot => {
+            html += buildScLevelGroupHtml(
+                level,
+                [slot],
+                buildLfSubclassSpellsLevelSelectHtml(slot),
+                slots
+            );
         });
-        html += `</div></div>`;
     });
 
     html += `</div></div>`;

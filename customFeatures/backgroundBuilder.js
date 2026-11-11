@@ -1483,6 +1483,10 @@ function registerCustomBackgroundInRuntime(rawOrEnvelope) {
         envelope: envelope || null
     };
 
+    // Vor Hub-Refresh: Session als geladen markieren (wie Species/Class – auch nach Create-Save)
+    if (typeof markDcPackageUserLoaded === "function" && typeof DC_PACKAGE_TYPE !== "undefined") {
+        markDcPackageUserLoaded(DC_PACKAGE_TYPE.CUSTOM_BACKGROUND);
+    }
     refreshCustomBackgroundListItemUI();
     persistCustomBackgroundRuntimeToLocalStorage();
     return true;

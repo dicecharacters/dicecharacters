@@ -75,6 +75,8 @@ function createEmptyCustomSubclassState(targetClassSlug) {
         names: { de: "", en: "" },
         descriptions: { de: "", en: "" },
         levelFeatures: [],
+        /** Einfach→Frei Parameter (LEVEL_VAL) – analog Custom-Class-Editor */
+        parameterRegistry: [],
         /** parentReadonly | standard | preset | user */
         spellConfigMode: "standard",
         spellPresetSubclassNumber: null,
@@ -255,8 +257,11 @@ function syncCscSpellcastingFromFeatures() {
 /**
  * UC-Stufen der Elternklasse – gleiche Quelle wie Tab 3 im Klassenbuilder (getTab2SubclassLevels).
  * Custom Class: Stufe(n) mit Merkmaltyp „Unterklasse“ in Tab 2 (kompiliert: translationLabel „subclass“).
- * PHB: subclassCategoryNumber > 0 in classData.
+ * PHB: Unique levels mit subclassCategoryNumber > 0 (NICHT die einzelne „subclass“-Wahlzeile).
  * Fallback: [3, 6, 10, 14]
+ *
+ * Regression-Hinweis (v1.5→aktuell): fromSubclassPick vor fromScFeatures ließ PHB nur Stufe 3 sehen.
+ * PHB muss fromScFeatures priorisieren; Custom bleibt bei Tab-2 / subclass-Pick.
  */
 function getCscParentSubclassLevels() {
     const slug = getCscParentClassSlug();
@@ -294,12 +299,15 @@ function getCscParentSubclassLevels() {
     if (isCustomParent) {
         // Keine PHB-Template-UC-Zeilen (sc 1…4) – nur Tab-2-Unterklassen-Stufe(n)
         levels = [...new Set([...fromEditor, ...fromSubclassPick])];
+    } else if (fromScFeatures.length) {
+        // PHB: echte UC-Merkmalsstufen (wie Backup DC_v1.5_02.Aug.2026)
+        levels = [...new Set(fromScFeatures)];
     } else if (fromEditor.length) {
         levels = [...new Set(fromEditor)];
     } else if (fromSubclassPick.length) {
         levels = [...new Set(fromSubclassPick)];
     } else {
-        levels = [...new Set(fromScFeatures)];
+        levels = [];
     }
 
     if (!levels.length) return [3, 6, 10, 14];
@@ -308,27 +316,79 @@ function getCscParentSubclassLevels() {
 
 function ensureCscLevelFeatureSlots(state) {
     const levels = getCscParentSubclassLevels();
-    const byLevel = {};
-    (state.levelFeatures || []).forEach(s => {
-        const lvl = Number(s.level) || 1;
-        if (!byLevel[lvl]) byLevel[lvl] = [];
-        byLevel[lvl].push(s);
+    const prev = Array.isArray(state.levelFeatures) ? state.levelFeatures : [];
+    const independent = prev.filter(s =>
+        typeof isLfSubclassSpellsLevelIndependent === "function" && isLfSubclassSpellsLevelIndependent(s)
+    );
+    if (typeof ensureLfSubclassSpellsStableSlotId === "function") {
+        independent.forEach(s => ensureLfSubclassSpellsStableSlotId(s));
+    }
+    const independentIds = new Set(independent.map(s => s.slotId));
+    const reservedRail = new Set();
+    independent.forEach(s => {
+        const home = Number(s.payload?.scRailHomeLevel);
+        const idx = Number(s.payload?.scRailHomeIndex);
+        if (Number.isFinite(home) && home >= 1 && Number.isFinite(idx) && idx >= 0) {
+            reservedRail.add(`${home}:${idx}`);
+        }
     });
     const next = [];
+    const claimed = new Set();
     levels.forEach(level => {
         const rowsPer = (typeof getScRowsPerLevel === "function") ? getScRowsPerLevel(level) : 2;
-        const existing = byLevel[level] || [];
         for (let i = 0; i < rowsPer; i++) {
-            if (existing[i]) {
-                existing[i].subclassId = CUSTOM_SUBCLASS_SLOT_ID;
-                existing[i].level = level;
-                existing[i].index = i;
-                next.push(existing[i]);
+            if (reservedRail.has(`${level}:${i}`)) continue;
+            const slotId = `${CUSTOM_SUBCLASS_SLOT_ID}-L${level}-${i}`;
+            let found = prev.find(s =>
+                s.slotId === slotId
+                && !independentIds.has(s.slotId)
+                && !(typeof isLfSubclassSpellsLevelIndependent === "function" && isLfSubclassSpellsLevelIndependent(s))
+                && !claimed.has(s.slotId)
+            );
+            if (!found) {
+                found = prev.find(s =>
+                    !independentIds.has(s.slotId)
+                    && !(typeof isLfSubclassSpellsLevelIndependent === "function" && isLfSubclassSpellsLevelIndependent(s))
+                    && !claimed.has(s.slotId)
+                    && Number(s.level) === Number(level)
+                    && Number(s.index) === i
+                );
+            }
+            if (found) {
+                found.slotId = slotId;
+                found.subclassId = CUSTOM_SUBCLASS_SLOT_ID;
+                found.level = level;
+                found.index = i;
+                found.kind = "free";
+                found.contentLocked = false;
+                found.blockedBySubclass = false;
+                if (typeof isLfSubclassSpellsPayload === "function"
+                    && typeof clearLfSubclassSpellsLevelFlags === "function"
+                    && !isLfSubclassSpellsPayload(found.payload)) {
+                    clearLfSubclassSpellsLevelFlags(found, { restoreHome: false });
+                }
+                claimed.add(found.slotId);
+                next.push(found);
             } else if (typeof createScFeatureSlot === "function") {
                 next.push(createScFeatureSlot(CUSTOM_SUBCLASS_SLOT_ID, level, i));
             }
         }
     });
+    independent
+        .slice()
+        .sort((a, b) => (Number(a.level) - Number(b.level))
+            || String(a.slotId).localeCompare(String(b.slotId)))
+        .forEach(s => {
+            if (typeof ensureLfSubclassSpellsStableSlotId === "function") {
+                ensureLfSubclassSpellsStableSlotId(s);
+            }
+            if (claimed.has(s.slotId)) return;
+            s.subclassId = CUSTOM_SUBCLASS_SLOT_ID;
+            s.kind = "free";
+            s.index = next.filter(x => Number(x.level) === Number(s.level)).length;
+            claimed.add(s.slotId);
+            next.push(s);
+        });
     state.levelFeatures = next;
     return next;
 }
@@ -850,6 +910,23 @@ function importCustomSubclassPayload(raw) {
     customSubclassEditorState.levelFeatures = Array.isArray(payload.levelFeatures)
         ? JSON.parse(JSON.stringify(payload.levelFeatures))
         : [];
+    if (Array.isArray(payload.parameterRegistry)) {
+        customSubclassEditorState.parameterRegistry = payload.parameterRegistry.map(p => ({
+            id: p.id,
+            names: { de: p.names?.de || "", en: p.names?.en || "" },
+            useValue: (typeof normalizeLfParameterValueMode === "function")
+                ? normalizeLfParameterValueMode(p).useValue
+                : !!p.useValue,
+            useDie: (typeof normalizeLfParameterValueMode === "function")
+                ? normalizeLfParameterValueMode(p).useDie
+                : !!p.useDie
+        }));
+    } else {
+        customSubclassEditorState.parameterRegistry = [];
+    }
+    if (typeof syncLfParameterRegistryFromSlots === "function") {
+        syncLfParameterRegistryFromSlots(customSubclassEditorState);
+    }
     customSubclassEditorState.spellConfigMode = payload.spellConfigMode || "standard";
     customSubclassEditorState.spellPresetSubclassNumber = payload.spellPresetSubclassNumber ?? null;
     customSubclassEditorState.spellcastingProgression = payload.spellcastingProgression
@@ -1138,6 +1215,9 @@ function compileCustomSubclassRuntime(state) {
     const parentCore = (typeof buildLfCoreTraitsStateFromParent === "function")
         ? buildLfCoreTraitsStateFromParent(parentSlug)
         : {};
+    if (typeof syncLfParameterRegistryFromSlots === "function") {
+        syncLfParameterRegistryFromSlots(state);
+    }
     const fakeState = {
         levelFeatures: [],
         subclasses: [{
@@ -1148,7 +1228,9 @@ function compileCustomSubclassRuntime(state) {
             levelFeatures: state.levelFeatures
         }],
         spellcastingProgression: state.spellcastingProgression,
-        parameterRegistry: [],
+        parameterRegistry: (typeof ensureParameterRegistry === "function")
+            ? JSON.parse(JSON.stringify(ensureParameterRegistry(state)))
+            : (Array.isArray(state.parameterRegistry) ? JSON.parse(JSON.stringify(state.parameterRegistry)) : []),
         // Für Zauberbuch-Logik in Spellcraft-Compile (wie Class-Builder-Fokus)
         targetClassSlug: parentSlug,
         spellcastingFocus: (typeof customClassStateUsesSpellbook === "function"
@@ -1215,6 +1297,11 @@ function compileCustomSubclassRuntime(state) {
                 row.spellListLabels = prow.spellListLabels.slice();
             }
         }
+    }
+
+    // LEVEL_VAL-Parameter (Einfach→Frei) auf ClassData-Zeilen denormalisieren
+    if (typeof denormalizeCompiledFeatureParameters === "function") {
+        denormalizeCompiledFeatureParameters(compiledRows, fakeState);
     }
 
     // MagicSkills / UC-Zauber / Spell-Ability (wie Custom-Class-Compile)
@@ -1326,6 +1413,9 @@ function buildCustomSubclassExportPayload(state) {
             ? state.availableLanguages.slice()
             : [],
         levelFeatures: JSON.parse(JSON.stringify(state.levelFeatures)),
+        parameterRegistry: Array.isArray(state.parameterRegistry)
+            ? JSON.parse(JSON.stringify(state.parameterRegistry))
+            : [],
         spellConfigMode: state.spellConfigMode,
         spellPresetSubclassNumber: state.spellPresetSubclassNumber,
         spellcastingProgression: JSON.parse(JSON.stringify(state.spellcastingProgression)),
@@ -1400,6 +1490,13 @@ function saveCustomSubclass() {
     syncCscHeaderFromDom();
     if (!String(st.names.de || "").trim() && !String(st.names.en || "").trim()) {
         alert(tCC("cscNameRequiredAlertLabel") || "Bitte eine Bezeichnung angeben.");
+        return;
+    }
+    if (typeof hasPendingLfSubclassSpellsFeatures === "function" && hasPendingLfSubclassSpellsFeatures(st)) {
+        alert(tCC(
+            "ccLfSubclassSpellsPendingLevelAlertLabel",
+            "Bitte für jede Magieprogression eine Stufe wählen (kein „?“)."
+        ));
         return;
     }
     ensureCscLevelFeatureSlots(st);
@@ -1547,6 +1644,10 @@ function registerCustomSubclassInRuntime(rawOrEnvelope) {
 
     refreshCreatorSubclassOptionsRadios({ preferNotSelectCustom: true });
     persistCustomSubclassRuntimeToLocalStorage();
+    // Session als geladen markieren (wie Species/Class – auch nach Create-Save, nicht nur Upload)
+    if (typeof markDcPackageUserLoaded === "function" && typeof DC_PACKAGE_TYPE !== "undefined") {
+        markDcPackageUserLoaded(DC_PACKAGE_TYPE.CUSTOM_SUBCLASS);
+    }
     if (typeof updateStep1CustomHub === "function") updateStep1CustomHub();
     return true;
 }
