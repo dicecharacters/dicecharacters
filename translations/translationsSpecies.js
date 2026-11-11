@@ -248,8 +248,8 @@ Object.assign(translations.de, {
         // Species: Merkmale, Beschreibungen (Bogen)
 	"drowTraitDSheet": "Die Reichweite deiner Dunkelsicht erhöht sich auf 36 m. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br>Du beherrscht folgende Zauber:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
     "woodElfTraitDSheet": "Deine Bewegungsrate erhöht sich auf 10 m. Abhängig von deiner Stufe lernst du spezielle Zauber. Du hast diese Zauber immer vorbereitet und kannst sie einmal pro langer Rast ohne Zauberplatz wirken. Du kannst sie auch regulär mit verfügbaren Zauberplätzen des entsprechenden Grades wirken.<br><br>Du beherrscht folgende Zauber:<br>[CHOICE_LIST]preparedSpells.source.name.speciesSpellsLabel[/CHOICE_LIST]",
-    	"darkvision1DSheet": "Du besitzt Dunkelsicht mit einer Reichweite von 18 Metern.",
-    	"darkvision2DSheet": "Du besitzt Dunkelsicht mit einer Reichweite von 36 Metern.",
+    	"darkvision1DSheet": "Du kannst bei schwachem Licht und Dunkelheit auf 18 Meter sehen.",
+    	"darkvision2DSheet": "Du kannst bei schwachem Licht und Dunkelheit auf 36 Meter sehen.",
     	"celestialResistanceDSheet": "Du hast Resistenz gegen nekrotischen Schaden und gleißenden Schaden.",
     	"healingHandsDSheet": "Als magische Aktion kannst du eine Kreatur berühren und W4 in Höhe deines Übungsbonus würfeln. Die Kreatur heilt Trefferpunkte in Höhe des gewürfelten Gesamtwerts. (Regeneration: Lange Rast).",
     	"lightBearerDSheet": "Du kennst den Zaubertrick 'Licht'. Charisma ist dein Zauberattribut dafür.",
@@ -530,8 +530,8 @@ Object.assign(translations.en, {
         "otherworldlyPresenceD": "You know the 'Thaumaturgy' cantrip. When you cast it with this trait, the spell uses the same spellcasting ability you use for your Fiendish Legacy trait.",
 
         // Species: Traits, Descriptions (Sheet)
-	"darkvision1DSheet": "You have Darkvision with a range of 60 feet.",
-    	"darkvision2DSheet": "You have Darkvision with a range of 120 feet.",
+	"darkvision1DSheet": "You can see in dim light and darkness within 60 feet.",
+    	"darkvision2DSheet": "You can see in dim light and darkness within 120 feet.",
     	"celestialResistanceDSheet": "You have Resistance to Necrotic and Radiant damage.",
     	"healingHandsDSheet": "As a Magic action, touch a creature and roll a number of d4s equal to your Proficiency Bonus. The creature regains that many Hit Points. (Regains on a Long Rest).",
     	"lightBearerDSheet": "You know the 'Light' cantrip. Charisma is your spellcasting ability for it.",

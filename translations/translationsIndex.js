@@ -25,7 +25,8 @@ Object.assign(translations.de, {
     "universeCardDnd5": "Führt Einsteiger Schritt für Schritt und intuitiv durch die Erstellung",
     "universeCardDnd6": "Charakterbogen im DIN-A4-Format, speicherbar, mit PDF-Export",
     "universeCardDnd7": "Bearbeitbarer Bogen, Merkmale und Talente rechnen Spielwerte automatisch mit,<br>Stufenaufstieg bestehender Charaktere",
-    "universeCardDnd8": "Läuft am zuverlässigsten in Google Chrome",
+    "universeCardDnd8": "Masken zur Einbindung eigener Hintergründe, Völker und Unterklassen (Homebrew-Inhalte)",
+    "universeCardDnd9": "Läuft am zuverlässigsten in Google Chrome",
 
     "aboutHeader": "Ein Projekt von einem Fan für Fans",
     "aboutText1": "Willkommen bei DiceCharacters! Dieses Projekt ist aus reiner Leidenschaft für das Geschichtenerzählen entstanden. Mein Ziel war es, ein Tool zu schaffen, das die Charaktererstellung in eine unterhaltsame und spaßige Erfahrung verwandelt, die besonders Einsteigern die Welten von Pen & Paper zugänglicher macht. Wer seine Zeit gerne in Charaktereditoren verbringt, wird sich hier bestimmt wohl fühlen!",
@@ -112,7 +113,8 @@ Object.assign(translations.en, {
     "universeCardDnd5": "Guides beginners step by step and intuitively through creation",
     "universeCardDnd6": "Character sheet in A4 format, saveable, with PDF export",
     "universeCardDnd7": "Editable sheet, features and feats update your stats automatically,<br>level-up for existing characters",
-    "universeCardDnd8": "Works most reliably in Google Chrome",
+    "universeCardDnd8": "Templates for adding custom backgrounds, races, and subclasses (homebrew content)",
+    "universeCardDnd9": "Works most reliably in Google Chrome",
 
     "aboutHeader": "A Project by a Fan for Fans",
     "aboutText1": "Welcome to DiceCharacters! This project was born purely out of a passion for storytelling. My goal was to create a tool that turns character creation into an engaging and fun experience, making the worlds of pen & paper more accessible—especially for newcomers. Anyone who enjoys spending time in character editors will surely feel at home here!",
