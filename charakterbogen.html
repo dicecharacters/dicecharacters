@@ -921,7 +921,7 @@
     </div>
  </div>
 
- <div class="page fixed-page" id="page5-wrapper"> <div class="character-sheet simple-layout" id="page5-sheet">
+ <div class="page fixed-page spell-list-page" id="page5-wrapper" data-spell-list-page="0"> <div class="character-sheet simple-layout" id="page5-sheet">
 
         <header class="simple-header">
             <div class="header-left-simple">
@@ -947,7 +947,7 @@
                             <th id="th_spell_appendix_page" style="width: 8%;"></th>
                         </tr>
                     </thead>
-                    <tbody id="spellTableBody">
+                    <tbody id="spellTableBody" class="spell-list-tbody" data-spell-list-page="0">
                         </tbody>
                 </table>
             </div>
@@ -1163,9 +1163,7 @@ window.onload = function() {
        ========================================================== */
     if (charData.isManualMode) {
         console.log("Manueller Modus aktiv: Initialisiere leeren Bogen.");
-        
-        // Im manuellen Modus lassen wir standardmäßig alle Seiten zu (5 Seiten)
-        totalPages = 5;
+
         const page6 = document.getElementById('page6-wrapper');
         if (page6) page6.remove();
 
@@ -1180,37 +1178,34 @@ window.onload = function() {
         }
     } else {
         /* ==========================================================
-           PRÜFUNG OB ZAUBER (Seite 5) ERFORDERLICH (Bestehende Logik)
+           PRÜFUNG OB ZAUBER / ZAUBERBUCH ERFORDERLICH
            ========================================================== */
-        // 1. ZAUBER-SEITE PRÜFEN (Seite 5)
         const hasCantrips = (charData.spells.cantrips && charData.spells.cantrips.length > 0);
         const hasPrepared = (charData.spells.prepared && charData.spells.prepared.length > 0);
         const hasSpellbook = (charData.spells.spellbook && charData.spells.spellbook.length > 0);
         const hasFavored = (charData.spells.favored && charData.spells.favored.length > 0);
 
         if (!hasCantrips && !hasPrepared && !hasSpellbook && !hasFavored) {
-            const page5 = document.getElementById('page5-wrapper');
-            if (page5) page5.remove(); 
-            totalPages--; 
-            console.log("Seite 5 (Zauber) ausgeblendet.");
+            if (typeof removeAllSpellListPages === "function") {
+                removeAllSpellListPages();
+            } else {
+                const page5 = document.getElementById('page5-wrapper');
+                if (page5) page5.remove();
+            }
+            console.log("Zauberlisten-Seiten ausgeblendet.");
         }
 
-        // 2. ZAUBERBUCH-SEITE PRÜFEN (Seite 6)
         const usesBook = (typeof characterUsesSpellbook === "function")
             ? characterUsesSpellbook(charData.basic.class)
             : (charData.basic.class && charData.basic.class.toLowerCase() === 'wizard');
         if (!usesBook) {
             const page6 = document.getElementById('page6-wrapper');
-            if (page6) page6.remove(); 
-            totalPages--;
-            console.log("Seite 6 (Zauberbuch) ausgeblendet (kein Zauberbuch).");
+            if (page6) page6.remove();
+            console.log("Zauberbuch-Seite ausgeblendet (kein Zauberbuch).");
         }
     }
 
-    // Fußzeilen nach Seiten-Anpassung aktualisieren!
-    document.querySelectorAll('.total-pages-display').forEach(el => {
-        el.textContent = totalPages;
-    });
+    // Fußzeilen nach finalem Spell-Render (processSpellsPage → renumber)
     /* ========================================================== */
     
     // 3a. Kopfzeile
@@ -1249,6 +1244,9 @@ window.onload = function() {
     // 3k. Zauber
     processSpellsPage(charData);
     processSpellbookPage(charData);
+    if (typeof renumberCharacterSheetPages === "function") {
+        renumberCharacterSheetPages();
+    }
 
     // 4. Events registrieren
     setupEventListeners();
@@ -1261,6 +1259,9 @@ window.onload = function() {
     setTimeout(() => {
         applyImportOverrides();
         updateLevelUpButtonState();
+        if (typeof renumberCharacterSheetPages === "function") {
+            renumberCharacterSheetPages();
+        }
     }, 100); // Kleiner Timeout sorgt dafür, dass alle async-Prozesse fertig sind
 
     updateLevelUpButtonState();
@@ -5851,124 +5852,446 @@ function applySpeciesFeatureLogic(charData) {
    3 k. Zauber
    ========================================================================== */
 
-// Konfiguration der Zeilen pro Grad (Vorgabe)
-const spellRowsConfig = {
-    0: 4, // Cantrips
-    1: 5,
-    2: 5,
-    3: 4,
-    4: 3,
-    5: 2,
-    6: 2,
-    7: 2,
-    8: 1,
-    9: 1
+/**
+ * Feste Breakpoint-Szenarien für die Zauberliste (1–4 A4-Seiten).
+ * S1 = bisheriges Layout; höher nur bei Grad-Overflow.
+ */
+const SPELL_LIST_SCENARIOS = {
+    1: {
+        rows: { 0: 4, 1: 5, 2: 5, 3: 4, 4: 3, 5: 2, 6: 2, 7: 2, 8: 1, 9: 1 },
+        pages: [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]]
+    },
+    2: {
+        rows: { 0: 8, 1: 8, 2: 8, 3: 5, 4: 6, 5: 5, 6: 5, 7: 4, 8: 4, 9: 4 },
+        pages: [[0, 1, 2, 3], [4, 5, 6, 7, 8, 9]]
+    },
+    3: {
+        rows: { 0: 10, 1: 10, 2: 9, 3: 10, 4: 10, 5: 9, 6: 8, 7: 8, 8: 6, 9: 7 },
+        pages: [[0, 1, 2], [3, 4, 5], [6, 7, 8, 9]]
+    },
+    4: {
+        rows: { 0: 14, 1: 15, 2: 14, 3: 15, 4: 14, 5: 15, 6: 8, 7: 8, 8: 7, 9: 6 },
+        pages: [[0, 1], [2, 3], [4, 5], [6, 7, 8, 9]]
+    }
 };
 
-function processSpellsPage(data) {
-    console.log("Verarbeite Zauber (Seite 5)...");
-    const t = translations[currentLanguage];
-    
-    // Labels setzen
-    setTextContent('page5Title', t['spellsLabel']);
-    setTextContent('th_spell_name', t['nameLabel'] || "Name");
-    setTextContent('th_spell_ability', t['abilityLabel'] || "Attr.");
-    setTextContent('th_spell_dc', t['DCLabel'] || "SG");
-    setTextContent('th_spell_attack', t['bonusLabel'] || "Angriff");
-    setTextContent('th_spell_benefit', t['spellBenefitsfromLabel'] || "Begünstigt durch");
-    setTextContent('th_spell_appendix_page', t['appendixPage2Label'] || "Anhang S.");
+/** Legacy-Alias: Szenario-1-Zeilen (für ältere Aufrufe). */
+const spellRowsConfig = SPELL_LIST_SCENARIOS[1].rows;
 
-    const tableBody = document.getElementById('spellTableBody');
-    if (!tableBody) return;
+/** Spell-Level-Label-Key für Grad 0–9. */
+function getSpellLevelLabelKey(level) {
+    return level === 0 ? "cantripLabel" : getLevelKey(level);
+}
 
-    // --- SCHRITT A: MANUELLE INHALTE GRAD-SPEZIFISCH SPEICHERN ---
-    const manualOverridesByLevel = {}; 
-    let currentScanningLevel = null;
-
-    // Wir gehen durch alle existierenden Zeilen, bevor wir sie löschen
-    const existingRows = tableBody.querySelectorAll('tr');
-    existingRows.forEach(row => {
-        if (row.classList.contains('spell-level-header')) {
-            // Wir zählen die Header mit, um den aktuellen Grad (0-9) zu bestimmen
-            if (currentScanningLevel === null) currentScanningLevel = 0;
-            else currentScanningLevel++;
-            manualOverridesByLevel[currentScanningLevel] = [];
-        } else if (currentScanningLevel !== null && !row.hasAttribute('data-db-spell')) {
-            // Nur Zeilen sichern, die NICHT automatisch (DB) befüllt wurden
-            const inputs = row.querySelectorAll('input');
-            const rowValues = Array.from(inputs).map(inp => inp.value);
-            // Nur speichern, wenn die Zeile manuellen Text enthält
-            if (rowValues.some(v => v.trim() !== "")) {
-                manualOverridesByLevel[currentScanningLevel].push(rowValues);
+/** Zählt Zauber pro Grad (0–9) aus der Sammelliste. */
+function countSpellsPerLevel(allSpells) {
+    const counts = {};
+    for (let level = 0; level <= 9; level++) counts[level] = 0;
+    (allSpells || []).forEach(entry => {
+        if (!entry?.spell) return;
+        for (let level = 0; level <= 9; level++) {
+            if (entry.spell.spellLevel === getSpellLevelLabelKey(level)) {
+                counts[level]++;
+                break;
             }
         }
     });
+    return counts;
+}
 
-    // --- SCHRITT B: TABELLE LEEREN ---
-    tableBody.innerHTML = ""; 
+/**
+ * Wählt Szenario 1–4: sobald ein Grad mehr Zauber hat als die Config-Zeilen → nächstes.
+ */
+function selectSpellListScenario(allSpells) {
+    const counts = countSpellsPerLevel(allSpells);
+    let scenario = 1;
+    while (scenario < 4) {
+        const rows = SPELL_LIST_SCENARIOS[scenario].rows;
+        let overflow = false;
+        for (let level = 0; level <= 9; level++) {
+            if ((counts[level] || 0) > (rows[level] || 0)) {
+                overflow = true;
+                break;
+            }
+        }
+        if (!overflow) break;
+        scenario++;
+    }
+    return scenario;
+}
 
-    // --- SCHRITT C: ZAUBER-DATEN SAMMELN ---
-    let allSpells = [];
+/** Alle Zauberlisten-Seiten-Wrapper (ohne Anhang). */
+function getSpellListPageWrappers() {
+    return Array.from(document.querySelectorAll(".page.spell-list-page"));
+}
+
+/** Alle tbody der Zauberliste. */
+function getSpellListTableBodies() {
+    return Array.from(document.querySelectorAll("tbody.spell-list-tbody"));
+}
+
+/** Entfernt alle Zauberlisten-Seiten (inkl. Basis-Seite 5). */
+function removeAllSpellListPages() {
+    getSpellListPageWrappers().forEach(el => el.remove());
+}
+
+/**
+ * Stellt genau pageCount Zauberlisten-Seiten bereit (Klone von Seite 5).
+ * Zusätzliche Seiten werden vor dem Zauberbuch (#page6-wrapper) eingefügt.
+ * @returns {HTMLElement[]} tbodys in Seitenreihenfolge
+ */
+function ensureSpellListPages(pageCount) {
+    const count = Math.max(1, Math.min(4, pageCount | 0));
+    let wrappers = getSpellListPageWrappers();
+    const template = wrappers[0] || document.getElementById("page5-wrapper");
+    if (!template) return [];
+
+    // Überzählige Fortsetzungsseiten entfernen (Basis-Seite 5 behalten)
+    wrappers = getSpellListPageWrappers();
+    while (wrappers.length > count) {
+        const last = wrappers[wrappers.length - 1];
+        if (last.id === "page5-wrapper" && wrappers.length === 1) break;
+        if (last.id === "page5-wrapper") {
+            // Basis nie löschen wenn sie die einzige ist; sonst Fortsetzungen von hinten
+            const extra = wrappers.filter(w => w.id !== "page5-wrapper");
+            if (!extra.length) break;
+            extra[extra.length - 1].remove();
+        } else {
+            last.remove();
+        }
+        wrappers = getSpellListPageWrappers();
+    }
+
+    wrappers = getSpellListPageWrappers();
+    const insertBeforeNode = document.getElementById("page6-wrapper");
+
+    while (wrappers.length < count) {
+        const index = wrappers.length;
+        const clone = template.cloneNode(true);
+        clone.id = `page5-wrapper-${index}`;
+        clone.classList.add("spell-list-page");
+        clone.setAttribute("data-spell-list-page", String(index));
+
+        // Doppel-IDs auf Klonen entschärfen
+        clone.querySelectorAll("[id]").forEach(node => {
+            if (node.id === "page5-wrapper") return;
+            node.removeAttribute("id");
+        });
+        const sheet = clone.querySelector(".character-sheet");
+        if (sheet) sheet.removeAttribute("id");
+
+        const title = clone.querySelector(".page-title");
+        if (title) title.classList.add("spell-list-page-title");
+
+        const tbody = clone.querySelector("tbody");
+        if (tbody) {
+            tbody.classList.add("spell-list-tbody");
+            tbody.setAttribute("data-spell-list-page", String(index));
+            tbody.innerHTML = "";
+        }
+
+        const pageNumSpan = clone.querySelector(".footer-right span:last-child");
+        // Fußzeile wird in renumberCharacterSheetPages gesetzt
+
+        if (insertBeforeNode && insertBeforeNode.parentNode) {
+            insertBeforeNode.parentNode.insertBefore(clone, insertBeforeNode);
+        } else if (template.parentNode) {
+            template.parentNode.appendChild(clone);
+        }
+        wrappers = getSpellListPageWrappers();
+    }
+
+    // data-Attribute / Klassen auf Basisseite sicherstellen
+    wrappers = getSpellListPageWrappers();
+    wrappers.forEach((wrap, index) => {
+        wrap.classList.add("spell-list-page");
+        wrap.setAttribute("data-spell-list-page", String(index));
+        const tbody = wrap.querySelector("tbody");
+        if (tbody) {
+            tbody.classList.add("spell-list-tbody");
+            tbody.setAttribute("data-spell-list-page", String(index));
+        }
+        const title = wrap.querySelector(".page-title");
+        if (title && index === 0 && !title.id) title.id = "page5Title";
+    });
+
+    return getSpellListTableBodies();
+}
+
+/**
+ * Zählt Bogen-Seiten (ohne Anhang) neu und schreibt Fußzeilen 1/N … N/N.
+ * Seite 1–2 nutzen nur .page (ohne .fixed-page) – daher alle .page außer Anhang.
+ */
+function renumberCharacterSheetPages() {
+    const allPages = Array.from(document.querySelectorAll(".page:not(.appendix-page)"));
+    totalPages = allPages.length;
+    const t = (typeof translations !== "undefined" && translations[currentLanguage])
+        ? translations[currentLanguage]
+        : {};
+    const pageLabel = t.pageNumberLabel || "Seite";
+
+    allPages.forEach((page, index) => {
+        const n = index + 1;
+        const footerRight = page.querySelector(".footer-right");
+        if (!footerRight) return;
+
+        // Kein #id (Doppel-IDs / Klone) – span mit total-pages-display bzw. letztes span
+        const spans = Array.from(footerRight.querySelectorAll(":scope > span"));
+        let numEl = spans.find(s => s.querySelector(".total-pages-display"));
+        if (!numEl && spans.length) numEl = spans[spans.length - 1];
+        let labelEl = spans.find(s => s !== numEl && !s.querySelector(".total-pages-display"));
+        if (!labelEl && spans.length >= 2) labelEl = spans[0];
+
+        if (labelEl && !labelEl.querySelector(".total-pages-display")) {
+            labelEl.textContent = pageLabel;
+        }
+        if (numEl) {
+            numEl.innerHTML = `${n} / <span class="total-pages-display">${totalPages}</span>`;
+        }
+    });
+}
+
+/** Tabellenkopf-Labels auf allen Zauberlisten-Seiten setzen. */
+function applySpellListTableLabels() {
+    const t = translations[currentLanguage] || {};
+    const titleText = t.spellsLabel || "Zauber";
+    const headers = [
+        t.nameLabel || "Name",
+        t.abilityLabel || "Attr.",
+        t.DCLabel || "SG",
+        t.bonusLabel || "Angriff",
+        t.spellBenefitsfromLabel || "Begünstigt durch",
+        t.appendixPage2Label || "Anhang S."
+    ];
+
+    getSpellListPageWrappers().forEach(wrap => {
+        const title = wrap.querySelector(".page-title");
+        if (title) title.textContent = titleText;
+        const ths = wrap.querySelectorAll("thead th");
+        ths.forEach((th, i) => {
+            if (headers[i] != null) th.textContent = headers[i];
+        });
+    });
+}
+
+/**
+ * Manuelle (nicht-DB) Zeilen aus allen Listen-tbodys je Grad sichern.
+ * Header tragen data-spell-level für stabile Zuordnung über mehrere Seiten.
+ */
+function collectSpellListManualOverrides() {
+    const manualOverridesByLevel = {};
+    for (let level = 0; level <= 9; level++) manualOverridesByLevel[level] = [];
+
+    getSpellListTableBodies().forEach(tableBody => {
+        let currentLevel = null;
+        let fallbackLevel = 0;
+        tableBody.querySelectorAll("tr").forEach(row => {
+            if (row.classList.contains("spell-level-header")) {
+                const attr = row.getAttribute("data-spell-level");
+                if (attr != null && attr !== "" && !isNaN(parseInt(attr, 10))) {
+                    currentLevel = parseInt(attr, 10);
+                } else {
+                    currentLevel = fallbackLevel;
+                    fallbackLevel++;
+                }
+                if (!manualOverridesByLevel[currentLevel]) {
+                    manualOverridesByLevel[currentLevel] = [];
+                }
+            } else if (currentLevel != null && !row.hasAttribute("data-db-spell")) {
+                const inputs = row.querySelectorAll("input");
+                const rowValues = Array.from(inputs).map(inp => inp.value);
+                if (rowValues.some(v => String(v).trim() !== "")) {
+                    manualOverridesByLevel[currentLevel].push(rowValues);
+                }
+            }
+        });
+    });
+    return manualOverridesByLevel;
+}
+
+/** Sammelt Cantrips + prepared für die Listenanzeige. */
+function collectAllSpellsForSheetList(data) {
+    const allSpells = [];
     const addSpellToList = (list, type) => {
         if (!list) return;
         list.forEach(entry => {
             const spellObj = (typeof findSheetSpellById === "function")
                 ? findSheetSpellById(entry.spellId)
-                : spellList.find(s => s.ID === entry.spellId);
+                : (typeof spellList !== "undefined"
+                    ? spellList.find(s => s.ID === entry.spellId)
+                    : null);
             if (spellObj) {
                 allSpells.push({ spell: spellObj, source: entry.source, type: type });
             }
         });
     };
+    addSpellToList(data?.spells?.cantrips, "cantrip");
+    addSpellToList(data?.spells?.prepared, "prepared");
+    return allSpells;
+}
 
-    addSpellToList(data.spells.cantrips, 'cantrip');
-    addSpellToList(data.spells.prepared, 'prepared');
+/**
+ * Notfall S4: Restzauber eines Grades auf Extra-Seiten (wiederholter Header).
+ * @returns {number} Anzahl zusätzlicher Seiten
+ */
+function renderSpellLevelOverflowPages(level, leftoverSpells, data, manualOverrides, insertBeforeNode) {
+    if (!leftoverSpells || !leftoverSpells.length) return 0;
+    const template = document.getElementById("page5-wrapper") || getSpellListPageWrappers()[0];
+    if (!template) return 0;
 
-    // --- SCHRITT D: GRADE RENDERN (mit grad-spezifischen Overrides) ---
-    for (let level = 0; level <= 9; level++) {
-        // Wir übergeben nur die Overrides, die zu diesem spezifischen Level gehören
-        const levelSpecificOverrides = manualOverridesByLevel[level] || [];
-        renderSpellLevelBlock(level, allSpells, data, tableBody, levelSpecificOverrides);
+    const rowsPerPage = 29;
+    let offset = 0;
+    let pagesAdded = 0;
+    const overrides = manualOverrides || [];
+
+    while (offset < leftoverSpells.length) {
+        const slice = leftoverSpells.slice(offset, offset + rowsPerPage);
+        const index = getSpellListPageWrappers().length;
+        const clone = template.cloneNode(true);
+        clone.id = `page5-wrapper-overflow-${level}-${pagesAdded}`;
+        clone.classList.add("spell-list-page", "spell-list-overflow-page");
+        clone.setAttribute("data-spell-list-page", String(index));
+        clone.querySelectorAll("[id]").forEach(node => node.removeAttribute("id"));
+        const tbody = clone.querySelector("tbody");
+        if (!tbody) break;
+        tbody.classList.add("spell-list-tbody");
+        tbody.setAttribute("data-spell-list-page", String(index));
+        tbody.innerHTML = "";
+
+        // Overrides nur auf der ersten Overflow-Seite dieses Grads verbrauchen
+        const overrideCopy = pagesAdded === 0 ? overrides.slice() : [];
+        renderSpellLevelBlock(level, slice, data, tbody, overrideCopy, slice.length, 0, false);
+
+        if (insertBeforeNode && insertBeforeNode.parentNode) {
+            insertBeforeNode.parentNode.insertBefore(clone, insertBeforeNode);
+        } else {
+            template.parentNode.appendChild(clone);
+        }
+        offset += slice.length;
+        pagesAdded++;
     }
-    
+    return pagesAdded;
+}
+
+function processSpellsPage(data) {
+    console.log("Verarbeite Zauber (Seite 5 / Listen-Szenarien)...");
+    if (!document.getElementById("page5-wrapper") && !getSpellListPageWrappers().length) {
+        return;
+    }
+
+    // --- SCHRITT A: Manuelle Inhalte über alle Listen-Seiten sichern ---
+    const manualOverridesByLevel = collectSpellListManualOverrides();
+
+    // --- SCHRITT B: Zauber sammeln & Szenario wählen ---
+    const allSpells = collectAllSpellsForSheetList(data);
+    const scenarioId = selectSpellListScenario(allSpells);
+    const scenario = SPELL_LIST_SCENARIOS[scenarioId];
+    console.log("Zauberlisten-Szenario:", scenarioId);
+
+    // Vorherige Overflow-Seiten entfernen
+    document.querySelectorAll(".spell-list-overflow-page").forEach(el => el.remove());
+
+    // --- SCHRITT C: DOM-Seiten anlegen / trimmen ---
+    const tableBodies = ensureSpellListPages(scenario.pages.length);
+    if (!tableBodies.length) return;
+
+    tableBodies.forEach(tb => { tb.innerHTML = ""; });
+    applySpellListTableLabels();
+
+    // --- SCHRITT D: Grade je Seite rendern ---
+    const leftoverByLevel = {};
+    scenario.pages.forEach((levelsOnPage, pageIndex) => {
+        const tableBody = tableBodies[pageIndex];
+        if (!tableBody) return;
+        levelsOnPage.forEach(level => {
+            const rowCount = scenario.rows[level] || 0;
+            const levelOverrides = manualOverridesByLevel[level] || [];
+            const leftover = renderSpellLevelBlock(
+                level, allSpells, data, tableBody, levelOverrides, rowCount, 0, true
+            );
+            if (leftover && leftover.length) {
+                leftoverByLevel[level] = (leftoverByLevel[level] || []).concat(leftover);
+            }
+        });
+    });
+
+    // --- SCHRITT E: S4-Notfall – Restzauber auf Extra-Seiten ---
+    const insertBefore = document.getElementById("page6-wrapper");
+    Object.keys(leftoverByLevel).forEach(levelKey => {
+        const level = parseInt(levelKey, 10);
+        renderSpellLevelOverflowPages(
+            level,
+            leftoverByLevel[level],
+            data,
+            manualOverridesByLevel[level] || [],
+            insertBefore
+        );
+    });
+
+    applySpellListTableLabels();
+
+    // Namen auf neu geklonte Listen-Seiten übernehmen
+    const charName = data?.basic?.name || document.getElementById("characterName")?.value || "";
+    document.querySelectorAll(".sync-char-name").forEach(input => {
+        input.value = charName;
+    });
+
+    renumberCharacterSheetPages();
     applyFieldLocks();
 }
 
-function renderSpellLevelBlock(level, allSpells, data, tableBody, manualOverrides) {
+/**
+ * Rendert einen Grad-Block.
+ * @param {number} rowCount – feste Zeilenzahl des Szenarios
+ * @param {number} spellStartIndex – Startindex in der Grad-Zauberliste (Overflow)
+ * @param {boolean} returnLeftover – true: überschüssige DB-Zauber zurückgeben statt verwerfen
+ * @returns {Array|undefined} leftover spell entries wenn returnLeftover
+ */
+function renderSpellLevelBlock(level, allSpells, data, tableBody, manualOverrides, rowCount, spellStartIndex, returnLeftover) {
     const t = translations[currentLanguage];
-    
-    // Header-Zeile (mit Slots)
-    const trHeader = document.createElement('tr');
+    const resolvedRowCount = (rowCount != null)
+        ? rowCount
+        : (spellRowsConfig[level] || 0);
+    const startIndex = spellStartIndex || 0;
+
+    // Header-Zeile (mit Slots) – nur beim ersten Chunk Slots zeigen
+    const trHeader = document.createElement("tr");
     trHeader.className = "spell-level-header";
-    const labelKey = level === 0 ? "cantripLabel" : getLevelKey(level);
+    trHeader.setAttribute("data-spell-level", String(level));
+    const labelKey = getSpellLevelLabelKey(level);
     const levelName = t[labelKey] || labelKey;
     let headerContent = `<td colspan="6" style="padding-left: 10px;">${levelName}`;
-    if (level > 0) {
+    if (level > 0 && startIndex === 0) {
         const slots = calculateSpellSlots(level, data);
-        const slotLabel = t['spellSlotsLabel'] || "Zauberplätze";
+        const slotLabel = t.spellSlotsLabel || "Zauberplätze";
         let checkboxes = "";
-        for(let i=0; i<slots; i++) checkboxes += `<input type="checkbox" class="slot-checkbox">`;
-        if (slots > 0) headerContent += `<div class="spell-slots-container" style="float:right;"><span>${slotLabel} (${slots}):</span> ${checkboxes}</div>`;
+        for (let i = 0; i < slots; i++) checkboxes += `<input type="checkbox" class="slot-checkbox">`;
+        if (slots > 0) {
+            headerContent += `<div class="spell-slots-container" style="float:right;"><span>${slotLabel} (${slots}):</span> ${checkboxes}</div>`;
+        }
     }
     headerContent += `</td>`;
     trHeader.innerHTML = headerContent;
     tableBody.appendChild(trHeader);
 
-    // Zauber filtern
-    const targetLabelKey = level === 0 ? "cantripLabel" : getLevelKey(level);
-    const spellsForLevel = allSpells.filter(s => s.spell.spellLevel === targetLabelKey);
-    const rowCount = spellRowsConfig[level] || 0;
+    const targetLabelKey = getSpellLevelLabelKey(level);
+    const levelSpells = (allSpells || []).filter(s =>
+        s?.spell && s.spell.spellLevel === targetLabelKey
+    );
 
-    for (let i = 0; i < rowCount; i++) {
-        const tr = document.createElement('tr');
-        
-        if (i < spellsForLevel.length) {
-            tr.setAttribute('data-db-spell', 'true');
-            fillSpellRow(tr, spellsForLevel[i], data, level);
-        } 
-        else if (manualOverrides && manualOverrides.length > 0) {
-            // Nimmt den nächsten manuellen Eintrag für GENAU DIESEN GRAD
-            const v = manualOverrides.shift(); 
+    const visibleSpells = levelSpells.slice(startIndex, startIndex + resolvedRowCount);
+    const leftover = returnLeftover
+        ? levelSpells.slice(startIndex + resolvedRowCount)
+        : [];
+
+    for (let i = 0; i < resolvedRowCount; i++) {
+        const tr = document.createElement("tr");
+
+        if (i < visibleSpells.length) {
+            tr.setAttribute("data-db-spell", "true");
+            fillSpellRow(tr, visibleSpells[i], data, level);
+        } else if (manualOverrides && manualOverrides.length > 0) {
+            const v = manualOverrides.shift();
             tr.innerHTML = `
                 <td><input type="text" class="spell-input" value="${v[0] || ''}"></td>
                 <td><input type="text" class="spell-input center-text" value="${v[1] || ''}"></td>
@@ -5977,8 +6300,7 @@ function renderSpellLevelBlock(level, allSpells, data, tableBody, manualOverride
                 <td><input type="text" class="spell-input" value="${v[4] || ''}"></td>
                 <td><input type="text" class="spell-input center-text" value="${v[5] || ''}"></td>
             `;
-        }
-        else {
+        } else {
             tr.innerHTML = `
                 <td><input type="text" class="spell-input"></td>
                 <td><input type="text" class="spell-input center-text"></td>
@@ -5990,6 +6312,8 @@ function renderSpellLevelBlock(level, allSpells, data, tableBody, manualOverride
         }
         tableBody.appendChild(tr);
     }
+
+    if (returnLeftover) return leftover;
 }
 
 function fillSpellRow(tr, entry, data, level) {
@@ -6062,7 +6386,22 @@ function determineSpellAbility(source, data) {
 
     // Fall 1: Volk
     if (source.type === 'Volk' || source.type === 'Species' || source.type === 'lineage') {
-        const abilityId = data.spells.spellcastingAbility_species;
+        let abilityId = data.spells.spellcastingAbility_species;
+
+        // Custom Species: festes Zauberattribut aus Entry, falls nicht am Charakter gesetzt
+        if (!abilityId && data.basic && data.basic.species) {
+            const speciesEntry = (typeof findSpeciesBySelectionValue === "function")
+                ? findSpeciesBySelectionValue(data.basic.species)
+                : (typeof speciesList !== "undefined"
+                    ? speciesList.find(s => s.translationLabel === data.basic.species
+                        || s.translationLabel === (String(data.basic.species).toLowerCase() + "Label"))
+                    : null);
+            if (speciesEntry && speciesEntry.isCustom
+                && !speciesEntry.spellAbilityFreeChoice
+                && speciesEntry.spellAbilityId) {
+                abilityId = speciesEntry.spellAbilityId;
+            }
+        }
         
         if (abilityId) {
             // Suchen des Attributs in der Liste anhand der ID (5 -> wisdomLabel)
@@ -6256,6 +6595,14 @@ function isSpellbookSheetTableId(tableId) {
     return typeof tableId === "string" && /^sb_table_\d+$/.test(tableId);
 }
 
+/** true = Zauberliste Seite 5(+Fortsetzung), nicht Inventar/Angriffe. */
+function isSheetSpellListTable(table) {
+    if (!table || table.tagName !== "TABLE") return false;
+    if (table.classList.contains("spell-table")) return true;
+    if (table.id === "mainSpellTable") return true;
+    return !!table.closest(".spell-list-page");
+}
+
 function findPreparedSpellEntry(preparedSpells, spellId) {
     const id = parseInt(spellId, 10);
     if (isNaN(id)) return null;
@@ -6391,9 +6738,11 @@ function isSpellAppendixAvailable(charData) {
     const hasSpellbook = Array.isArray(data.spells.spellbook) && data.spells.spellbook.length > 0;
     const hasFavored = Array.isArray(data.spells.favored) && data.spells.favored.length > 0;
     const hasSpells = hasCantrips || hasPrepared || hasSpellbook || hasFavored;
-    const page5Exists = !!document.getElementById("page5-wrapper");
+    const spellListExists = (typeof getSpellListPageWrappers === "function")
+        ? getSpellListPageWrappers().length > 0
+        : !!document.getElementById("page5-wrapper");
 
-    return hasSpells && page5Exists;
+    return hasSpells && spellListExists;
 }
 
 /**
@@ -7626,17 +7975,17 @@ function applyTranslations() {
     if (symbolContainer) symbolContainer.setAttribute('data-hover-text', hoverText);
 
     // --- SEITENANZAHL ---
-
-    // 1. Das Label "Seite" (oder "Page") überall setzen
-    const translatedPageLabel = elements.pageNumberLabel || 'Seite';
-    document.querySelectorAll('#pageNumberLabel').forEach(el => {
-        el.textContent = translatedPageLabel;
-    });
-
-    // 2. Die globale Seitenzahl (totalPages) überall in den Nenner schreiben
-    document.querySelectorAll('.total-pages-display').forEach(el => {
-        el.textContent = totalPages;
-    });   
+    if (typeof renumberCharacterSheetPages === "function") {
+        renumberCharacterSheetPages();
+    } else {
+        const translatedPageLabel = elements.pageNumberLabel || 'Seite';
+        document.querySelectorAll('#pageNumberLabel').forEach(el => {
+            el.textContent = translatedPageLabel;
+        });
+        document.querySelectorAll('.total-pages-display').forEach(el => {
+            el.textContent = totalPages;
+        });
+    }
 
     // --- BUTTONS ---
     setTextContent('generateSpellDescLabel', elements.generateSpellDesc);
@@ -7819,14 +8168,20 @@ function collectSheetOverridesFromDOM() {
         if (table.classList.contains('attack-table') && table.closest('.inventory-box') === null) return;
         if (table.getAttribute('data-dc-table-id') === 'physical_attacks') return;
         const tableId = getDcSheetTableExportId(table);
+        const isSpellList = isSheetSpellListTable(table);
         const rows = table.querySelectorAll('tbody tr');
         rows.forEach((row, rowIndex) => {
+            // Zauberlisten-Header (Slot-Checkboxen) und DB-Zeilen nicht in Overrides
+            if (isSpellList && row.classList.contains('spell-level-header')) return;
+            if (isSpellList && row.hasAttribute('data-db-spell')) return;
             const cells = row.querySelectorAll('td');
             cells.forEach((cell, cellIndex) => {
                 const input = cell.querySelector('input');
                 if (!input) return;
                 // Zauberbuch: Vorbereitet-Status kommt aus preparedSpells (base), nicht aus Overrides
                 if (input.classList.contains('spellbook-checkbox')) return;
+                if (input.classList.contains('slot-checkbox')) return;
+                if (input.type === 'checkbox' && isSpellList) return;
                 const entry = {
                     t: tableIndex,
                     r: rowIndex,
@@ -8249,7 +8604,7 @@ function importCharacterJSON(event) {
             };
 
             // Alle verknüpften Custom-Typen erneut per Modal nachfordern
-            // (LS-/Embed allein erfüllt Import-Deps nicht; Base-Scan fängt fehlende Runtime ab)
+            // (requireFreshUpload: Session-/LS-/Embed zählen nicht)
             const fromEnvelope = Array.isArray(result.envelope?.dependencies)
                 ? result.envelope.dependencies
                 : [];
@@ -8277,6 +8632,8 @@ function importCharacterJSON(event) {
                 payload: result.payload,
                 detectedType: DC_PACKAGE_TYPE.CHARACTER_SHEET,
                 requiredDeps,
+                // Immer von null: Session-/LS-/Embed zählen nicht — alle Deps neu hochladen
+                requireFreshUpload: true,
                 onApply: applySheet
             });
         } catch (err) {
@@ -8342,14 +8699,22 @@ function applyImportOverrides() {
             if (isSpellbookSheetTableId(item.tableId)) return;
             const table = resolveDcSheetTableForImport(item);
             if (table) {
+                const isSpellList = isSheetSpellListTable(table);
+                // Slot-Checkbox-„on“ und DB-Zauberzeilen nicht auf Textfelder schreiben
+                if (isSpellList && item.chk !== null) return;
+                if (isSpellList && String(item.v || "").toLowerCase() === "on") return;
                 const row = table.querySelectorAll('tbody tr')[item.r];
                 if (row) {
+                    if (isSpellList && row.classList.contains('spell-level-header')) return;
+                    if (isSpellList && row.hasAttribute('data-db-spell')) return;
                     const cell = row.querySelectorAll('td')[item.c];
                     const input = cell?.querySelector('input');
                     if (input) {
                         if (input.classList.contains('spellbook-checkbox')) return;
+                        if (input.classList.contains('slot-checkbox')) return;
+                        if (input.type === 'checkbox' && isSpellList) return;
                         input.value = item.v;
-                        if (item.chk !== null) input.checked = item.chk;
+                        if (item.chk !== null && input.type === 'checkbox') input.checked = item.chk;
                     }
                 }
             }

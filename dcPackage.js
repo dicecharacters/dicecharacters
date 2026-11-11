@@ -267,7 +267,8 @@ function getRegisteredCustomBackgroundSlug(bg) {
 
 /**
  * Kandidaten aus eingebetteter customBackgroundRuntime (Pending-Import-Basis / LS).
- * Level-Up / Charakterbogen: Snapshot-Hydrate zählt ohne erneuten Upload.
+ * Nur außerhalb von Import-Upload-Ketten (z. B. Level-Up mit forImport:false).
+ * Charakterbogen-Import nutzt requireFreshUpload und verlangt Datei-Upload.
  */
 function collectCustomBackgroundEmbeddedRuntimeCandidates(candidates) {
     const rawSources = [];
@@ -483,9 +484,9 @@ function isDcPackageDependencySatisfied(dep, opts) {
             }
         }
 
-        // Eingebettete Runtime im Bogen-Snapshot (Level-Up / Import ohne Neu-Upload)
-        if (!forImport
-            || dcPendingPackageImport?.detectedType === DC_PACKAGE_TYPE.CHARACTER_SHEET) {
+        // Eingebettete Runtime nur wenn keine Import-Upload-Kette
+        // (Charakterbogen-Import: requireFreshUpload; Level-Up: forImport:false)
+        if (!forImport) {
             collectCustomBackgroundEmbeddedRuntimeCandidates(candidates);
         }
 

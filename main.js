@@ -109,7 +109,6 @@ let classSavingThrowProficiencies = [];
 //=======================================================================
 
 // Speichert die gewählte Klasse und wechselt zu Schritt 2
-// Speichert die gewählte Klasse und wechselt zu Schritt 2
 function saveClass() {
     const selectedClass = document.querySelector('input[name="class"]:checked');
     if (!selectedClass) {
@@ -895,6 +894,129 @@ document.addEventListener('DOMContentLoaded', () => {
 // SCHRITT 3: VOLK
 //=======================================================================
 
+/**
+ * Custom-Species-Zauberattribut aus kompiliertem Entry.
+ * Species-Box nur bei Freier Wahl + Tab-1-Zauberwissen (hasSpellcraftTraits).
+ * @returns {{ freeChoice: boolean, attrId: number, showInSpeciesBox: boolean } | null}
+ */
+function getCustomSpeciesSpellAbilityConfig(speciesValue) {
+    const species = (typeof findSpeciesBySelectionValue === "function")
+        ? findSpeciesBySelectionValue(speciesValue)
+        : null;
+    if (!species || !species.isCustom) return null;
+
+    const hasSpellcraftTraits = (typeof customSpeciesHasSpellcraftTraits === "function")
+        ? customSpeciesHasSpellcraftTraits(species)
+        : !!species.hasSpellcraftTraits;
+
+    // Kein Tab-1-Zauberwissen → Species-Box aus; Erblinie nutzt Standard-Dropdown
+    if (!hasSpellcraftTraits) return null;
+
+    if (species.spellAbilityFreeChoice) {
+        return { freeChoice: true, attrId: 0, showInSpeciesBox: true };
+    }
+    let attrId = parseInt(species.spellAbilityId, 10) || 0;
+    if (!attrId && species.spellAbilityAttr && typeof attributeList !== "undefined") {
+        const a = attributeList.find(x => x.translationLabel === species.spellAbilityAttr);
+        if (a) attrId = a.ID;
+    }
+    if (!attrId) {
+        // Legacy mit Trait-Zaubern ohne festes Attribut → Freie Wahl
+        return { freeChoice: true, attrId: 0, showInSpeciesBox: true };
+    }
+    return { freeChoice: false, attrId, showInSpeciesBox: false };
+}
+
+/** True, wenn das Custom-Volk Tab-1-Zauberwissen (Spellcraft) hat. */
+function customSpeciesHasSpellcraftTraits(species) {
+    if (!species || !species.isCustom) return false;
+    if (species.hasSpellcraftTraits === true) return true;
+    if (species.hasSpellcraftTraits === false) return false;
+    // Legacy-Pakete: Trait-Zauber oder gesetzte Ability-Felder
+    if (species.spellAbilityFreeChoice === true
+        || !!(species.spellAbilityAttr)
+        || !!(species.spellAbilityId)) {
+        return true;
+    }
+    if (!Array.isArray(species.speciesTraitLabel) || typeof speciesTraitList === "undefined") {
+        return false;
+    }
+    return species.speciesTraitLabel.some(lab => {
+        const t = speciesTraitList.find(x => x.speciesTraitLabel === lab);
+        return !!(t && t.spellLabel && t.spellLabel !== 0);
+    });
+}
+
+/** Spiegelt Zauberattribut-Dropdowns (Species-Box ↔ Erblinie). */
+function syncSpeciesSpellAbilitySelects(sourceEl) {
+    if (!sourceEl) return;
+    tempSpellAbilitySpecies = sourceEl.value;
+    ["spellAbility", "spellAbilityLineage"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el !== sourceEl) el.value = sourceEl.value;
+    });
+}
+
+function wireSpeciesSpellAbilitySelect(el) {
+    if (!el || el.dataset.spellAbilityWired === "1") return;
+    el.dataset.spellAbilityWired = "1";
+    el.addEventListener("change", function () {
+        syncSpeciesSpellAbilitySelects(this);
+    });
+}
+
+/**
+ * HTML für freies Zauberattribut in der Species-Box (letzter Punkt).
+ */
+function buildSpeciesBoxSpellAbilityHtml(elements, preferredId) {
+    const id = preferredId || "spellAbility";
+    return `<li class="cspc-species-spell-ability">
+        <div class="cspc-species-spell-ability-inner">
+            <span>${elements.spellcastingAbilityLabel || "Zauberattribut"}</span>
+            <select id="${id}" class="dropdown cspc-species-spell-ability-select">
+                <option value="">${elements.pleaseSelectLabel}</option>
+                ${createSpellAbilityOptions()}
+            </select>
+        </div>
+    </li>`;
+}
+
+/**
+ * Erblinie-Zauberattribut: frei, gespiegelt oder fest (Schloss).
+ */
+function buildLineageSpellAbilityHtml(elements, cfg, speciesHasSpellAbilitySelect) {
+    if (!cfg) {
+        // PHB / nur Erblinie (kein Tab-1-Zauberwissen): Standard-Dropdown
+        if (speciesHasSpellAbilitySelect) return "";
+        return `<div style="text-align: left;">
+            <label for="spellAbility" style="margin-top: 20px; display: block;">${elements.spellcastingAbilityLabel} - ${elements.chooseOptionLabel}:</label>
+            <select id="spellAbility" class="dropdown" style="width: 150px;">
+                <option value="">${elements.pleaseSelectLabel}</option>
+                ${createSpellAbilityOptions()}
+            </select>
+        </div>`;
+    }
+    if (cfg.freeChoice) {
+        const id = speciesHasSpellAbilitySelect ? "spellAbilityLineage" : "spellAbility";
+        return `<div style="text-align: left;">
+            <label for="${id}" style="margin-top: 20px; display: block;">${elements.spellcastingAbilityLabel} - ${elements.chooseOptionLabel}:</label>
+            <select id="${id}" class="dropdown" style="width: 150px;">
+                <option value="">${elements.pleaseSelectLabel}</option>
+                ${createSpellAbilityOptions()}
+            </select>
+        </div>`;
+    }
+    // Fest: Dropdown gesperrt + Schloss
+    const lock = "🔒";
+    return `<div style="text-align: left;">
+        <label for="spellAbility" style="margin-top: 20px; display: block;">${elements.spellcastingAbilityLabel} ${lock}</label>
+        <select id="spellAbility" class="dropdown" style="width: 150px;" disabled>
+            <option value="">${elements.pleaseSelectLabel}</option>
+            ${createSpellAbilityOptions()}
+        </select>
+    </div>`;
+}
+
 // Speichert die gewählte Species und wechselt zum nächsten Schritt
 function saveSpecies() {
     const selectedSpecies = document.querySelector('input[name="species"]:checked');
@@ -908,8 +1030,29 @@ function saveSpecies() {
     character.lineage = tempLineage;
     console.log(`lineage gespeichert: ${character.lineage}`); // Konsolenausgabe
 
+    const spellAbilityDom = document.getElementById("spellAbility")
+        || document.getElementById("spellAbilityLineage");
+    if (spellAbilityDom && spellAbilityDom.value) {
+        tempSpellAbilitySpecies = spellAbilityDom.value;
+    }
+
     character.spellcastingAbility_species = tempSpellAbilitySpecies;
     console.log(`spellcasting ability (lineage) gespeichert: ${character.spellcastingAbility_species}`); // Konsolenausgabe
+
+    // Custom Species: Freie Wahl erfordert eine Auswahl
+    if (typeof getCustomSpeciesSpellAbilityConfig === "function") {
+        const cfg = getCustomSpeciesSpellAbilityConfig(character.species);
+        if (cfg && cfg.freeChoice && cfg.showInSpeciesBox && !character.spellcastingAbility_species) {
+            alert(translations[currentLang].cspcSpellAbilityPickRequiredAlertLabel
+                || translations[currentLang].selectSpellAbilityAlert
+                || "Bitte wähle ein Zauberattribut.");
+            return;
+        }
+        if (cfg && !cfg.freeChoice && cfg.attrId) {
+            character.spellcastingAbility_species = String(cfg.attrId);
+            tempSpellAbilitySpecies = String(cfg.attrId);
+        }
+    }
 
     character.ancestry = tempAncestry;
     console.log(`ancestry gespeichert: ${character.ancestry}`); // Konsolenausgabe
@@ -1191,8 +1334,23 @@ function showSpeciesTraits(speciesValue) {
         }
     });
 
+    // Custom Species: Freie Wahl + Tab-1-Zauberwissen → in der Species-Box
+    const spellAbilityCfg = getCustomSpeciesSpellAbilityConfig(speciesValue);
+    if (spellAbilityCfg && spellAbilityCfg.showInSpeciesBox && spellAbilityCfg.freeChoice) {
+        traitsHTML += buildSpeciesBoxSpellAbilityHtml(elements, "spellAbility");
+    }
+
     traitsHTML += `</ul>`;
     traitsContent.innerHTML = traitsHTML;
+
+    if (spellAbilityCfg && !spellAbilityCfg.freeChoice && spellAbilityCfg.attrId) {
+        tempSpellAbilitySpecies = String(spellAbilityCfg.attrId);
+    }
+    const speciesSpellAbilityEl = document.getElementById("spellAbility");
+    if (speciesSpellAbilityEl && spellAbilityCfg && spellAbilityCfg.showInSpeciesBox && spellAbilityCfg.freeChoice) {
+        if (tempSpellAbilitySpecies) speciesSpellAbilityEl.value = String(tempSpellAbilitySpecies);
+        wireSpeciesSpellAbilitySelect(speciesSpellAbilityEl);
+    }
 
     const keenSensesDropdown = document.getElementById("skill60");
     if (keenSensesDropdown) {
@@ -1345,6 +1503,15 @@ function showLineageDetails(lineageLabel) {
     const imagePath = `images/${lineageLabel}.webp`;
     const existingSpellAbility = document.getElementById("spellAbility");
     const spellAbilityOutsideLineage = !!(existingSpellAbility && !lineageDetailBox.contains(existingSpellAbility));
+    const speciesEntryForAbility = (typeof findSpeciesBySelectionValue === "function")
+        ? findSpeciesBySelectionValue(character.species)
+        : null;
+    const spellAbilityCfg = getCustomSpeciesSpellAbilityConfig(character.species);
+    const lineageSpellAbilityHtml = buildLineageSpellAbilityHtml(
+        elements,
+        spellAbilityCfg,
+        spellAbilityOutsideLineage
+    );
 
     // 1. TEXT-INHALT (Ohne Bild, mit Klassen für Breakpoints)
     lineageDetailBox.innerHTML = `
@@ -1354,20 +1521,12 @@ function showLineageDetails(lineageLabel) {
             <h4 class="lineage-traits-header">${elements.subspeciesTraitsLabel}</h4>
             <div class="lineage-sub-desc"><p>${subspeciesDescription}</p></div>
             <div class="lineage-table-container">${tableHTML}</div>
-            ${spellAbilityOutsideLineage ? "" : `<div style="text-align: left;">
-                <label for="spellAbility" style="margin-top: 20px; display: block;">${elements.spellcastingAbilityLabel} - ${elements.chooseOptionLabel}:</label>
-                <select id="spellAbility" class="dropdown" style="width: 150px;">
-                    <option value="">${elements.pleaseSelectLabel}</option>
-                    ${createSpellAbilityOptions()}
-                </select>
-            </div>`}
+            ${lineageSpellAbilityHtml}
         </div>
     `;
 
     // 2. BILD-INHALT (Externer Container) – Custom-Volk: keine Erblinie-Bilder
-    const speciesEntry = (typeof findSpeciesBySelectionValue === "function")
-        ? findSpeciesBySelectionValue(character.species)
-        : null;
+    const speciesEntry = speciesEntryForAbility;
     const hideLineageImage = !!(speciesEntry?.isCustom
         || (typeof isRegisteredCustomSpeciesSlug === "function"
             && isRegisteredCustomSpeciesSlug(character.species)));
@@ -1384,12 +1543,25 @@ function showLineageDetails(lineageLabel) {
     lineageDetailBox.style.display = "block";
     updateLineageUI(); // Regelt die Exklusivität
 
-    // Eventlistener
+    // Eventlistener / Festwert / Spiegelung
     const spellAbilitySelect = document.getElementById("spellAbility");
-    if (spellAbilitySelect) {
-        spellAbilitySelect.addEventListener('change', function() {
-            tempSpellAbilitySpecies = spellAbilitySelect.value;
-        });
+    const spellAbilityLineageSelect = document.getElementById("spellAbilityLineage");
+    if (spellAbilityCfg && !spellAbilityCfg.freeChoice && spellAbilityCfg.attrId) {
+        const fixed = String(spellAbilityCfg.attrId);
+        tempSpellAbilitySpecies = fixed;
+        if (spellAbilitySelect) {
+            spellAbilitySelect.value = fixed;
+            spellAbilitySelect.disabled = true;
+        }
+    } else {
+        if (spellAbilitySelect) {
+            if (tempSpellAbilitySpecies) spellAbilitySelect.value = String(tempSpellAbilitySpecies);
+            wireSpeciesSpellAbilitySelect(spellAbilitySelect);
+        }
+        if (spellAbilityLineageSelect) {
+            if (tempSpellAbilitySpecies) spellAbilityLineageSelect.value = String(tempSpellAbilitySpecies);
+            wireSpeciesSpellAbilitySelect(spellAbilityLineageSelect);
+        }
     }
 }
 
@@ -3497,23 +3669,28 @@ function populateClassFormOptions(className) {
                     <option value="">${translations[currentLang].pleaseSelectLabel}</option>
                     ${createWeaponOptions([1, 2, 3, 4], [1, 2, 3, 4, 5, 6, 7, 8, 9])}
                 </select>
-                <div id="additionalWeaponMasterySection1" style="display: none;">
-                    <label for="weaponMastery3">${elements.chooseWTLabel} (${elements.levelLabel2} 4):</label>
-                    <select id="weaponMastery3" name="weaponMastery3" class="dropdown">
+                <label for="weaponMastery3">${elements.chooseWTLabel} (${elements.levelLabel2} 1):</label>
+                <select id="weaponMastery3" name="weaponMastery3" class="dropdown">
                     <option value="">${translations[currentLang].pleaseSelectLabel}</option>
-                        ${createWeaponOptions([1, 2, 3, 4], [1, 2, 3, 4, 5, 6, 7, 8, 9])}
-                    </select>
-                </div>
-                <div id="additionalWeaponMasterySection2" style="display: none;">
-                    <label for="weaponMastery4">${elements.chooseWTLabel} (${elements.levelLabel2} 10):</label>
+                    ${createWeaponOptions([1, 2, 3, 4], [1, 2, 3, 4, 5, 6, 7, 8, 9])}
+                </select>
+                <div id="additionalWeaponMasterySection1" style="display: none;">
+                    <label for="weaponMastery4">${elements.chooseWTLabel} (${elements.levelLabel2} 4):</label>
                     <select id="weaponMastery4" name="weaponMastery4" class="dropdown">
                     <option value="">${translations[currentLang].pleaseSelectLabel}</option>
                         ${createWeaponOptions([1, 2, 3, 4], [1, 2, 3, 4, 5, 6, 7, 8, 9])}
                     </select>
                 </div>
-                <div id="additionalWeaponMasterySection3" style="display: none;">
-                     <label for="weaponMastery5">${elements.chooseWTLabel} (${elements.levelLabel2} 16):</label>
+                <div id="additionalWeaponMasterySection2" style="display: none;">
+                    <label for="weaponMastery5">${elements.chooseWTLabel} (${elements.levelLabel2} 10):</label>
                     <select id="weaponMastery5" name="weaponMastery5" class="dropdown">
+                    <option value="">${translations[currentLang].pleaseSelectLabel}</option>
+                        ${createWeaponOptions([1, 2, 3, 4], [1, 2, 3, 4, 5, 6, 7, 8, 9])}
+                    </select>
+                </div>
+                <div id="additionalWeaponMasterySection3" style="display: none;">
+                     <label for="weaponMastery6">${elements.chooseWTLabel} (${elements.levelLabel2} 16):</label>
+                    <select id="weaponMastery6" name="weaponMastery6" class="dropdown">
                     <option value="">${translations[currentLang].pleaseSelectLabel}</option>
                         ${createWeaponOptions([1, 2, 3, 4], [1, 2, 3, 4, 5, 6, 7, 8, 9])}
                     </select>
@@ -4714,12 +4891,26 @@ function showSubclassDetails(subclassCategoryNumber) {
         const featuresLabel = elements.subclassFeaturesLabel || "Features";
 
         const level = character.level || 1;
-        const features = classData.filter(f =>
-            f.subclassCategoryNumber === subclassCategoryNumber
-            && f.level <= level
-            && f.translationLabel
-            && f.translationLabel !== 0
-        ).map(f => `<li>${elements[f.translationLabel] || f.translationLabel}</li>`).join('');
+        // Magieprogression nur einmal (erste/niedrigste Stufe), nicht pro Aufruf-Stufe
+        let seenMagicProgression = false;
+        const featureRows = classData
+            .filter(f =>
+                f.subclassCategoryNumber === subclassCategoryNumber
+                && f.level <= level
+                && f.translationLabel
+                && f.translationLabel !== 0
+            )
+            .slice()
+            .sort((a, b) => (Number(a.level) - Number(b.level)) || (Number(a.ID) - Number(b.ID)));
+        const features = featureRows
+            .filter(f => {
+                if (f.translationLabel !== "magicProgressionLabel") return true;
+                if (seenMagicProgression) return false;
+                seenMagicProgression = true;
+                return true;
+            })
+            .map(f => `<li>${elements[f.translationLabel] || f.translationLabel}</li>`)
+            .join("");
 
         // 1. Textinhalt der Box
         subclassDetailBox.innerHTML = `
@@ -7800,6 +7991,23 @@ function isSpeciesSpellFeature(feature) {
 }
 
 /**
+ * Prüft, ob ein Volksmerkmal für die Charakterstufe freigeschaltet ist
+ * (characterSheet „1:LEVEL:n“ wie auf dem Charakterbogen).
+ */
+function isSpeciesTraitUnlockedForLevel(trait, characterLevel) {
+    if (!trait) return false;
+    const status = trait.characterSheet;
+    if (status === 0 || status === "0") return false;
+    const statusStr = String(status == null ? "1" : status);
+    if (statusStr.includes(":LEVEL:")) {
+        const targetLevel = parseInt(statusStr.split(":LEVEL:")[1], 10);
+        if (!Number.isFinite(targetLevel)) return true;
+        return (Number(characterLevel) || 1) >= targetLevel;
+    }
+    return true;
+}
+
+/**
  * Gruppen fester Volkszauber pro Trait bzw. Erblinie (Anzeige in Schritt 7).
  * Persistenz bleibt über source.name = speciesSpellsLabel.
  */
@@ -7811,10 +8019,12 @@ function getSpeciesSpellFeatureGroups(character) {
     if (!speciesData) return [];
 
     const groups = [];
+    const charLevel = character.level || 1;
     if (Array.isArray(speciesData.speciesTraitLabel)) {
         speciesData.speciesTraitLabel.forEach(traitLabel => {
             const trait = speciesTraitList.find(t => t.speciesTraitLabel === traitLabel);
             if (!trait || !trait.spellLabel || trait.spellLabel === 0) return;
+            if (!isSpeciesTraitUnlockedForLevel(trait, charLevel)) return;
             const spellLabels = (Array.isArray(trait.spellLabel) ? trait.spellLabel : [trait.spellLabel])
                 .filter(Boolean);
             if (!spellLabels.length) return;
